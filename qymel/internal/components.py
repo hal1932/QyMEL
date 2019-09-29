@@ -6,24 +6,6 @@ from six.moves import *
 import sys
 import inspect
 
-import maya.api.OpenMaya as om2
-
-
-class _PlugFactory(object):
-
-    _cls = None  # type: type
-
-    @staticmethod
-    def register(cls):
-        # type: (type) -> NoReturn
-        _PlugFactory._cls = cls
-
-    @staticmethod
-    def create(mplug):
-        # type: (om2.MPlug) -> object
-        cls = _PlugFactory._cls
-        return cls(mplug)
-
 
 class _ComponentFactory(object):
 
@@ -59,3 +41,4 @@ class _ComponentFactory(object):
         # type: (om2.MDagPath, om2.MObject) -> object
         cls = _ComponentFactory._default_cls
         return cls(mdagpath, mobject)
+

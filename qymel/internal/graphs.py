@@ -7,7 +7,8 @@ import maya.cmds as cmds
 import maya.api.OpenMaya as om2
 
 from qymel.internal.nodes import _NodeFactory
-from qymel.internal.objects import _PlugFactory, _ComponentFactory
+from qymel.internal.plugs import _PlugFactory
+from qymel.internal.components import _ComponentFactory
 
 
 def _ls(*args, **kwargs):
@@ -18,18 +19,18 @@ def _ls(*args, **kwargs):
     tmp_mfn_comp = om2.MFnComponent()
 
     for obj_name in cmds.ls(*args, **kwargs):
-        mplug = None
-        try:
-            mplug = _get_mplug(obj_name)
-        except TypeError:
-            pass
-
-        if mplug is not None:
-            plug = _PlugFactory.create(mplug)
-            result.append(plug)
-            continue
-
         if '.' in obj_name:
+            mplug = None
+            try:
+                mplug = _get_mplug(obj_name)
+            except TypeError:
+                pass
+
+            if mplug is not None:
+                plug = _PlugFactory.create(mplug)
+                result.append(plug)
+                continue
+
             mdagpath = None
             mobj = None
             try:
@@ -42,6 +43,7 @@ def _ls(*args, **kwargs):
                 comp = _to_comp_instance(tmp_mfn_comp, mdagpath, mobj)
                 result.append(comp)
                 continue
+
         else:
             mobj = _get_mobject(obj_name)
             if mobj.hasFn(om2.MFn.kDependencyNode):
@@ -77,7 +79,9 @@ def _ls_nodes(*args, **kwargs):
 
 
 def _create_node(*args, **kwargs):
-    pass
+    node_name = cmds.createNode(*args, **kwargs)
+    mobj = _get_mobject(node_name)
+    return _to_node_instance(om2.MFnDependencyNode(mobj))
 
 
 def _to_node_instance(mfn):

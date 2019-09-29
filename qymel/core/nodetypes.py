@@ -6,7 +6,7 @@ from six.moves import *
 import maya.api.OpenMaya as om2
 import maya.api.OpenMayaAnim as om2anim
 
-from qymel.core.general import MayaObject
+from qymel.core.general import MayaObject, Plug
 from qymel.internal.graphs import _ls_nodes, _create_node
 from qymel.internal.nodes import _NodeFactory
 
@@ -24,12 +24,17 @@ class DependNode(MayaObject):
 
     @property
     def mfn(self):
-        if self.__class__._mfn_set is None:
+        mfn_set = self.__class__._mfn_set
+
+        if mfn_set is None:
             return None
 
-        if self._mfn is None:
-            self._mfn = self.__class__._mfn_set(self.mobject)
-        return self._mfn
+        mfn = self._mfn
+        if mfn is None:
+            mfn = mfn_set(self.mobject)
+            self._mfn = mfn
+
+        return mfn
 
     @property
     def name(self):
@@ -45,9 +50,28 @@ class DependNode(MayaObject):
         # type: (om2.MObject) -> NoReturn
         super(DependNode, self).__init__(mobj)
         self._mfn = None
+        self._plugs = {}  # Dict[str, Plug]
 
     def __str__(self):
         return '{} {}'.format(self.__class__, self.abs_name)
+
+    def __getattr__(self, item):
+        # type: (str) -> Any
+        if item in self.__dict__:
+            return self.__dict__[item]
+
+        plug = self._plugs.get(item, None)
+        if plug is not None:
+            return plug
+
+        mplug = self.mfn.findPlug(item, False)
+        if mplug is None:
+            return None
+
+        plug = Plug(mplug)
+        self._plugs[item] = plug
+
+        return plug
 
 
 class ContainerBase(DependNode):
