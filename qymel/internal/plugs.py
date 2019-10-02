@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from typing import *
 from six.moves import *
 
+import maya.cmds as cmds
 import maya.api.OpenMaya as om2
 
 
@@ -37,17 +38,22 @@ def _plug_get_impl(mplug):
         #     return mplug.asMDataHandle().asVector()
         return [_plug_get_impl(mplug.child(i)) for i in range(mplug.numChildren())]
 
-    # typed
-    if api_type == om2.MFn.kTypedAttribute:
-        attr_type = om2.MFnTypedAttribute(mobj).attrType()
-        return _typed_attr_table[attr_type](mplug)
+    try:
+        # typed
+        if api_type == om2.MFn.kTypedAttribute:
+            attr_type = om2.MFnTypedAttribute(mobj).attrType()
+            return _typed_attr_table[attr_type](mplug)
 
-    # numeric
-    if api_type == om2.MFn.kNumericAttribute:
-        numeric_type = om2.MFnNumericAttribute(mobj).numericType()
-        return _numeric_attr_table[numeric_type](mplug)
+        # numeric
+        if api_type == om2.MFn.kNumericAttribute:
+            numeric_type = om2.MFnNumericAttribute(mobj).numericType()
+            return _numeric_attr_table[numeric_type](mplug)
 
-    return _api_type_table[api_type](mplug)
+        return _api_type_table[api_type](mplug)
+
+    except KeyError:
+        print 'not-supported plug data: {}'.format(mplug)
+        return cmds.getAttr(mplug.name())
 
 
 _api_type_table = {
@@ -59,9 +65,17 @@ _api_type_table = {
     om2.MFn.kMatrixAttribute: lambda plug: om2.MFnMatrixAttribute(plug.asMObject()).matrix(),
 }
 
+
+def _get_component_list_data(mplug):
+    # type: (om2.MPlug) -> List[int]
+    mfn = om2.MFnComponentListData(mplug.asMObject())
+    return [mfn.get(i) for i in range(mfn.length())]
+
+
 _typed_attr_table = {
     om2.MFnData.kString: lambda plug: plug.asString(),
     om2.MFnData.kMatrix: lambda plug: om2.MFnMatrixData(plug.asMObject()).matrix(),
+    om2.MFnData.kComponentList: _get_component_list_data,
 }
 
 _numeric_attr_table = {

@@ -16,11 +16,13 @@ class ${ClassName}(${BaseClassName}):
 
     @staticmethod
     def ls(*args, **kwargs):
+        # type: (Any, Any) -> List[${ClassName]]
         kwargs['type'] = ${ClassName}._mel_type
         return _ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create(**kwargs):
+        # type: (Any) -> ${ClassName]
         return _create_node(${ClassName}._mel_type, **kwargs)
 
     def __init__(self, mobj):

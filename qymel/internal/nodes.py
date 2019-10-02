@@ -33,22 +33,20 @@ class _NodeFactory(object):
         _NodeFactory._default_cls_dict['dag_node'] = dag_node_cls
 
     @staticmethod
-    def create(mel_type, mobject):
-        # type: (str, om2.MObject) -> object
+    def create(mel_type, mobject, mdagpath=None):
+        # type: (str, om2.MObject, om2.MDagPath) -> object
         if mel_type not in _NodeFactory._cls_dict:
             return None
 
         cls = _NodeFactory._cls_dict[mel_type]
+        if mdagpath is not None:
+            return cls(mobject, mdagpath)
         return cls(mobject)
 
     @staticmethod
-    def create_default(mobject):
-        # type: (om2.MObject) -> object
+    def create_default(mobject, mdagpath=None):
+        # type: (om2.MObject, om2.MDagPath) -> object
         cls = _NodeFactory._default_cls_dict['node']
-        return cls(mobject)
-
-    @staticmethod
-    def create_default_dag(mobject):
-        # type: (om2.MObject) -> object
-        cls = _NodeFactory._default_cls_dict['dag_node']
+        if mdagpath is not None:
+            return cls(mobject, mdagpath)
         return cls(mobject)
