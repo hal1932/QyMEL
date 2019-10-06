@@ -17,10 +17,13 @@ def ls(*args, **kwargs):
 
 
 def eval(obj_name):
-    # type: (str) -> Any
+    # type: (Union[str, Iterable[str]]) -> Any
     tmp_mfn_comp = om2.MFnComponent()
     tmp_mfn_node = om2.MFnDependencyNode()
-    return _eval(obj_name, tmp_mfn_comp, tmp_mfn_node)
+    if isinstance(obj_name, (str, unicode)):
+        return _eval(obj_name, tmp_mfn_comp, tmp_mfn_node)
+    else:
+        return [_eval(name, tmp_mfn_comp, tmp_mfn_node) for name in obj_name]
 
 
 def eval_node(node_name):
