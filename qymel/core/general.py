@@ -75,6 +75,10 @@ class MayaObject(object):
         # type: () -> str
         return '{} {}'.format(self.__class__, self.mobject)
 
+    def has_fn(self, mfn_type):
+        # type: (int) -> bool
+        return self.mobject.hasFn(mfn_type)
+
 
 class Plug(object):
 
