@@ -6,14 +6,14 @@ from six.moves import *
 import maya.cmds as cmds
 import maya.api.OpenMaya as om2
 
-from qymel.internal.graphs import _ls, _eval, _eval_node, _eval_plug, _eval_component
-from qymel.internal.plugs import _PlugFactory, _plug_get_impl
-from qymel.internal.components import _ComponentFactory
+from ..internal import graphs as _graphs
+from ..internal import plugs as _plugs
+from ..internal import components as _components
 
 
 def ls(*args, **kwargs):
     # type: (Any, Any) -> Any
-    return _ls(*args, **kwargs)
+    return _graphs.ls(*args, **kwargs)
 
 
 def eval(obj_name):
@@ -21,26 +21,26 @@ def eval(obj_name):
     tmp_mfn_comp = om2.MFnComponent()
     tmp_mfn_node = om2.MFnDependencyNode()
     if isinstance(obj_name, (str, unicode)):
-        return _eval(obj_name, tmp_mfn_comp, tmp_mfn_node)
+        return _graphs.eval(obj_name, tmp_mfn_comp, tmp_mfn_node)
     else:
-        return [_eval(name, tmp_mfn_comp, tmp_mfn_node) for name in obj_name]
+        return [_graphs.eval(name, tmp_mfn_comp, tmp_mfn_node) for name in obj_name]
 
 
 def eval_node(node_name):
     # type: (str) -> Any
     tmp_mfn = om2.MFnDependencyNode()
-    return _eval_node(node_name, tmp_mfn)
+    return _graphs.eval_node(node_name, tmp_mfn)
 
 
 def eval_plug(plug_name):
     # type: (str) -> Plug
-    return _eval_plug(plug_name)
+    return _graphs.eval_plug(plug_name)
 
 
 def eval_component(comp_name):
     # type: (str) -> Component
     tmp_mfn = om2.MFnComponent()
-    return _eval_component(comp_name, tmp_mfn)
+    return _graphs.eval_component(comp_name, tmp_mfn)
 
 
 class MayaObject(object):
@@ -118,7 +118,7 @@ class Plug(object):
     @property
     def api_type(self):
         # type: () -> int
-        self._mplug.attribute().apiType()
+        return self._mplug.attribute().apiType()
 
     @property
     def is_source(self):
@@ -186,7 +186,7 @@ class Plug(object):
         if mplug.isNetworked:
             raise RuntimeError('{} is networked'.format(self.name))
 
-        return _plug_get_impl(mplug)
+        return _plugs.plug_get_impl(mplug)
 
     def get_attr(self, **kwargs):
         # type: (Any, Any) -> Any
@@ -239,7 +239,7 @@ class Component(MayaObject):
         # type: (om2.MDagPath, om2.MObject) -> NoReturn
         super(Component, self).__init__(mobj)
         self._mdagpath = mdagpath
-        self._mfn = None
+        self._mfn = None  # type: om2.MFnComponent
         self.__cursor = 0
 
     def __str__(self):
@@ -286,7 +286,7 @@ class _DoubleIndexedComponent(Component):
 
     def __init__(self, mdagpath, mobj):
         # type: (om2.MDagPath, om2.MObject) -> NoReturn
-        super(_SingleIndexedComponent, self).__init__(mdagpath, mobj)
+        super(_DoubleIndexedComponent, self).__init__(mdagpath, mobj)
 
     def _get_element(self, index):
         # type: (int) -> Any
@@ -333,5 +333,5 @@ class MeshVertexFaceComponent(_DoubleIndexedComponent):
         super(MeshVertexFaceComponent, self).__init__(mdagpath, mobj)
 
 
-_PlugFactory.register(Plug)
-_ComponentFactory.register(__name__)
+_plugs.PlugFactory.register(Plug)
+_components.ComponentFactory.register(__name__)

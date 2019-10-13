@@ -7,34 +7,34 @@ import maya.cmds as cmds
 import maya.api.OpenMaya as om2
 
 
-class _PlugFactory(object):
+class PlugFactory(object):
 
     _cls = None  # type: type
 
     @staticmethod
     def register(cls):
         # type: (type) -> NoReturn
-        _PlugFactory._cls = cls
+        PlugFactory._cls = cls
 
     @staticmethod
     def create(mplug):
         # type: (om2.MPlug) -> object
-        cls = _PlugFactory._cls
+        cls = PlugFactory._cls
         return cls(mplug)
 
 
-def _plug_get_impl(mplug):
+def plug_get_impl(mplug):
     # type: (om2.MPlug) -> Any
     mobj = mplug.attribute()
     api_type = mobj.apiType()
 
     # array
     if mplug.isArray:
-        return [_plug_get_impl(mplug.elementByLogicalIndex(i)) for i in range(mplug.numElements())]
+        return [plug_get_impl(mplug.elementByLogicalIndex(i)) for i in range(mplug.numElements())]
 
     # compound
     if mplug.isCompound:
-        return tuple(_plug_get_impl(mplug.child(i)) for i in range(mplug.numChildren()))
+        return tuple(plug_get_impl(mplug.child(i)) for i in range(mplug.numChildren()))
 
     try:
         # typed
@@ -50,7 +50,7 @@ def _plug_get_impl(mplug):
         return _api_type_table[api_type](mplug)
 
     except KeyError:
-        print 'not-supported plug data: {}'.format(mplug)
+        print('not-supported plug data: {}'.format(mplug))
         return cmds.getAttr(mplug.name())
 
 

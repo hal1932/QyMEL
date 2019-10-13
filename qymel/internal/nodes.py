@@ -9,7 +9,7 @@ import inspect
 import maya.api.OpenMaya as om2
 
 
-class _NodeFactory(object):
+class NodeFactory(object):
 
     _cls_dict = {}  # Dict[str, type]
     _default_cls_dict = {}  # Dict[str, type]
@@ -24,21 +24,21 @@ class _NodeFactory(object):
             mel_type = symbol._mel_type
             if mel_type is None or len(mel_type) == 0:
                 continue
-            _NodeFactory._cls_dict[mel_type] = symbol
+            NodeFactory._cls_dict[mel_type] = symbol
 
     @staticmethod
     def register_default(node_cls, dag_node_cls):
         # type: (type, type) -> NoReturn
-        _NodeFactory._default_cls_dict['node'] = node_cls
-        _NodeFactory._default_cls_dict['dag_node'] = dag_node_cls
+        NodeFactory._default_cls_dict['node'] = node_cls
+        NodeFactory._default_cls_dict['dag_node'] = dag_node_cls
 
     @staticmethod
     def create(mel_type, mobject, mdagpath=None):
         # type: (str, om2.MObject, om2.MDagPath) -> object
-        if mel_type not in _NodeFactory._cls_dict:
+        if mel_type not in NodeFactory._cls_dict:
             return None
 
-        cls = _NodeFactory._cls_dict[mel_type]
+        cls = NodeFactory._cls_dict[mel_type]
         if mdagpath is not None:
             return cls(mobject, mdagpath)
         return cls(mobject)
@@ -46,7 +46,7 @@ class _NodeFactory(object):
     @staticmethod
     def create_default(mobject, mdagpath=None):
         # type: (om2.MObject, om2.MDagPath) -> object
-        cls = _NodeFactory._default_cls_dict['node']
+        cls = NodeFactory._default_cls_dict['node']
         if mdagpath is not None:
             return cls(mobject, mdagpath)
         return cls(mobject)
