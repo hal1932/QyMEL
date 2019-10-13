@@ -55,6 +55,11 @@ class MayaObject(object):
         # type: () -> om2.MObjectHandle
         return self._mobj_handle
 
+    @property
+    def is_null_object(self):
+        # type: () -> bool
+        return self._mobj_handle.object().isNull()
+
     def __init__(self, mobj):
         # type: (om2.MObject) -> NoReturn
         if mobj is not None:
@@ -96,6 +101,11 @@ class Plug(object):
         return self._mplug.attribute()
 
     @property
+    def is_null_object(self):
+        # type: () -> bool
+        return self._mplug.isNull
+
+    @property
     def name(self):
         # type: () -> str
         return self._mplug.name()
@@ -104,6 +114,11 @@ class Plug(object):
     def partial_name(self):
         # type: () -> str
         return self._mplug.partialName()
+
+    @property
+    def api_type(self):
+        # type: () -> int
+        self._mplug.attribute().apiType()
 
     @property
     def is_source(self):
@@ -124,6 +139,16 @@ class Plug(object):
     def is_compound(self):
         # type: () -> bool
         return self._mplug.isCompound
+
+    @property
+    def is_locked(self):
+        # type: () -> bool
+        return self._mplug.isLocked
+
+    @property
+    def is_networked(self):
+        # type: () -> bool
+        return self._mplug.isNetworked
 
     def __init__(self, mplug):
         # type: (om2.MPlug) -> NoReturn

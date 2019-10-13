@@ -25,9 +25,11 @@ class ${ClassName}(${BaseClassName}):
         # type: (Any) -> ${ClassName]
         return _create_node(${ClassName}._mel_type, **kwargs)
 
-    def __init__(self, mobj):
-        # type: (om2.MObject) -> NoReturn
-        super(${ClassName}, self).__init__(mobj)
+    def __init__(self, object):
+        # type: (Union[om2.MObject, str]) -> NoReturn
+        if isinstance(mobj, (str, unicode)):
+            object, _ = _get_mobject(object)
+        super(${ClassName}, self).__init__(object)
 
 '''
 

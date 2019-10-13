@@ -34,9 +34,7 @@ def _plug_get_impl(mplug):
 
     # compound
     if mplug.isCompound:
-        # if om2.MFn.kAttribute2Double <= api_type <= om2.MFn.kAttribute4Double:
-        #     return mplug.asMDataHandle().asVector()
-        return [_plug_get_impl(mplug.child(i)) for i in range(mplug.numChildren())]
+        return tuple(_plug_get_impl(mplug.child(i)) for i in range(mplug.numChildren()))
 
     try:
         # typed
@@ -56,20 +54,20 @@ def _plug_get_impl(mplug):
         return cmds.getAttr(mplug.name())
 
 
+def _get_component_list_data(mplug):
+    # type: (om2.MPlug) -> Tuple[int]
+    mfn = om2.MFnComponentListData(mplug.asMObject())
+    return tuple(mfn.get(i) for i in range(mfn.length()))
+
+
 _api_type_table = {
     om2.MFn.kDoubleLinearAttribute: lambda plug: plug.asDouble(),
     om2.MFn.kFloatLinearAttribute: lambda plug: plug.asFloat(),
-    om2.MFn.kDoubleAngleAttribute: lambda plug: plug.asMAngle().asUnit(om2.MAngle.uiUnit()),
-    om2.MFn.kFloatAngleAttribute: lambda plug: plug.asMAngle().asUnit(om2.MAngle.uiUnit()),
+    om2.MFn.kDoubleAngleAttribute: lambda plug: plug.asMAngle().asUnits(om2.MAngle.uiUnit()),
+    om2.MFn.kFloatAngleAttribute: lambda plug: plug.asMAngle().asUnits(om2.MAngle.uiUnit()),
     om2.MFn.kEnumAttribute: lambda plug: plug.asInt(),
     om2.MFn.kMatrixAttribute: lambda plug: om2.MFnMatrixAttribute(plug.asMObject()).matrix(),
 }
-
-
-def _get_component_list_data(mplug):
-    # type: (om2.MPlug) -> List[int]
-    mfn = om2.MFnComponentListData(mplug.asMObject())
-    return [mfn.get(i) for i in range(mfn.length())]
 
 
 _typed_attr_table = {

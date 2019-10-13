@@ -43,11 +43,11 @@ class _Iterator(object):
         self._miter.next()
 
 
-class MeshVertexIterator(_Iterator):
+class MeshVertexIter(_Iterator):
 
     def __init__(self, miter):
         # type: (om2.MItMeshVertex) -> NoReturn
-        super(MeshVertexIterator, self).__init__(miter)
+        super(MeshVertexIter, self).__init__(miter)
 
 
 class MeshFaceIter(_Iterator):
