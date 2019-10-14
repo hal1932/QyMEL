@@ -88,7 +88,10 @@ def __force_reload_rec(module_obj, indent=0):
                 #             name, as_name, module_obj.__dict__[as_name],
                 #             id(module_obj.__dict__[as_name]), id(submodule.module_obj.__dict__[name])))
 
-                module_obj.__dict__[as_name] = submodule.module_obj.__dict__[name]
+                if submodule.module_obj.__name__.split('.')[-1] == name:
+                    module_obj.__dict__[as_name] = submodule.module_obj
+                else:
+                    module_obj.__dict__[as_name] = submodule.module_obj.__dict__[name]
 
 
 class __ModuleInfo(object):
@@ -143,7 +146,17 @@ def __find_submodules(module_obj):
             modules.append(module)
 
         elif isinstance(node, ast.ImportFrom):
-            target_module = __get_sys_module(module_obj, node.module)
+            if node.level > 0:
+                if node.names[0].name == '*':
+                    target_module = __get_sys_module(module_obj, node.module)
+                else:
+                    if node.module is None:
+                        submodule_name = node.names[0].name
+                    else:
+                        submodule_name = '{}.{}'.format(node.module, node.names[0].name)
+                    target_module = __get_sys_module(module_obj, submodule_name, node.level)
+            else:
+                target_module = __get_sys_module(module_obj, node.module)
             if target_module is None:
                 continue
 
@@ -166,12 +179,13 @@ def __find_submodules(module_obj):
     return modules
 
 
-def __get_sys_module(module_obj, node_name):
+def __get_sys_module(module_obj, node_name, relative_ref_level=0):
     # absolute import
     module_name = node_name
     if module_name not in sys.modules:
         # relative import
-        module_name = '{}.{}'.format(module_obj.__name__, node_name)
+        module_origin_name = '.'.join(module_obj.__name__.split('.')[:-relative_ref_level])
+        module_name = '{}.{}'.format(module_origin_name, node_name)
         if module_name not in sys.modules:
             if module_obj.__package__ is None:
                 return None
