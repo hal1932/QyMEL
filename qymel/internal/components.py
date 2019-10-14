@@ -34,7 +34,7 @@ class ComponentFactory(object):
             return None
 
         cls = ComponentFactory._cls_dict[comp_type]
-        return cls(mdagpath, mobject)
+        return cls(mobject, mdagpath)
 
     @staticmethod
     def create_default(mdagpath, mobject):

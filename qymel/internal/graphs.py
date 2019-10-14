@@ -65,12 +65,12 @@ def eval_plug(plug_name):
     # type: (str) -> Any
     mplug = None
     try:
-        mplug = _get_mplug(plug_name)
+        mplug = get_mplug(plug_name)
     except TypeError:
         pass
 
     if mplug is not None:
-        plug = PlugFactory.create(mplug)
+        plug = _plugs.PlugFactory.create(mplug)
         return plug
 
     return None
@@ -81,13 +81,13 @@ def eval_component(comp_name, tmp_mfn_comp):
     mdagpath = None
     mobj = None
     try:
-        mdagpath, mobj = _get_comp_mobject(comp_name)
+        mdagpath, mobj = get_comp_mobject(comp_name)
     except TypeError:
         pass
 
     if mdagpath is not None:
         tmp_mfn_comp.setObject(mobj)
-        comp = _to_comp_instance(tmp_mfn_comp, mdagpath, mobj)
+        comp = to_comp_instance(tmp_mfn_comp, mdagpath, mobj)
         return comp
 
     return None
@@ -150,7 +150,7 @@ def _to_plug_instance(mplug):
     return _plugs.PlugFactory.create(mplug)
 
 
-def _to_comp_instance(mfn, mdagpath, mobject):
+def to_comp_instance(mfn, mdagpath, mobject):
     # type: (om2.MFnComponent, om2.MDagPath, om2.MObject) -> object
     comp_type = mfn.componentType
 
@@ -161,14 +161,14 @@ def _to_comp_instance(mfn, mdagpath, mobject):
     return _components.ComponentFactory.create_default(mdagpath, mobject)
 
 
-def _get_mplug(name):
+def get_mplug(name):
     # type: (str) -> om2.MPlug
     sel = om2.MSelectionList()
     sel.add(name)
     return sel.getPlug(0)
 
 
-def _get_comp_mobject(name):
+def get_comp_mobject(name):
     # type: (str) -> (om2.MDagPath, om2.MObject)
     sel = om2.MSelectionList()
     sel.add(name)

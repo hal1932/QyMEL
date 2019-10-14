@@ -60,6 +60,11 @@ class MayaObject(object):
         # type: () -> bool
         return self._mobj_handle.object().isNull()
 
+    @property
+    def mel_object(self):
+        # type: () -> Union[str, Tuple[str]]
+        pass
+
     def __init__(self, mobj):
         # type: (om2.MObject) -> NoReturn
         if mobj is not None:
@@ -89,6 +94,11 @@ class MayaObject(object):
 
 
 class Plug(object):
+
+    @property
+    def mel_object(self):
+        # type: () -> str
+        return self.name
 
     @property
     def mplug(self):
@@ -150,14 +160,20 @@ class Plug(object):
         # type: () -> bool
         return self._mplug.isNetworked
 
-    def __init__(self, mplug):
-        # type: (om2.MPlug) -> NoReturn
-        self._mplug = mplug
+    def __init__(self, plug):
+        # type: (Union[om2.MPlug, str]) -> NoReturn
+        if isinstance(plug, (str, unicode)):
+            plug = _graphs.get_mplug(plug)
+        self._mplug = plug
         self._mfn = None
 
     def __str__(self):
         # type: () -> str
-        return '{} {}'.format(self.__class__, self.name)
+        return repr(self)
+
+    def __repr__(self):
+        # type: () -> str
+        return "{}('{}')".format(self.__class__.__name__, self.name)
 
     def __getitem__(self, item):
         # type: (int) -> Plug
@@ -190,19 +206,19 @@ class Plug(object):
 
     def get_attr(self, **kwargs):
         # type: (Any, Any) -> Any
-        return cmds.getAttr(self.name, **kwargs)
+        return cmds.getAttr(self.mel_object, **kwargs)
 
     def set_attr(self, *args, **kwargs):
         # type: (Any, Any) -> Any
-        return cmds.setAttr(self.name, *args, **kwargs)
+        return cmds.setAttr(self.mel_object, *args, **kwargs)
 
     def connect(self, dest_plug, **kwargs):
         # type: (Plug, Any) -> NoReturn
-        cmds.connectAttr(self.name, dest_plug.name, **kwargs)
+        cmds.connectAttr(self.mel_object, dest_plug.mel_object, **kwargs)
 
     def disconnect(self, dest_plug, **kwargs):
         # type: (Plug, Any) -> NoReturn
-        cmds.disconnectAttr(self.name, dest_plug.name, **kwargs)
+        cmds.disconnectAttr(self.mel_object, dest_plug.mel_object, **kwargs)
 
     def source(self):
         # type: () -> Plug
@@ -217,6 +233,14 @@ class Component(MayaObject):
 
     _comp_mfn = None
     _comp_type = om2.MFn.kComponent
+    _comp_repr = ''
+
+    @property
+    def mel_object(self):
+        # type: () -> Tuple[str]
+        sel_list = om2.MSelectionList()
+        sel_list.add((self.mdagpath, self.mobject), False)
+        return sel_list.getSelectionStrings(0)
 
     @property
     def mdagpath(self):
@@ -235,16 +259,22 @@ class Component(MayaObject):
         # type: () -> Iterable[Any]
         return self.mfn.getElements()
 
-    def __init__(self, mdagpath, mobj):
-        # type: (om2.MDagPath, om2.MObject) -> NoReturn
-        super(Component, self).__init__(mobj)
+    def __init__(self, obj, mdagpath):
+        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
+        if isinstance(obj, (str, unicode)):
+            mdagpath, obj = _graphs.get_comp_mobject(obj)
+        super(Component, self).__init__(obj)
         self._mdagpath = mdagpath
         self._mfn = None  # type: om2.MFnComponent
         self.__cursor = 0
 
     def __str__(self):
         # type: () -> str
-        return '{} {} (count: {})'.format(self.__class__, self.mdagpath.fullPathName(), self.mfn.elementCount)
+        return repr(self)
+
+    def __repr__(self):
+        # type: () -> str
+        return ', '.join(["{}('{}')".format(self.__class__.__name__, name) for name in self.mel_object])
 
     def __len__(self):
         # type: () -> int
@@ -273,9 +303,9 @@ class Component(MayaObject):
 
 class _SingleIndexedComponent(Component):
 
-    def __init__(self, mdagpath, mobj):
-        # type: (om2.MDagPath, om2.MObject) -> NoReturn
-        super(_SingleIndexedComponent, self).__init__(mdagpath, mobj)
+    def __init__(self, obj, mdagpath):
+        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
+        super(_SingleIndexedComponent, self).__init__(obj, mdagpath)
 
     def _get_element(self, index):
         # type: (int) -> Any
@@ -284,53 +314,57 @@ class _SingleIndexedComponent(Component):
 
 class _DoubleIndexedComponent(Component):
 
-    def __init__(self, mdagpath, mobj):
-        # type: (om2.MDagPath, om2.MObject) -> NoReturn
-        super(_DoubleIndexedComponent, self).__init__(mdagpath, mobj)
+    def __init__(self, obj, mdagpath):
+        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
+        super(_DoubleIndexedComponent, self).__init__(obj, mdagpath)
 
     def _get_element(self, index):
         # type: (int) -> Any
         return self.mfn.getElement(index)
 
 
-class MeshVertexComponent(_SingleIndexedComponent):
+class MeshVertex(_SingleIndexedComponent):
 
     _comp_mfn = om2.MFnSingleIndexedComponent
     _comp_type = om2.MFn.kMeshVertComponent
+    _comp_repr = 'vtx'
 
-    def __init__(self, mdagpath, mobj):
-        # type: (om2.MDagPath, om2.MObject) -> NoReturn
-        super(MeshVertexComponent, self).__init__(mdagpath, mobj)
+    def __init__(self, obj, mdagpath=None):
+        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
+        super(MeshVertex, self).__init__(obj, mdagpath)
 
 
-class MeshFaceComponent(_SingleIndexedComponent):
+class MeshFace(_SingleIndexedComponent):
 
     _comp_mfn = om2.MFnSingleIndexedComponent
     _comp_type = om2.MFn.kMeshPolygonComponent
+    _comp_repr = 'f'
 
-    def __init__(self, mdagpath, mobj):
-        # type: (om2.MDagPath, om2.MObject) -> NoReturn
-        super(MeshFaceComponent, self).__init__(mdagpath, mobj)
+    def __init__(self, obj, mdagpath=None):
+        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
+        super(MeshFace, self).__init__(obj, mdagpath)
 
 
-class MeshEdgeComponent(_SingleIndexedComponent):
+class MeshEdge(_SingleIndexedComponent):
 
     _comp_mfn = om2.MFnSingleIndexedComponent
     _comp_type = om2.MFn.kMeshEdgeComponent
+    _comp_repr = 'e'
 
-    def __init__(self, mdagpath, mobj):
-        # type: (om2.MDagPath, om2.MObject) -> NoReturn
-        super(MeshEdgeComponent, self).__init__(mdagpath, mobj)
+    def __init__(self, obj, mdagpath=None):
+        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
+        super(MeshEdge, self).__init__(obj, mdagpath)
 
 
-class MeshVertexFaceComponent(_DoubleIndexedComponent):
+class MeshVertexFace(_DoubleIndexedComponent):
 
     _comp_mfn = om2.MFnDoubleIndexedComponent
     _comp_type = om2.MFn.kMeshVtxFaceComponent
+    _comp_repr = 'vtxface'
 
-    def __init__(self, mdagpath, mobj):
-        # type: (om2.MDagPath, om2.MObject) -> NoReturn
-        super(MeshVertexFaceComponent, self).__init__(mdagpath, mobj)
+    def __init__(self, obj, mdagpath=None):
+        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
+        super(MeshVertexFace, self).__init__(obj, mdagpath)
 
 
 _plugs.PlugFactory.register(Plug)
