@@ -183,9 +183,9 @@ class DisplayLayer(DependNode):
     _mfn_set = om2.MFnDependencyNode
     _mel_type = 'displayLayer'
 
-    kNormalType = 0
-    kTemplateType = 1
-    kReferenceType = 2
+    DISPLAY_TYPE_NORMAL = 0
+    DISPLAY_TYPE_TEMPLATE = 1
+    DISPLAY_TYPE_REFERENCE = 2
 
     @staticmethod
     def ls(*args, **kwargs):
@@ -286,6 +286,10 @@ class SkinCluster(GeometryFilter):
         # type: () -> List[Joint]
         tmp_mfn = om2.MFnDependencyNode()
         return [_graphs.eval_node(name, tmp_mfn) for name in self.mfn.influenceObjects()]
+
+    def influence_index(self, joint):
+        # type: (Joint) -> long
+        return self.mfn.indexForInfluenceObject(joint.mdagpath)
 
     def weights(self, mesh, component=None, influences=None):
         # type: (Mesh, _general.MeshVertex, Iterable[Joint]) -> List[List[float]]
@@ -1159,6 +1163,92 @@ class SurfaceShape(ControlPoint):
         super(SurfaceShape, self).__init__(obj, mdagpath)
 
 
+class ColorSet(object):
+
+    @property
+    def name(self):
+        # type: () -> str
+        return self.__name
+
+    @property
+    def mel_object(self):
+        # type: () -> str
+        return self.__name
+
+    @property
+    def mesh(self):
+        # type: () -> Mesh
+        return self.__mesh
+
+    @property
+    def channels(self):
+        # type: () -> int
+        return self.__mfn.getColorRepresentation(self.mel_object)
+
+    @property
+    def is_clamped(self):
+        # type: () -> bool
+        return self.__mfn.isColorClamped(self.mel_object)
+
+    @property
+    def is_per_instance(self):
+        # type: () -> bool
+        return self.__mfn.isColorSetPerInstance(self.mel_object)
+
+    def __init__(self, name, mesh):
+        # type: (str, Mesh) -> None
+        self.__name = name
+        self.__mfn = mesh.mfn
+        self.__mesh = mesh
+
+    def __repr__(self):
+        return "{}('{}', {})".format(self.__class__.__name__, self.mel_object, repr(self.mesh))
+
+    def color(self, index):
+        # type: (int) -> om2.MColor
+        return self.__mfn.getColor(index, self.mel_object)
+
+    def colors(self):
+        # type: () -> om2.MColorArray
+        return self.__mfn.getColors(self.mel_object)
+
+    def color_index(self, face_id, local_vertex_id):
+        # type: (int) -> int
+        return self.__mfn.getColorIndex(face_id, local_vertex_id, self.mel_object)
+
+    def face_vertex_colors(self):
+        # type: () -> om2.MColorArray
+        return self.__mfn.getFaceVertexColors(self.mel_object)
+
+    def vertex_colors(self):
+        # type: () -> om2.MColorArray
+        return self.__mfn.getVertexColors(self.mel_object)
+
+
+class UvSet(object):
+
+    @property
+    def name(self):
+        # type: () -> str
+        return self.__name
+
+    @property
+    def mel_object(self):
+        # type: () -> str
+        return self.__name
+
+    @property
+    def mesh(self):
+        # type: () -> Mesh
+        return self.__mesh
+
+    def __init__(self, name, mesh):
+        # type: (str, Mesh) -> NoReturn
+        self.__name = name
+        self.__mesh = mesh
+        self.__mfn = mesh.mfn
+
+
 class Mesh(SurfaceShape):
 
     _mfn_type = om2.MFn.kMesh
@@ -1175,67 +1265,141 @@ class Mesh(SurfaceShape):
         return _graphs.create_node(Mesh._mel_type, **kwargs)
 
     @property
+    def face_count(self):
+        # type: () -> int
+        return self.mfn.numPolygons
+
+    @property
     def vertex_count(self):
         # type: () -> int
         return self.mfn.numVertices
+
+    @property
+    def edge_count(self):
+        # type: () -> int
+        return self.mfn.numEdges
+
+    @property
+    def face_vertex_count(self):
+        # type: () -> int
+        return self.mfn.numFaceVertices
+
+    @property
+    def uv_set_count(self):
+        # type: () -> int
+        return self.mfn.numUVSets
+
+    @property
+    def color_set_count(self):
+        # type: () -> int
+        return self.mfn.numColorSets
 
     def __init__(self, obj, mdagpath=None):
         # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
         super(Mesh, self).__init__(obj, mdagpath)
 
-    def face_comp(self, indices):
+    def points(self, space=om2.MSpace.kObject):
+        # type: (int) -> om2.MFloatPointArray
+        return self.mfn.getFloatPoints(space)
+
+    def connected_shaders(self):
+        # type: (int) -> Dict[ShadingEngine, int]
+        mobjs, face_ids = self.mfn.getConnectedShaders(self.instance_number)
+
+        shaders = {index: ShadingEngine(mobj) for index, mobj in enumerate(mobjs)}
+
+        result = {shader: [] for shader in shaders.values()}
+        for face_id, shader_id in enumerate(face_ids):
+            shader = shaders[shader_id]
+            result[shader].append(face_id)
+
+        return result
+
+    def current_color_set(self):
+        # type: () -> ColorSet
+        mfn = self.mfn  # type: om2.MFnMesh
+        name = mfn.currentColorSetName(self.instance_number)
+        return ColorSet(name, self)
+
+    def color_sets(self):
+        # type: () -> List[ColorSet]
+        mfn = self.mfn  # type: om2.MFnMesh
+        names = mfn.getColorSetNames()
+        return [ColorSet(name, self) for name in names]
+
+    def current_uv_set(self):
+        # type: () -> UvSet
+        mfn = self.mfn  # type: om2.MFnMesh
+        name = mfn.currentUVSetName()
+        return UvSet(name, self)
+
+    def uv_sets(self):
+        # type: () -> List[UvSet]
+        mfn = self.mfn  # type: om2.MFnMesh
+        names = mfn.getUVSetNames()
+        return [UvSet(name, self) for name in names]
+
+    def add_color_set(self, name=''):
+        # type: (str) -> ColorSet
+        cmds.select(self.mel_object, replace=True)
+        name = cmds.polyColorSet(create=True, colorSet=name)
+
+    def face_comp(self, indices=None):
         # type: (Iterable[int]) -> _general.MeshFace
-        return self.__create_component(_general.MeshFace, indices)
+        return self.__create_component(_general.MeshFace, indices, self.face_count)
 
-    def vertex_comp(self, indices):
+    def vertex_comp(self, indices=None):
         # type: (Iterable[int]) -> _general.MeshVertex
-        return self.__create_component(_general.MeshVertex, indices)
+        return self.__create_component(_general.MeshVertex, indices, self.vertex_count)
 
-    def edge_comp(self, indices):
+    def edge_comp(self, indices=None):
         # type: (Iterable[int]) -> _general.MeshEdge
-        return self.__create_component(_general.MeshEdge, indices)
+        return self.__create_component(_general.MeshEdge, indices, self.edge_count)
 
-    def vertex_face_comp(self, indices):
+    def vertex_face_comp(self, indices=None):
         # type: (Iterable[Iterable[int, int]]) -> _general.MeshVertexFace
-        return self.__create_component(_general.MeshVertexFace, indices)
+        return self.__create_component(_general.MeshVertexFace, indices, [self.vertex_count, self.face_count])
 
     def faces(self, comp=None):
         # type: (_general.MeshFace) -> _iterators.MeshFaceIter
         if comp is None:
-            miter = om2.MItMeshPolygon(self.mobject)
-        else:
-            miter = om2.MItMeshPolygon(self.mdagpath, comp.mobject)
-        return _iterators.MeshFaceIter(miter)
+            comp = self.face_comp()
+        miter = om2.MItMeshPolygon(self.mdagpath, comp.mobject)
+        return _iterators.MeshFaceIter(miter, comp)
 
     def vertices(self, comp=None):
         # type: (_general.MeshVertex) -> _iterators.MeshVertexIter
         if comp is None:
-            miter = om2.MItMeshVertex(self.mobject)
-        else:
-            miter = om2.MItMeshVertex(self.mdagpath, comp.mobject)
-        return _iterators.MeshVertexIter(miter)
+            comp = self.vertex_comp()
+        miter = om2.MItMeshVertex(self.mdagpath, comp.mobject)
+        return _iterators.MeshVertexIter(miter, comp)
 
     def edges(self, comp=None):
         # type: (_general.MeshEdge) -> _iterators.MeshEdgeIter
         if comp is None:
-            miter = om2.MItMeshEdge(self.mobject)
-        else:
-            miter = om2.MItMeshEdge(self.mdagpath, comp.mobject)
-        return _iterators.MeshEdgeIter(miter)
+            comp = self.edge_comp()
+        miter = om2.MItMeshEdge(self.mdagpath, comp.mobject)
+        return _iterators.MeshEdgeIter(miter, comp)
 
     def vertex_faces(self, comp=None):
         # type: (_general.MeshVertexFace) -> _iterators.MeshVertexFaceIter
         if comp is None:
-            miter = om2.MItMeshFaceVertex(self.mobject)
-        else:
-            miter = om2.MItMeshFaceVertex(self.mdagpath, comp.mobject)
-        return _iterators.MeshVertexFaceIter(miter)
+            comp = self.vertex_face_comp()
+        miter = om2.MItMeshFaceVertex(self.mdagpath, comp.mobject)
+        return _iterators.MeshVertexFaceIter(miter, comp)
 
-    def __create_component(self, cls, indices):
+    def __create_component(self, cls, indices=None, complete_length=None):
+        # type: (type, List[Any], Any) -> Any
         comp = cls._comp_mfn()
         mobj = comp.create(cls._comp_type)
-        comp.addElements(indices)
-        return cls(self.mdagpath, mobj)
+        if indices is not None:
+            comp.addElements(indices)
+        else:
+            if isinstance(complete_length, int):
+                comp.setCompleteData(complete_length)
+            else:
+                comp.setCompleteData(*complete_length)
+        return cls(mobj, self.mdagpath)
 
 
 _nodes.NodeFactory.register(__name__)
