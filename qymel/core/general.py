@@ -65,6 +65,11 @@ class MayaObject(object):
         # type: () -> Union[str, Tuple[str]]
         pass
 
+    @property
+    def exists(self):
+        # type: () -> bool
+        pass
+
     def __init__(self, mobj):
         # type: (om2.MObject) -> NoReturn
         if mobj is not None:
@@ -79,6 +84,10 @@ class MayaObject(object):
         if not isinstance(other, MayaObject):
             return False
         return self._mobj_handle.hashCode() == other._mobj_handle.hashCode()
+
+    def __ne__(self, other):
+        # type: (object) -> bool
+        return not self.__eq__(other)
 
     def __hash__(self):
         # type: () -> long
@@ -159,6 +168,11 @@ class Plug(object):
     def is_networked(self):
         # type: () -> bool
         return self._mplug.isNetworked
+
+    @property
+    def exists(self):
+        # type: () -> bool
+        return cmds.objExists(self.mel_object)
 
     def __init__(self, plug):
         # type: (Union[om2.MPlug, str]) -> NoReturn
@@ -241,6 +255,14 @@ class Component(MayaObject):
         sel_list = om2.MSelectionList()
         sel_list.add((self.mdagpath, self.mobject), False)
         return sel_list.getSelectionStrings(0)
+
+    @property
+    def exists(self):
+        # type: () -> bool
+        for mel_obj in self.mel_object:
+            if not cmds.objExists(mel_obj):
+                return False
+        return True
 
     @property
     def mdagpath(self):

@@ -29,6 +29,11 @@ class DependNode(_general.MayaObject):
         return self.full_name
 
     @property
+    def exists(self):
+        # type: () -> bool
+        return cmds.objExists(self.mel_object)
+
+    @property
     def mfn(self):
         mfn_set = self.__class__._mfn_set
 
@@ -71,11 +76,6 @@ class DependNode(_general.MayaObject):
     def is_locked(self):
         # type: () -> bool
         return self.mfn.isLocked
-
-    @property
-    def exists(self):
-        # type: () -> bool
-        return not self.mobject.isNull()
 
     def __init__(self, obj):
         # type: (Union[om2.MObject, str]) -> NoReturn
