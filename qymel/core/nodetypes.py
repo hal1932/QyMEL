@@ -1372,7 +1372,7 @@ class Mesh(SurfaceShape):
         if comp is None:
             comp = self.vertex_comp()
         miter = om2.MItMeshVertex(self.mdagpath, comp.mobject)
-        return _iterators.MeshVertexIter(miter, comp)
+        return _iterators.MeshVertexIter(miter, comp, self.mfn)
 
     def edges(self, comp=None):
         # type: (_general.MeshEdge) -> _iterators.MeshEdgeIter
