@@ -17,11 +17,6 @@ class _Iterator(object):
         # type: () -> om2.MObject
         return self._miter.currentItem()
 
-    @property
-    def index(self):
-        # type: () -> int
-        return self._miter.index()
-
     def __init__(self, miter, comp):
         self._miter = miter
         self._comp = comp  # 使う機会はないけど、ループの最中にcompのスコープが切れないように手許で抱えておく
@@ -58,6 +53,11 @@ class _Iterator(object):
 
 
 class MeshVertexIter(_Iterator):
+
+    @property
+    def index(self):
+        # type: () -> int
+        return self._miter.index()
 
     @property
     def connected_edge_indices(self):
@@ -162,6 +162,11 @@ class MeshVertexIter(_Iterator):
 
 
 class MeshFaceIter(_Iterator):
+
+    @property
+    def index(self):
+        # type: () -> int
+        return self._miter.index()
 
     @property
     def connected_edge_indices(self):
@@ -276,6 +281,11 @@ class MeshFaceIter(_Iterator):
 class MeshEdgeIter(_Iterator):
 
     @property
+    def index(self):
+        # type: () -> int
+        return self._miter.index()
+
+    @property
     def connected_edge_indices(self):
         # type: () -> om2.MIntArray
         return self._miter.getConnectedEdges()
@@ -318,10 +328,6 @@ class MeshEdgeIter(_Iterator):
 
 
 class MeshVertexFaceIter(_Iterator):
-
-    @property
-    def index(self):
-        raise NotImplementedError()
 
     @property
     def face_index(self):
