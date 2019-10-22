@@ -783,6 +783,21 @@ class DagNode(Entity):
         # type: () -> int
         return self.mfn.instanceCount(True)
 
+    @property
+    def mfn(self):
+        # type: () -> om2.MFnDagNode
+        mfn_set = self.__class__._mfn_set
+
+        if mfn_set is None:
+            return None
+
+        mfn = self._mfn
+        if mfn is None:
+            mfn = mfn_set(self.mdagpath)
+            self._mfn = mfn
+
+        return mfn
+
     def __init__(self, obj, mdagpath=None):
         # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
         if isinstance(obj, (str, unicode)):
