@@ -38,7 +38,7 @@ def eval_plug(plug_name):
 
 
 def eval_component(comp_name):
-    # type: (str) -> DiscreteComponent
+    # type: (str) -> Component
     tmp_mfn = om2.MFnComponent()
     return _graphs.eval_component(comp_name, tmp_mfn)
 
@@ -107,7 +107,10 @@ class Plug(object):
     @property
     def mel_object(self):
         # type: () -> str
-        return self.name
+        mfn_node = self.mfn_node
+        if isinstance(mfn_node, om2.MFnDagNode):
+            return '{}.{}'.format(mfn_node.fullPathName(), self._mplug.partialName())
+        return self._mplug.name()
 
     @property
     def mplug(self):
@@ -118,6 +121,17 @@ class Plug(object):
     def attribute_mobject(self):
         # type: () -> om2.MObject
         return self._mplug.attribute()
+
+    @property
+    def mfn_node(self):
+        # type: () -> Union[om2.MFnDependencyNode, om2.MFnDagNode]
+        if self._mfn_node is None:
+            node = self._mplug.node()
+            if node.hasFn(om2.MFn.kDagNode):
+                self._mfn_node = om2.MFnDagNode(node)
+            else:
+                self._mfn_node = om2.MFnDependencyNode(node)
+        return self._mfn_node
 
     @property
     def is_null_object(self):
@@ -179,7 +193,7 @@ class Plug(object):
         if isinstance(plug, (str, unicode)):
             plug = _graphs.get_mplug(plug)
         self._mplug = plug
-        self._mfn = None
+        self._mfn_node = None
 
     def __str__(self):
         # type: () -> str
@@ -245,12 +259,6 @@ class Plug(object):
 
 class Component(MayaObject):
 
-    def __init__(self, obj):
-        super(Component, self).__init__(obj)
-
-
-class DiscreteComponent(Component):
-
     _comp_mfn = None
     _comp_type = om2.MFn.kComponent
     _comp_repr = ''
@@ -260,7 +268,7 @@ class DiscreteComponent(Component):
         # type: () -> Tuple[str]
         sel_list = om2.MSelectionList()
         sel_list.add((self.mdagpath, self.mobject), False)
-        return sel_list.getSelectionStrings(0)
+        return cmds.ls(sel_list.getSelectionStrings(0), long=True)
 
     @property
     def exists(self):
@@ -291,7 +299,7 @@ class DiscreteComponent(Component):
         # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
         if isinstance(obj, (str, unicode)):
             mdagpath, obj = _graphs.get_comp_mobject(obj)
-        super(DiscreteComponent, self).__init__(obj)
+        super(Component, self).__init__(obj)
         self._mdagpath = mdagpath
         self._mfn = None  # type: om2.MFnComponent
         self.__cursor = 0
@@ -329,29 +337,29 @@ class DiscreteComponent(Component):
         return value
 
 
-class _SingleIndexedDiscreteComponent(DiscreteComponent):
+class _SingleIndexedComponent(Component):
 
     def __init__(self, obj, mdagpath):
         # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
-        super(_SingleIndexedDiscreteComponent, self).__init__(obj, mdagpath)
+        super(_SingleIndexedComponent, self).__init__(obj, mdagpath)
 
     def _get_element(self, index):
         # type: (int) -> Any
         return self.mfn.element(index)
 
 
-class _DoubleIndexedDiscreteComponent(DiscreteComponent):
+class _DoubleIndexedComponent(Component):
 
     def __init__(self, obj, mdagpath):
         # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
-        super(_DoubleIndexedDiscreteComponent, self).__init__(obj, mdagpath)
+        super(_DoubleIndexedComponent, self).__init__(obj, mdagpath)
 
     def _get_element(self, index):
         # type: (int) -> Any
         return self.mfn.getElement(index)
 
 
-class MeshVertex(_SingleIndexedDiscreteComponent):
+class MeshVertex(_SingleIndexedComponent):
 
     _comp_mfn = om2.MFnSingleIndexedComponent
     _comp_type = om2.MFn.kMeshVertComponent
@@ -362,7 +370,7 @@ class MeshVertex(_SingleIndexedDiscreteComponent):
         super(MeshVertex, self).__init__(obj, mdagpath)
 
 
-class MeshFace(_SingleIndexedDiscreteComponent):
+class MeshFace(_SingleIndexedComponent):
 
     _comp_mfn = om2.MFnSingleIndexedComponent
     _comp_type = om2.MFn.kMeshPolygonComponent
@@ -373,7 +381,7 @@ class MeshFace(_SingleIndexedDiscreteComponent):
         super(MeshFace, self).__init__(obj, mdagpath)
 
 
-class MeshEdge(_SingleIndexedDiscreteComponent):
+class MeshEdge(_SingleIndexedComponent):
 
     _comp_mfn = om2.MFnSingleIndexedComponent
     _comp_type = om2.MFn.kMeshEdgeComponent
@@ -384,7 +392,7 @@ class MeshEdge(_SingleIndexedDiscreteComponent):
         super(MeshEdge, self).__init__(obj, mdagpath)
 
 
-class MeshVertexFace(_DoubleIndexedDiscreteComponent):
+class MeshVertexFace(_DoubleIndexedComponent):
 
     _comp_mfn = om2.MFnDoubleIndexedComponent
     _comp_type = om2.MFn.kMeshVtxFaceComponent
