@@ -1213,7 +1213,7 @@ class ColorSet(object):
         return self.__mfn.getColors(self.mel_object)
 
     def color_index(self, face_id, local_vertex_id):
-        # type: (int) -> int
+        # type: (int, int) -> int
         return self.__mfn.getColorIndex(face_id, local_vertex_id, self.mel_object)
 
     def face_vertex_colors(self):
@@ -1303,7 +1303,7 @@ class Mesh(SurfaceShape):
         return self.mfn.getFloatPoints(space)
 
     def connected_shaders(self):
-        # type: (int) -> Dict[ShadingEngine, int]
+        # type: () -> Dict[ShadingEngine, int]
         mobjs, face_ids = self.mfn.getConnectedShaders(self.instance_number)
 
         shaders = {index: ShadingEngine(mobj) for index, mobj in enumerate(mobjs)}
@@ -1317,25 +1317,25 @@ class Mesh(SurfaceShape):
 
     def current_color_set(self):
         # type: () -> ColorSet
-        mfn = self.mfn  # type: om2.MFnMesh
+        mfn = self.mfn
         name = mfn.currentColorSetName(self.instance_number)
         return ColorSet(name, self)
 
     def color_sets(self):
         # type: () -> List[ColorSet]
-        mfn = self.mfn  # type: om2.MFnMesh
+        mfn = self.mfn
         names = mfn.getColorSetNames()
         return [ColorSet(name, self) for name in names]
 
     def current_uv_set(self):
         # type: () -> UvSet
-        mfn = self.mfn  # type: om2.MFnMesh
+        mfn = self.mfn
         name = mfn.currentUVSetName()
         return UvSet(name, self)
 
     def uv_sets(self):
         # type: () -> List[UvSet]
-        mfn = self.mfn  # type: om2.MFnMesh
+        mfn = self.mfn
         names = mfn.getUVSetNames()
         return [UvSet(name, self) for name in names]
 
@@ -1343,6 +1343,7 @@ class Mesh(SurfaceShape):
         # type: (str) -> ColorSet
         cmds.select(self.mel_object, replace=True)
         name = cmds.polyColorSet(create=True, colorSet=name)
+        return ColorSet(name, self)
 
     def face_comp(self, indices=None):
         # type: (Iterable[int]) -> _general.MeshFace
@@ -1389,7 +1390,7 @@ class Mesh(SurfaceShape):
         return _iterators.MeshVertexFaceIter(miter, comp)
 
     def __create_component(self, cls, indices=None, complete_length=None):
-        # type: (type, List[Any], Any) -> Any
+        # type: (type, Iterable[Any], Any) -> Any
         comp = cls._comp_mfn()
         mobj = comp.create(cls._comp_type)
         if indices is not None:
@@ -1400,6 +1401,109 @@ class Mesh(SurfaceShape):
             else:
                 comp.setCompleteData(*complete_length)
         return cls(mobj, self.mdagpath)
+
+
+class FileReference(DependNode):
+
+    _mfn_type = om2.MFn.kReference
+    _mfn_set = om2.MFnReference
+    _mel_type = 'reference'
+
+    @staticmethod
+    def ls(*args, **kwargs):
+        kwargs['type'] = FileReference._mel_type
+        return _graphs.ls_nodes(*args, **kwargs)
+
+    @property
+    def file_path(self):
+        # type: () -> str
+        return self.mfn.fileName(True, False, False)
+
+    @property
+    def file_path_with_copy_number(self):
+        # type: () -> str
+        return self.mfn.fileName(True, False, True)
+
+    @property
+    def unresolved_file_path(self):
+        # type: () -> str
+        return self.mfn.fileName(False, False, False)
+
+    @property
+    def unresolved_file_path_with_copy_number(self):
+        # type: () -> str
+        return self.mfn.fileName(False, False, True)
+
+    @property
+    def is_loaded(self):
+        # type: () -> bool
+        return self.mfn.isLoaded
+
+    @property
+    def associated_namespace(self):
+        # type: () -> str
+        return ':' + self.mfn.associatedNamespace(False)
+
+    def __init__(self, obj):
+        # type: (Union[om2.MObject, str]) -> NoReturn
+        super(FileReference, self).__init__(obj)
+
+    def load(self, depth=None, return_new_nodes=False):
+        # type: (str, bool) -> Union[None, List[DependNode]]
+        return self.replace(None, depth, return_new_nodes)
+
+    def replace(self, file_path, depth=None, return_new_nodes=False):
+        # type: (str, str, bool) -> Union[None, List[DependNode]]
+        args = []
+        if file_path is not None:
+            args.append(file_path)
+
+        kwargs = {
+            'loadReference': self.mel_object,
+            'returnNewNodes': return_new_nodes,
+        }
+        if depth is not None:
+            kwargs['loadReferenceDepth'] = depth
+
+        result = cmds.file(*args, **kwargs)
+
+        if return_new_nodes:
+            tmp_mfn = om2.MFnDependencyNode()
+            return [_graphs.eval_node(name, tmp_mfn) for name in result]
+
+        return None
+
+    def unload(self, force=False):
+        # type: (bool) -> NoReturn
+        cmds.file(unloadReference=self.mel_object, force=force)
+
+    def import_to_scene(self, strict=False):
+        # type: (bool) -> NoReturn
+        cmds.file(self.file_path, importReference=True, strict=strict)
+
+    def remove(self, force=False):
+        # type: (bool) -> NoReturn
+        cmds.file(self.file_path, removeReference=True, force=force)
+
+    def nodes(self):
+        # type: () -> List[DependNode]
+        nodes = self.mfn.nodes()
+        if len(nodes) == 0:
+            return []
+
+        mfn = om2.MFnDependencyNode()
+        mfn_dag = om2.MFnDagNode()
+
+        result = []
+        for node in nodes:
+            mfn.setObject(node)
+            mdagpath = None
+            if node.hasFn(om2.MFn.kDagNode):
+                mfn_dag.setObject(node)
+                mdagpath = mfn_dag.getPath()
+            result.append(_graphs.to_node_instance(mfn, mdagpath))
+
+        return result
 
 
 _nodes.NodeFactory.register(__name__)
