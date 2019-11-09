@@ -207,6 +207,11 @@ class Workspace(object):
         return cmds.workspace(directory_path, newWorkspace=True)
 
     @staticmethod
+    def root_directory():
+        # type: () -> str
+        return cmds.workspace(query=True, rootDirectory=True)
+
+    @staticmethod
     def open(directory_path):
         # type: (str) -> NoReturn
         cmds.workspace(directory_path, openWorkspace=True)
