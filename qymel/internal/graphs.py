@@ -19,7 +19,6 @@ def ls(*args, **kwargs):
     tmp_mfn_node = om2.MFnDependencyNode()
     tmp_mfn_comp = om2.MFnComponent()
 
-    # 自前でノードを辿るより ls のほうが速い
     for obj_name in cmds.ls(*args, **kwargs):
         obj = eval(obj_name, tmp_mfn_comp, tmp_mfn_node)
         result.append(obj)
