@@ -110,8 +110,6 @@ def _apply_updates(updated_items):
 
             for symbol in item.symbols:
                 symbol_name = symbol.alias if symbol.alias is not None else symbol.name
-                if symbol_name not in module.__dict__:
-                    continue
 
                 if symbol.is_module:
                     new_symbol_obj = item.module
@@ -121,7 +119,7 @@ def _apply_updates(updated_items):
                 if id(module.__dict__[symbol_name]) == id(new_symbol_obj):
                     continue
 
-                # print '  {}: {} -> {}'.format(module.__dict__[symbol_name], id(module.__dict__[symbol_name]), id(new_symbol_obj))
+                print '  {}: {} -> {}'.format(module.__dict__[symbol_name], id(module.__dict__[symbol_name]), id(new_symbol_obj))
                 module.__dict__[symbol_name] = new_symbol_obj
 
 
@@ -160,7 +158,7 @@ def _walk_ast_tree(tree, module):
                     if '__all__' in module_obj.__dict__:
                         symbols.extend([_ImportSymbolItem(name) for name in module_obj.__dict__['__all__']])
                     else:
-                        symbols.extend([_ImportSymbolItem(name) for name in module_obj.__dict__ if not name.startswith('__')])
+                        symbols.extend([_ImportSymbolItem(name) for name in module_obj.__dict__ if not name.startswith('_')])
                 else:
                     symbol = _ImportSymbolItem(alias)
                     symbol.is_module = module_obj.__name__.split('.')[-1] == alias.name
@@ -168,13 +166,23 @@ def _walk_ast_tree(tree, module):
 
             result.append(_ImportItem(module_obj, None, symbols))
 
+    # print module
+    # for item in result:
+    #     print '    {} as {}'.format(item.module.__name__, item.alias)
+    #     for symbol in item.symbols:
+    #         print '        {} as {}, {}'.format(symbol.name, symbol.alias, symbol.is_module)
+
     return result
 
 
 def _parse_module_source(module):
     # type: (types.ModuleType) -> ast.Module
     try:
-        source = inspect.getsource(module)
+        # inspect.getsource() は内部でキャッシュが効いてるから、必ず最新のソースを取得するために自前で read() する
+        # source = inspect.getsource(module)
+        source_file = inspect.getsourcefile(module)
+        with open(source_file, 'r') as f:
+            source = f.read()
     except TypeError:
         return None
     except IOError:
