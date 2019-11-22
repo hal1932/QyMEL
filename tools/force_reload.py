@@ -31,6 +31,7 @@ def force_reload(module_obj):
     _reloaded_modules.clear()
 
     items = _get_import_items(module_obj)
+    items.reverse()
     _reload_modules(items)
     _apply_updates(items)
 
@@ -55,11 +56,11 @@ class _ImportSymbolItem(object):
 
 class _ImportItem(object):
 
-    def __init__(self, module, alias, symbols=None):
+    def __init__(self, module, alias, symbols=[]):
         # type: (types.ModuleType, str, List[_ImportSymbolItem]) -> NoReturn
         self.module = module
         self.alias = alias
-        self.symbols = symbols
+        self.symbols = [s for s in symbols if not s.name.startswith('Q')]
 
     def __repr__(self):
         if self.alias is not None:
@@ -67,14 +68,22 @@ class _ImportItem(object):
         return '{} {}'.format(self.module.__name__, self.symbols)
 
 
+class _ModuleItem(object):
+
+    def __init__(self, module, items):
+        # type: (types.ModuleType, List[_ImportItem]) -> NoReturn
+        self.module = module
+        self.items = items
+
+
 def _get_import_items(root_module):
-    # type: (types.ModuleType) -> collections.OrderedDict[types.ModuleType, List[_ImportItem]]
-    result = collections.OrderedDict()
+    # type: (types.ModuleType) -> List[_ModuleItem]
+    result = []  # type: List[_ModuleItem]
 
     modules = [root_module]
     while len(modules) > 0:
         module = modules.pop(-1)
-        if module in result or not _is_reload_target(module):
+        if module in result or not _is_reload_target_module(module):
             continue
 
         tree = _parse_module_source(module)
@@ -87,21 +96,24 @@ def _get_import_items(root_module):
                 continue
             modules.append(child.module)
 
-        result[module] = children
+        result.append(_ModuleItem(module, children))
 
     return result
 
 
 def _reload_modules(items):
-    # type: (Dict[types.ModuleType, List[_ImportItem]]) -> NoReturn
-    for module in items.keys():
-        print 'reload: {}'.format(module.__name__)
-        reload_module(module)
+    # type: (List[_ModuleItem]) -> NoReturn
+    for item in items:
+        print 'reload: {}'.format(item.module.__name__)
+        reload_module(item.module)
 
 
 def _apply_updates(updated_items):
-    # type: (Dict[types.ModuleType, List[_ImportItem]]) -> NoReturn
-    for module, items in updated_items.items():
+    # type: (List[_ModuleItem]) -> NoReturn
+    for item in updated_items:
+        module = item.module
+        items = item.items
+
         if len(items) > 0:
             print module.__name__
         for item in items:
@@ -132,9 +144,9 @@ def _walk_ast_tree(tree, module):
             for alias in node.names:
                 module_name = alias.name
                 module_obj = _find_from_sys_modules(module, module_name)
-                if module_obj is None or not _is_reload_target(module_obj):
+                if module_obj is None or not _is_reload_target_module(module_obj):
                     continue
-                result.append(_ImportItem(module_obj, alias.asname, None))
+                result.append(_ImportItem(module_obj, alias.asname))
 
         elif isinstance(node, ast.ImportFrom):
             if node.level > 0:
@@ -149,7 +161,7 @@ def _walk_ast_tree(tree, module):
             else:
                 module_obj = _find_from_sys_modules(module, node.module)
 
-            if module_obj is None or not _is_reload_target(module_obj):
+            if module_obj is None or not _is_reload_target_module(module_obj):
                 continue
 
             symbols = []
@@ -191,7 +203,7 @@ def _parse_module_source(module):
     return ast.parse(source)
 
 
-def _is_reload_target(module):
+def _is_reload_target_module(module):
     # type: (types.ModuleType) -> bool
     module_file = module.__dict__.get('__file__', None)
     if module_file is None:
