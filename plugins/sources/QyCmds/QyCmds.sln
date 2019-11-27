@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29411.108
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QyCmds", "QyCmds\QyCmds.vcxproj", "{389E203F-C500-459C-AFC9-AD2FFC09F6BA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QyMods", "QyMods\QyMods.vcxproj", "{C675F25D-7833-468B-83FC-05A309D86BA3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{389E203F-C500-459C-AFC9-AD2FFC09F6BA}.Debug|x64.ActiveCfg = Debug|x64
+		{389E203F-C500-459C-AFC9-AD2FFC09F6BA}.Debug|x64.Build.0 = Debug|x64
+		{389E203F-C500-459C-AFC9-AD2FFC09F6BA}.Release|x64.ActiveCfg = Release|x64
+		{389E203F-C500-459C-AFC9-AD2FFC09F6BA}.Release|x64.Build.0 = Release|x64
+		{C675F25D-7833-468B-83FC-05A309D86BA3}.Debug|x64.ActiveCfg = Debug|x64
+		{C675F25D-7833-468B-83FC-05A309D86BA3}.Debug|x64.Build.0 = Debug|x64
+		{C675F25D-7833-468B-83FC-05A309D86BA3}.Release|x64.ActiveCfg = Release|x64
+		{C675F25D-7833-468B-83FC-05A309D86BA3}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F4FA5590-8E5E-45A8-81F6-003C3DCE201B}
+	EndGlobalSection
+EndGlobal

@@ -6,3 +6,4 @@ from .iterators import *
 from .nodetypes import *
 from .system import *
 from .utils import *
+from .plugins import *

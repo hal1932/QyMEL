@@ -2,6 +2,8 @@
 from __future__ import absolute_import
 from typing import *
 
+import itertools
+
 import maya.cmds as cmds
 import maya.api.OpenMaya as om2
 import maya.api.OpenMayaAnim as om2anim
@@ -31,7 +33,8 @@ class DependNode(_general.MayaObject):
     @property
     def exists(self):
         # type: () -> bool
-        return cmds.objExists(self.mel_object)
+        # return cmds.objExists(self.mel_object)
+        return not self.mobject.isNull()
 
     @property
     def mfn(self):
@@ -50,7 +53,12 @@ class DependNode(_general.MayaObject):
     @property
     def node_type(self):
         # type: () -> str
-        return cmds.nodeType(self.mel_object)
+        return self.mfn.typeName
+
+    @property
+    def is_default_node(self):
+        # type: () -> bool
+        return self.mfn.isDefaultNode()
 
     @property
     def name(self):
@@ -302,7 +310,7 @@ class SkinCluster(GeometryFilter):
             flatten_weights, infl_count = mfn.getWeights(mesh.mdagpath, component.mobject)
             influence_mdagpaths = mfn.influenceObjects()
         else:
-            influence_mdagpaths = [i.mdagpath for i in influences]
+            influence_mdagpaths = [infl.mdagpath for infl in influences]
             influence_indices = [mfn.indexForInfluenceObject(dagpath) for dagpath in influence_mdagpaths]
             flatten_weights = mfn.getWeights(mesh.mdagpath, component.mobject, om2.MIntArray(influence_indices))
             infl_count = len(influence_mdagpaths)
@@ -318,6 +326,27 @@ class SkinCluster(GeometryFilter):
             result[infl_index] = weights
 
         return result
+
+    def set_weights(self, mesh, values, component=None, influences=None):
+        # type: (Mesh, Iterable[Iterable[float]], _general.MeshVertex, Iterable[Joint]) -> NoReturn
+        mfn = self.mfn
+
+        if component is None:
+            component = mesh.vertex_comp(range(mesh.vertex_count))
+
+        if influences is None:
+            influence_mdagpaths = mfn.influenceObjects()
+        else:
+            influence_mdagpaths = [infl.mdagpath for infl in influences]
+
+        influence_indices = [mfn.indexForInfluenceObject(dagpath) for dagpath in influence_mdagpaths]
+        flatten_values = list(itertools.chain.from_iterable(values))
+
+        cmds.qmSkinSetWeights(
+            mesh.mel_object,
+            components=component.elements,
+            influenceIndices=influence_indices,
+            values=flatten_values)
 
 
 class Entity(ContainerBase):
@@ -1077,6 +1106,13 @@ class Shape(DagNode):
         # type: (Any) -> Transform
         transform = cmds.instance(self.mel_object, **kwargs)
         return _graphs.eval_node(transform, om2.MFnDependencyNode())
+
+    def skin_cluster(self):
+        # type: () -> SkinCluster
+        names = cmds.ls(cmds.listHistory(self.mel_object), type='skinCluster')
+        if len(names) == 0:
+            return None
+        return SkinCluster(names[0])
 
 
 class Camera(Shape):
