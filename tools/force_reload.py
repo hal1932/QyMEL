@@ -23,17 +23,13 @@ STDLIB_ROOT = distutils.sysconfig.get_python_lib(standard_lib=True).lower()
 MAYALIB_ROOT = os.environ.get('MAYA_LOCATION', None).replace('/', os.sep)
 
 
-_reloaded_modules = set()
-
-
 def force_reload(module_obj):
-    global _reloaded_modules
-    _reloaded_modules.clear()
-
     items = _get_import_items(module_obj)
-    items.reverse()
+    # items.reverse()
     _reload_modules(items)
+    items.reverse()
     _apply_updates(items)
+    reload_module(module_obj)
 
 
 class _ImportSymbolItem(object):
@@ -80,11 +76,14 @@ def _get_import_items(root_module):
     # type: (types.ModuleType) -> List[_ModuleItem]
     result = []  # type: List[_ModuleItem]
 
+    processed = set()
+
     modules = [root_module]
     while len(modules) > 0:
-        module = modules.pop(-1)
-        if module in result or not _is_reload_target_module(module):
+        module = modules.pop(0)
+        if module in processed or not _is_reload_target_module(module):
             continue
+        processed.add(module)
 
         tree = _parse_module_source(module)
         if tree is None:
@@ -92,8 +91,7 @@ def _get_import_items(root_module):
 
         children = _walk_ast_tree(tree, module)
         for child in children:
-            if child.module in result:
-                continue
+            # print '{} -> {}'.format(module.__name__, child.module.__name__)
             modules.append(child.module)
 
         result.append(_ModuleItem(module, children))
@@ -114,24 +112,31 @@ def _apply_updates(updated_items):
         module = item.module
         items = item.items
 
-        if len(items) > 0:
-            print module.__name__
-        for item in items:
-            if item.symbols is None:
+        if _is_std_module(module):
+            continue
+
+        print module.__name__
+
+        for sub_item in items:
+            if sub_item.symbols is None:
                 continue
 
-            for symbol in item.symbols:
+            print '  {}'.format(sub_item.module.__name__)
+
+            for symbol in sub_item.symbols:
                 symbol_name = symbol.alias if symbol.alias is not None else symbol.name
 
                 if symbol.is_module:
-                    new_symbol_obj = item.module
+                    # new_symbol_obj = sub_item.module
+                    new_symbol_obj = sys.modules[sub_item.module.__name__]
                 else:
-                    new_symbol_obj = item.module.__dict__[symbol.name]
+                    # new_symbol_obj = sub_item.module.__dict__[symbol.name]
+                    new_symbol_obj = sys.modules[sub_item.module.__name__].__dict__[symbol.name]
 
                 if id(module.__dict__[symbol_name]) == id(new_symbol_obj):
                     continue
 
-                print '  {}: {} -> {}'.format(module.__dict__[symbol_name], id(module.__dict__[symbol_name]), id(new_symbol_obj))
+                print '    {}, {}: {} -> {}'.format(symbol_name, module.__dict__[symbol_name], id(module.__dict__[symbol_name]), id(new_symbol_obj))
                 module.__dict__[symbol_name] = new_symbol_obj
 
 
@@ -182,7 +187,10 @@ def _walk_ast_tree(tree, module):
     # for item in result:
     #     print '    {} as {}'.format(item.module.__name__, item.alias)
     #     for symbol in item.symbols:
-    #         print '        {} as {}, {}'.format(symbol.name, symbol.alias, symbol.is_module)
+    #         if symbol.alias is None:
+    #             print '        {}, {} {}'.format(symbol.name, symbol.is_module, id(item.module.__dict__[symbol.name]))
+    #         else:
+    #             print '        {} as {}, {} {}'.format(symbol.name, symbol.alias, symbol.is_module, id(item.module.__dict__[symbol.alias]))
 
     return result
 
@@ -219,6 +227,19 @@ def _is_reload_target_module(module):
         return False
 
     return True
+
+
+def _is_std_module(module):
+    # type: (types.ModuleType) -> bool
+    module_file = module.__dict__.get('__file__', None)
+
+    if MAYALIB_ROOT is not None and module_file.startswith(MAYALIB_ROOT):
+        return True
+
+    if module_file.lower().startswith(STDLIB_ROOT):
+        return True
+
+    return False
 
 
 def _find_from_sys_modules(module, node_name, relative_ref_level=0):
