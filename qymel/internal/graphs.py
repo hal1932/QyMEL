@@ -172,3 +172,22 @@ def get_comp_mobject(name):
     sel = om2.MSelectionList()
     sel.add(name)
     return sel.getComponent(0)
+
+
+def connections(mfn):
+    # type: (om2.MFnDependencyNode) -> Set[om2.MObject]
+    result = []
+
+    # plug = om2.MPlug()
+    # plug.setMObject(mfn.object())
+
+    for i in range(mfn.attributeCount()):
+        attr = mfn.attribute(i)
+        # plug.setAttribute(attr)
+        plug = mfn.findPlug(attr, True)
+        print plug.connectedTo(True, True)
+        for other in plug.connectedTo(True, True):
+            # result.append(other.node())
+            result.append(other)
+
+    return result
