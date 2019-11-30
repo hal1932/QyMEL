@@ -5,5 +5,5 @@ from .general import *
 from .iterators import *
 from .nodetypes import *
 from .system import *
-from .utils import *
+from .scopes import *
 from .plugins import *
