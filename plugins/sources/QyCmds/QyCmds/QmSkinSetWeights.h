@@ -1,22 +1,26 @@
 #pragma once
 #include "CommandBase.h"
 
-class QmSkinSetWeights : CommandBase {
+class QmSkinSetWeights final : CommandBase {
 public:
 	static MString Name() { return "qmSkinSetWeights"; }
 	static void* Creator() { return new QmSkinSetWeights(); }
 
-	bool isUndoable() { return true; }
+	bool isUndoable() const { return true; }
 
 	MStatus redoIt();
 	MStatus undoIt();
 
-protected:
+private:
 	MSyntax CreateSyntax();
 	MStatus ParseArguments(const ArgParser& parser);
 
 private:
-	std::vector<int> components_;
-	std::vector<int> influences_;
-	std::vector<float> values_;
+	MObject components_;
+	MIntArray influences_;
+	MFloatArray values_;
+
+	MObject cluster_;
+	MDagPath dagpath_;
+	MFloatArray old_weights_;
 };

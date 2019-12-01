@@ -273,7 +273,7 @@ class GeometryFilter(DependNode):
 
 class SkinCluster(GeometryFilter):
 
-    _mfn_type = om2.MFn.kSkin
+    _mfn_type = om2.MFn.kSkinClusterFilter
     _mfn_set = om2anim.MFnSkinCluster
     _mel_type = 'skinCluster'
 
@@ -340,10 +340,15 @@ class SkinCluster(GeometryFilter):
             influence_mdagpaths = [infl.mdagpath for infl in influences]
 
         influence_indices = [mfn.indexForInfluenceObject(dagpath) for dagpath in influence_mdagpaths]
-        flatten_values = list(itertools.chain.from_iterable(values))
+
+        flatten_values = []
+        for i in range(len(component)):
+            for j in range(len(influence_indices)):
+                flatten_values.append(values[j][i])
 
         cmds.qmSkinSetWeights(
-            mesh.mel_object,
+            self.mel_object,
+            path=mesh.mdagpath.fullPathName(),
             components=component.elements,
             influenceIndices=influence_indices,
             values=flatten_values)

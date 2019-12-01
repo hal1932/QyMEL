@@ -19,6 +19,12 @@
     <Filter Include="ソース ファイル\commands">
       <UniqueIdentifier>{5a225017-5a2c-40fa-9e40-dfe7c410895e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\utils">
+      <UniqueIdentifier>{a7ea756e-b51d-48b5-902f-9436d3514c51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\utils">
+      <UniqueIdentifier>{5369dc35-5151-4bc4-80c5-76fe7c59abdc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pluginMain.cpp">
@@ -36,6 +42,9 @@
     <ClCompile Include="ArgParser.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="node.cpp">
+      <Filter>ソース ファイル\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -52,6 +61,18 @@
     </ClInclude>
     <ClInclude Include="ArgParser.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="nodetypes.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="node_utils.h">
+      <Filter>ヘッダー ファイル\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="component_utils.h">
+      <Filter>ヘッダー ファイル\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="array_utils.h">
+      <Filter>ヘッダー ファイル\utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

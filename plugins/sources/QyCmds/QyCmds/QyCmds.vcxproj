@@ -58,7 +58,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalLibraryDirectories>C:\Program Files\Autodesk\Maya2018\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OpenMaya.lib;OpenMayaUI.lib;Foundation.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;Foundation.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PreBuildEvent>
@@ -88,7 +88,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>C:\Program Files\Autodesk\Maya2018\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OpenMaya.lib;OpenMayaUI.lib;Foundation.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;Foundation.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PreBuildEvent>
@@ -102,6 +102,7 @@
   <ItemGroup>
     <ClCompile Include="ArgParser.cpp" />
     <ClCompile Include="CommandDefinition.cpp" />
+    <ClCompile Include="node.cpp" />
     <ClCompile Include="pluginMain.cpp" />
     <ClCompile Include="QmSkinSetWeights.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -111,8 +112,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArgParser.h" />
+    <ClInclude Include="array_utils.h" />
     <ClInclude Include="CommandDefinition.h" />
     <ClInclude Include="CommandBase.h" />
+    <ClInclude Include="component_utils.h" />
+    <ClInclude Include="node_utils.h" />
+    <ClInclude Include="nodetypes.h" />
     <ClInclude Include="QmSkinSetWeights.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
