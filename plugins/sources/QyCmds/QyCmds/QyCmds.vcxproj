@@ -102,7 +102,7 @@
   <ItemGroup>
     <ClCompile Include="ArgParser.cpp" />
     <ClCompile Include="CommandDefinition.cpp" />
-    <ClCompile Include="node.cpp" />
+    <ClCompile Include="node_utils.cpp" />
     <ClCompile Include="pluginMain.cpp" />
     <ClCompile Include="QmSkinSetWeights.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -112,6 +112,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArgParser.h" />
+    <ClInclude Include="ArgParser.hpp" />
     <ClInclude Include="array_utils.h" />
     <ClInclude Include="CommandDefinition.h" />
     <ClInclude Include="CommandBase.h" />

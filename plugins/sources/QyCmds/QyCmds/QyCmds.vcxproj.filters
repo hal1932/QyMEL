@@ -42,7 +42,7 @@
     <ClCompile Include="ArgParser.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="node.cpp">
+    <ClCompile Include="node_utils.cpp">
       <Filter>ソース ファイル\utils</Filter>
     </ClCompile>
   </ItemGroup>
@@ -73,6 +73,9 @@
     </ClInclude>
     <ClInclude Include="array_utils.h">
       <Filter>ヘッダー ファイル\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="ArgParser.hpp">
+      <Filter>ソース ファイル</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
