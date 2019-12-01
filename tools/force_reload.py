@@ -25,9 +25,9 @@ MAYALIB_ROOT = os.environ.get('MAYA_LOCATION', None).replace('/', os.sep)
 
 def force_reload(module_obj):
     items = _get_import_items(module_obj)
-    # items.reverse()
-    _reload_modules(items)
     items.reverse()
+    _reload_modules(items)
+    # items.reverse()
     _apply_updates(items)
     reload_module(module_obj)
 
