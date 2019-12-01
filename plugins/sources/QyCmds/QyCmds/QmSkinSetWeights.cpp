@@ -77,9 +77,7 @@ MStatus QmSkinSetWeights::ParseArguments(const ArgParser& parser) {
 
 MStatus QmSkinSetWeights::redoIt() {
 	MFnSkinCluster mfn(cluster_);
-	auto s = mfn.setWeights(dagpath_, components_, influences_, values_, false, &old_weights_);
-	auto w = utils::ArrayToStdVector(old_weights_);
-	return s;
+	return mfn.setWeights(dagpath_, components_, influences_, values_, false, &old_weights_);
 }
 
 MStatus QmSkinSetWeights::undoIt() {
