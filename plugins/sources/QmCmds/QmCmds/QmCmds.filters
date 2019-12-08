@@ -39,11 +39,11 @@
     <ClCompile Include="CommandDefinition.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="ArgParser.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="node_utils.cpp">
       <Filter>ソース ファイル\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="QmBatchSetVertexColor.cpp">
+      <Filter>ソース ファイル\commands</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -76,6 +76,9 @@
     </ClInclude>
     <ClInclude Include="ArgParser.hpp">
       <Filter>ソース ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="QmBatchSetVertexColor.h">
+      <Filter>ヘッダー ファイル\commands</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

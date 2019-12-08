@@ -13,8 +13,9 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{389E203F-C500-459C-AFC9-AD2FFC09F6BA}</ProjectGuid>
-    <RootNamespace>QyCmds</RootNamespace>
+    <RootNamespace>QmCmds</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <ProjectName>QmCmds</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -49,7 +50,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <PreprocessorDefinitions>NT_PLUGIN;REQUIRE_IOSTREAM;_WIN64;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NT_PLUGIN;REQUIRE_IOSTREAM;_WIN64;_WINDLL;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2018\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
@@ -100,10 +101,11 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ArgParser.cpp" />
+    <ClCompile Include="array_utils.hpp" />
     <ClCompile Include="CommandDefinition.cpp" />
     <ClCompile Include="node_utils.cpp" />
     <ClCompile Include="pluginMain.cpp" />
+    <ClCompile Include="QmBatchSetVertexColor.cpp" />
     <ClCompile Include="QmSkinSetWeights.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -119,6 +121,7 @@
     <ClInclude Include="component_utils.h" />
     <ClInclude Include="node_utils.h" />
     <ClInclude Include="nodetypes.h" />
+    <ClInclude Include="QmBatchSetVertexColor.h" />
     <ClInclude Include="QmSkinSetWeights.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>

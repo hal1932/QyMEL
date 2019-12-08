@@ -12,6 +12,7 @@
 #include <maya/MSyntax.h>
 #include <maya/MArgParser.h>
 #include <maya/MArgList.h>
+#include <maya/MArgDatabase.h>
 
 #include <maya/MObject.h>
 #include <maya/MObjectHandle.h>
@@ -35,3 +36,5 @@
 #include <maya/MVector.h>
 #include <maya/MPoint.h>
 #include <maya/MFloatArray.h>
+#include <maya/MColor.h>
+#include <maya/MColorArray.h>

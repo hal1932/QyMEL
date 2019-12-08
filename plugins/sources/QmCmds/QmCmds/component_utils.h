@@ -11,6 +11,13 @@ namespace utils {
 		return comp;
 	}
 
+	inline MObject ComponentsFromArray(MFn::Type type, MIntArray& indices) {
+		MFnSingleIndexedComponent mfn;
+		auto comp = mfn.create(type);
+		mfn.addElements(indices);
+		return comp;
+	}
+
 	inline MObject ComponentsFromStdVector(MFn::Type type, const std::vector<int>& indices_u, std::vector<int>& indices_v) {
 		MFnDoubleIndexedComponent mfn;
 		auto comp = mfn.create(type);

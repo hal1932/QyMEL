@@ -26,19 +26,31 @@ MSyntax QmSkinSetWeights::CreateSyntax() {
 }
 
 MStatus QmSkinSetWeights::ParseArguments(const ArgParser& parser) {
-	const auto components = parser.FlagArguments<int>("c");
-	const auto influences = parser.FlagArguments<int>("i");
-	const auto values = parser.FlagArguments<float>("v");
+	MIntArray components;
+	auto status = parser.FlagArguments<MIntArray>(&components, "c");
+	if (!status) {
+		return status;
+	}
 
-	const auto dagpaths = parser.FlagArguments<MString>("p");
-	if (dagpaths.size() != 1) {
+	status = parser.FlagArguments(&influences_, "i");
+	if (!status) {
+		return status;
+	}
+
+	status = parser.FlagArguments(&values_, "v");
+	if (!status) {
+		return status;
+	}
+
+	MStringArray dagpaths;
+	status = parser.FlagArguments(&dagpaths, "c");
+	if (dagpaths.length() != 1) {
 		MGlobal::displayError("a node path must be specified");
 		return MStatus::kFailure;
 	}
 
-	MStatus status;
 	dagpath_ = utils::GetDagPath(dagpaths[0], &status);
-	if (!status.error()) {
+	if (!status) {
 		status = dagpath_.extendToShape();
 	}
 	if (status.error()) {
@@ -46,8 +58,12 @@ MStatus QmSkinSetWeights::ParseArguments(const ArgParser& parser) {
 		return MStatus::kFailure;
 	}
 
-	const auto args = parser.CommandArguments<MString>();
-	if (args.size() != 1) {
+	MStringArray args;
+	status = parser.CommandArguments(&args);
+	if (!status) {
+		return status;
+	}
+	if (args.length() != 1) {
 		MGlobal::displayError("a skinCluster name must be specified");
 		return MStatus::kFailure;
 	}
@@ -58,19 +74,15 @@ MStatus QmSkinSetWeights::ParseArguments(const ArgParser& parser) {
 		return MStatus::kFailure;
 	}
 
-	if (components.size() == 0) {
+	if (components.length() == 0) {
 		components_ = Mesh(dagpath_.node()).VertexComponents();
 	} else {
-		components_ = utils::ComponentsFromStdVector(MFn::kMeshVertComponent, components);
+		components_ = utils::ComponentsFromArray(MFn::kMeshVertComponent, components);
 	}
 
-	if (influences.size() == 0) {
+	if (influences_.length() == 0) {
 		influences_ = SkinCluster(cluster_).InfluenceObjectIndices();
-	} else {
-		utils::ArrayCopyFromStdVector(&influences_, influences);
 	}
-
-	utils::ArrayCopyFromStdVector(&values_, values);
 
 	return MStatus::kSuccess;
 }
