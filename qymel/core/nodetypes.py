@@ -774,9 +774,10 @@ class DagNode(Entity):
         return self._mdagpath.fullPathName()
 
     @property
-    def root(self):
-        # type: () -> str
-        return self.full_name.split('|')[0]
+    def root_node(self):
+        # type: () -> DagNode
+        mfn = om2.MFnDagNode(self.mfn.dagRoot())
+        return _graphs.to_node_instance(mfn, mfn.getPath())
 
     @property
     def is_world(self):
@@ -817,18 +818,20 @@ class DagNode(Entity):
         # type: () -> int
         return self.mfn.instanceCount(True)
 
-    def __init__(self, obj, mdagpath=None):
-        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
+    def __init__(self, obj):
+        # type: (Union[om2.MObject, om2.MDagPath, str]) -> NoReturn
         if isinstance(obj, (str, unicode)):
-            obj, mdagpath = _graphs.get_mobject(obj)
+            _, dagpath = _graphs.get_mobject(obj)
 
-        if obj is None and mdagpath is None:
+        if obj is None:
             # self is World
             obj = _graphs.get_world_mobject()
-            mdagpath = om2.MFnDagNode(obj).getPath()
 
-        super(DagNode, self).__init__(obj)
-        self._mdagpath = mdagpath
+        if isinstance(obj, om2.MObject):
+            obj = om2.MFnDagNode(obj).getPath()
+
+        super(DagNode, self).__init__(obj.node())
+        self._mdagpath = obj
 
     def relatives(self, **kwargs):
         # type: (Any) -> List[DagNode]
@@ -1008,19 +1011,24 @@ class DagNode(Entity):
 
     def instances(self):
         # type: () -> List[DagNode]
-        tmp_mfn = om2.MFnDependencyNode()
-        return [_graphs.eval_node(mdagpath.fullPathName(), tmp_mfn) for mdagpath in self.mfn.getAllPaths()]
+        if not self.is_instanced:
+            return []
 
-    def other_instances(self):
-        # type: () -> List[DagNode]
-        mfn = self.mfn
-        self_path = mfn.fullPathName()
-        all_paths = mfn.getAllPaths()
-        tmp_mfn = om2.MFnDependencyNode()
-        return [_graphs.eval_node(mdagpath.fullPathName(), tmp_mfn) for mdagpath in all_paths if mdagpath.fullPathName() != self_path]
+        instances = []  # type: List[DagNode]
+
+        tmp_mfn = om2.MFnDagNode()
+        mdagpath = self.mdagpath
+        for other_mdagpath in om2.MDagPath.getAllPathsTo(self.mobject):
+            if other_mdagpath == mdagpath:
+                continue
+            tmp_mfn.setObject(other_mdagpath.node())
+            node = _graphs.to_node_instance(tmp_mfn, om2.MDagPath(other_mdagpath))
+            instances.append(node)
+
+        return instances
 
 
-world = DagNode(None, None)
+world = DagNode(None)
 
 
 class Transform(DagNode):
@@ -1038,9 +1046,9 @@ class Transform(DagNode):
     def create(**kwargs):
         return _graphs.create_node(Transform._mel_type, **kwargs)
 
-    def __init__(self, obj, mdagpath=None):
-        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
-        super(Transform, self).__init__(obj, mdagpath)
+    def __init__(self, obj):
+        # type: (Union[om2.MObject, om2.MDagPath, str]) -> NoReturn
+        super(Transform, self).__init__(obj)
 
     def shape(self):
         # type: () -> Shape
@@ -1081,9 +1089,9 @@ class Joint(Transform):
     def create(**kwargs):
         return _graphs.create_node(Joint._mel_type, **kwargs)
 
-    def __init__(self, obj, mdagpath=None):
-        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
-        super(Joint, self).__init__(obj, mdagpath)
+    def __init__(self, obj):
+        # type: (Union[om2.MObject, om2.MDagPath, str]) -> NoReturn
+        super(Joint, self).__init__(obj)
 
 
 class Shape(DagNode):
@@ -1097,9 +1105,9 @@ class Shape(DagNode):
         kwargs['type'] = Shape._mel_type
         return _graphs.ls_nodes(*args, **kwargs)
 
-    def __init__(self, obj, mdagpath=None):
-        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
-        super(Shape, self).__init__(obj, mdagpath)
+    def __init__(self, obj):
+        # type: (Union[om2.MObject, om2.MDagPath, str]) -> NoReturn
+        super(Shape, self).__init__(obj)
 
     def shading_groups(self):
         # type: () -> [ShadingEngine]
@@ -1135,9 +1143,9 @@ class Camera(Shape):
     def create(**kwargs):
         return _graphs.create_node(Camera._mel_type, **kwargs)
 
-    def __init__(self, obj, mdagpath=None):
-        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
-        super(Camera, self).__init__(obj, mdagpath)
+    def __init__(self, obj):
+        # type: (Union[om2.MObject, om2.MDagPath, str]) -> NoReturn
+        super(Camera, self).__init__(obj)
 
 
 class GeometryShape(Shape):
@@ -1151,9 +1159,9 @@ class GeometryShape(Shape):
         kwargs['type'] = GeometryShape._mel_type
         return _graphs.ls_nodes(*args, **kwargs)
 
-    def __init__(self, obj, mdagpath=None):
-        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
-        super(GeometryShape, self).__init__(obj, mdagpath)
+    def __init__(self, obj):
+        # type: (Union[om2.MObject, om2.MDagPath, str]) -> NoReturn
+        super(GeometryShape, self).__init__(obj)
 
 
 class DeformableShape(GeometryShape):
@@ -1167,9 +1175,9 @@ class DeformableShape(GeometryShape):
         kwargs['type'] = DeformableShape._mel_type
         return _graphs.ls_nodes(*args, **kwargs)
 
-    def __init__(self, obj, mdagpath=None):
-        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
-        super(DeformableShape, self).__init__(obj, mdagpath)
+    def __init__(self, obj):
+        # type: (Union[om2.MObject, om2.MDagPath, str]) -> NoReturn
+        super(DeformableShape, self).__init__(obj)
 
 
 class ControlPoint(DeformableShape):
@@ -1183,9 +1191,9 @@ class ControlPoint(DeformableShape):
         kwargs['type'] = ControlPoint._mel_type
         return _graphs.ls_nodes(*args, **kwargs)
 
-    def __init__(self, obj, mdagpath=None):
-        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
-        super(ControlPoint, self).__init__(obj, mdagpath)
+    def __init__(self, obj):
+        # type: (Union[om2.MObject, om2.MDagPath, str]) -> NoReturn
+        super(ControlPoint, self).__init__(obj)
 
 
 class SurfaceShape(ControlPoint):
@@ -1199,9 +1207,9 @@ class SurfaceShape(ControlPoint):
         kwargs['type'] = SurfaceShape._mel_type
         return _graphs.ls_nodes(*args, **kwargs)
 
-    def __init__(self, obj, mdagpath=None):
-        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
-        super(SurfaceShape, self).__init__(obj, mdagpath)
+    def __init__(self, obj):
+        # type: (Union[om2.MObject, om2.MDagPath, str]) -> NoReturn
+        super(SurfaceShape, self).__init__(obj)
 
 
 class ColorSet(object):
@@ -1335,9 +1343,9 @@ class Mesh(SurfaceShape):
         # type: () -> int
         return self.mfn.numColorSets
 
-    def __init__(self, obj, mdagpath=None):
-        # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
-        super(Mesh, self).__init__(obj, mdagpath)
+    def __init__(self, obj):
+        # type: (Union[om2.MObject, om2.MDagPath, str]) -> NoReturn
+        super(Mesh, self).__init__(obj)
 
     def points(self, space=om2.MSpace.kObject):
         # type: (int) -> om2.MFloatPointArray

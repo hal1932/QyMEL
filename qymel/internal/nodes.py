@@ -40,7 +40,7 @@ class NodeFactory(object):
 
         cls = NodeFactory._cls_dict[mel_type]
         if mdagpath is not None:
-            return cls(mobject, mdagpath)
+            return cls(mdagpath)
         return cls(mobject)
 
     @staticmethod
@@ -48,5 +48,5 @@ class NodeFactory(object):
         # type: (om2.MObject, om2.MDagPath) -> object
         cls = NodeFactory._default_cls_dict['node']
         if mdagpath is not None:
-            return cls(mobject, mdagpath)
+            return cls(mdagpath)
         return cls(mobject)

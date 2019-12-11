@@ -25,11 +25,11 @@ MAYALIB_ROOT = os.environ.get('MAYA_LOCATION', None).replace('/', os.sep)
 
 def force_reload(module_obj):
     items = _get_import_items(module_obj)
-    items.reverse()
+    # items.reverse()
     _reload_modules(items)
     # items.reverse()
     _apply_updates(items)
-    reload_module(module_obj)
+    # reload_module(module_obj)
 
 
 class _ImportSymbolItem(object):
@@ -72,29 +72,57 @@ class _ModuleItem(object):
         self.items = items
 
 
+# def _get_import_items(root_module):
+#     # type: (types.ModuleType) -> List[_ModuleItem]
+#     result = []  # type: List[_ModuleItem]
+#
+#     processed = set()
+#
+#     modules = [root_module]
+#     while len(modules) > 0:
+#         module = modules.pop(0)
+#         if module in processed or not _is_reload_target_module(module):
+#             continue
+#         processed.add(module)
+#
+#         tree = _parse_module_source(module)
+#         if tree is None:
+#             continue
+#
+#         children = _walk_ast_tree(tree, module)
+#         for child in children:
+#             # print '{} -> {}'.format(module.__name__, child.module.__name__)
+#             modules.append(child.module)
+#
+#         result.append(_ModuleItem(module, children))
+#
+#     return result
+
 def _get_import_items(root_module):
     # type: (types.ModuleType) -> List[_ModuleItem]
+    return _get_import_items_rec(root_module, set())
+
+
+def _get_import_items_rec(module, found_modules):
+    # type: (types.ModuleType, Set[types.ModuleType]) -> List[types.ModuleType]
+    if not _is_reload_target_module(module) or module in found_modules:
+        return []
+
+    found_modules.add(module)
+
+    tree = _parse_module_source(module)
+    if tree is None:
+        return []
+
     result = []  # type: List[_ModuleItem]
 
-    processed = set()
+    children = _walk_ast_tree(tree, module)
 
-    modules = [root_module]
-    while len(modules) > 0:
-        module = modules.pop(0)
-        if module in processed or not _is_reload_target_module(module):
-            continue
-        processed.add(module)
+    child_item = _ModuleItem(module, children)
+    result.append(child_item)
 
-        tree = _parse_module_source(module)
-        if tree is None:
-            continue
-
-        children = _walk_ast_tree(tree, module)
-        for child in children:
-            # print '{} -> {}'.format(module.__name__, child.module.__name__)
-            modules.append(child.module)
-
-        result.append(_ModuleItem(module, children))
+    for child in children:
+        result.extend(_get_import_items_rec(child.module, found_modules))
 
     return result
 

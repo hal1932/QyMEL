@@ -119,7 +119,7 @@ def to_node_instance(mfn, mdagpath=None):
     if node is not None:
         return node
 
-    return _nodes.NodeFactory.create_default(mobj)
+    return _nodes.NodeFactory.create_default(mobj, mdagpath)
 
 
 def get_mobject(node_name):
