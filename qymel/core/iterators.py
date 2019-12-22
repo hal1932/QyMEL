@@ -330,6 +330,12 @@ class MeshEdgeIter(_Iterator):
 class MeshVertexFaceIter(_Iterator):
 
     @property
+    def index(self):
+        # type: () -> Tuple[int, int]
+        miter = self._miter
+        return miter.vertexId(), miter.faceId()
+
+    @property
     def face_index(self):
         # type: () -> int
         return self._miter.faceId()

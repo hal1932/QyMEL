@@ -1,12 +1,14 @@
 #include "CommandDefinition.h"
 
 #include "QmSkinSetWeights.h"
-#include "QmBatchSetVertexColor.h"
+#include "QmMeshSetVertexColors.h"
+#include "QmMeshSetNormals.h"
 
 namespace {
 	std::vector<CommandCreation> commands_ = {
 		{ QmSkinSetWeights::Name(), QmSkinSetWeights::Creator },
-		{ QmBatchSetVertexColor::Name(), QmBatchSetVertexColor::Creator },
+		{ QmMeshSetVertexColors::Name(), QmMeshSetVertexColors::Creator },
+		{ QmMeshSetNormals::Name(), QmMeshSetNormals::Creator },
 	};
 }
 

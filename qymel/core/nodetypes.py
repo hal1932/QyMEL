@@ -848,14 +848,12 @@ class DagNode(Entity):
 
     def parent(self, index=0):
         # type: (int) -> DagNode
-        if self.is_world:
+        mfn = self.mfn
+        if index >= mfn.parentCount():
             return None
 
-        parent_mobj = self.mfn.parent(index)
-        parent_mfn = om2.MFnDependencyNode(parent_mobj)
-        parent_mfn_dag = om2.MFnDagNode(parent_mobj)
-
-        return _graphs.to_node_instance(parent_mfn, parent_mfn_dag.getPath())
+        parent_mobj = mfn.parent(index)
+        return _graphs.to_node_instance(parent_mobj, om2.MFnDagNode(parent_mobj).getPath())
 
     def parents(self):
         # type: () -> List[DagNode]

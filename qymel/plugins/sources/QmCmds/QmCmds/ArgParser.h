@@ -6,6 +6,8 @@ public:
 		: MArgDatabase(syntax, args)
 	{}
 
+	void EnumerateFlagArguments(const char* flag, std::function<void(const MArgList&)> callback) const;
+
 	template<class TArray, class TElement>
 	MStatus SelectFlagArguments(TArray* p_result, const char* flag, std::function<TElement(const MArgList&)> selector) const;
 

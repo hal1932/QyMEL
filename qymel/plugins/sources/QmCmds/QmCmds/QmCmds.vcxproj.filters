@@ -16,11 +16,14 @@
     <ClCompile Include="QmSkinSetWeights.cpp">
       <Filter>ソース ファイル\commands</Filter>
     </ClCompile>
-    <ClCompile Include="QmBatchSetVertexColor.cpp">
-      <Filter>ソース ファイル\commands</Filter>
-    </ClCompile>
     <ClCompile Include="array_utils.hpp">
       <Filter>ヘッダー ファイル\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="QmMeshSetVertexColors.cpp">
+      <Filter>ソース ファイル\commands</Filter>
+    </ClCompile>
+    <ClCompile Include="QmMeshSetNormals.cpp">
+      <Filter>ソース ファイル\commands</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -32,9 +35,6 @@
     </ClInclude>
     <ClInclude Include="ArgParser.hpp">
       <Filter>ソース ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="QmBatchSetVertexColor.h">
-      <Filter>ヘッダー ファイル\commands</Filter>
     </ClInclude>
     <ClInclude Include="QmSkinSetWeights.h">
       <Filter>ヘッダー ファイル\commands</Filter>
@@ -56,6 +56,12 @@
     </ClInclude>
     <ClInclude Include="array_utils.h">
       <Filter>ヘッダー ファイル\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="QmMeshSetNormals.h">
+      <Filter>ヘッダー ファイル\commands</Filter>
+    </ClInclude>
+    <ClInclude Include="QmMeshSetVertexColors.h">
+      <Filter>ヘッダー ファイル\commands</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "QmBatchSetVertexColor.h"
+#include "QmMeshSetVertexColors.h"
 #include "node_utils.h"
 #include "component_utils.h"
 #include "array_utils.h"
@@ -7,13 +7,13 @@
 #include <iostream>
 #include <string>
 
-MSyntax QmBatchSetVertexColor::CreateSyntax() {
+MSyntax QmMeshSetVertexColors::CreateSyntax() {
 	MSyntax syntax;
 	syntax.addArg(MSyntax::kString);
 
 	syntax.addFlag("m", "mesh", MSyntax::kString);
 
-	syntax.addFlag("v", "vertexIndex", MSyntax::kLong);
+	syntax.addFlag("v", "vertices", MSyntax::kLong);
 	syntax.makeFlagMultiUse("v");
 
 	syntax.addFlag("c", "colors", MSyntax::kDouble, MSyntax::kDouble, MSyntax::kDouble, MSyntax::kDouble);
@@ -22,7 +22,7 @@ MSyntax QmBatchSetVertexColor::CreateSyntax() {
 	return syntax;
 }
 
-MStatus QmBatchSetVertexColor::ParseArguments(const ArgParser& parser) {
+MStatus QmMeshSetVertexColors::ParseArguments(const ArgParser& parser) {
 	MStatus status;
 
 	MString mesh_path;
@@ -62,7 +62,7 @@ MStatus QmBatchSetVertexColor::ParseArguments(const ArgParser& parser) {
 	return MStatus::kSuccess;
 }
 
-MStatus QmBatchSetVertexColor::redoIt() {
+MStatus QmMeshSetVertexColors::redoIt() {
 	if (vertices_.length() != colors_.length()) {
 		MColorArray colors(vertices_.length());
 		const auto base_color_length = colors_.length();
@@ -83,6 +83,6 @@ MStatus QmBatchSetVertexColor::redoIt() {
 	return MStatus::kSuccess;
 }
 
-MStatus QmBatchSetVertexColor::undoIt() {
+MStatus QmMeshSetVertexColors::undoIt() {
 	return modifier_.undoIt();
 }

@@ -25,7 +25,7 @@ class PluginsInfo(object):
     def __init__(self):
         plugins_root = os.path.join(
             os.path.dirname(__file__),
-            '..', '..',
+            '..',
             'plugins'
         )
         plugins_root.replace(os.sep, '/')

@@ -34,7 +34,10 @@
 #include <maya/MItDag.h>
 
 #include <maya/MVector.h>
+#include <maya/MVectorArray.h>
 #include <maya/MPoint.h>
 #include <maya/MFloatArray.h>
+#include <maya/MFloatVector.h>
+#include <maya/MFloatVectorArray.h>
 #include <maya/MColor.h>
 #include <maya/MColorArray.h>

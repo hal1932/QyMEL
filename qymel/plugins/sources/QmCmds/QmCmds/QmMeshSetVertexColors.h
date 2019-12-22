@@ -1,10 +1,10 @@
 #pragma once
 #include "CommandBase.h"
 
-class QmBatchSetVertexColor final : CommandBase {
+class QmMeshSetVertexColors final : CommandBase {
 public:
-	static MString Name() { return "qmBatchSetVertexColor"; }
-	static void* Creator() { return new QmBatchSetVertexColor(); }
+	static MString Name() { return "qmMeshSetVertexColors"; }
+	static void* Creator() { return new QmMeshSetVertexColors(); }
 
 	bool isUndoable() const { return true; }
 

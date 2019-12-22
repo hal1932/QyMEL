@@ -21,6 +21,18 @@ namespace {
 	}
 }
 
+inline void ArgParser::EnumerateFlagArguments(const char* flag, std::function<void(const MArgList&)> callback) const {
+	MStatus status;
+	for (auto i = 0U; i < numberOfFlagUses(flag); ++i) {
+		MArgList args;
+		status = getFlagArgumentList(flag, i, args);
+		if (!status) {
+			break;
+		}
+		callback(args);
+	}
+}
+
 template<class TArray, class TElement>
 inline MStatus ArgParser::SelectFlagArguments(TArray* p_result, const char* flag, std::function<TElement(const MArgList&)> selector) const {
 	MStatus status;

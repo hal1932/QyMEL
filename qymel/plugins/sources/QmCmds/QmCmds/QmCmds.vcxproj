@@ -105,7 +105,8 @@
     <ClCompile Include="CommandDefinition.cpp" />
     <ClCompile Include="node_utils.cpp" />
     <ClCompile Include="pluginMain.cpp" />
-    <ClCompile Include="QmBatchSetVertexColor.cpp" />
+    <ClCompile Include="QmMeshSetNormals.cpp" />
+    <ClCompile Include="QmMeshSetVertexColors.cpp" />
     <ClCompile Include="QmSkinSetWeights.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -121,7 +122,8 @@
     <ClInclude Include="component_utils.h" />
     <ClInclude Include="node_utils.h" />
     <ClInclude Include="nodetypes.h" />
-    <ClInclude Include="QmBatchSetVertexColor.h" />
+    <ClInclude Include="QmMeshSetNormals.h" />
+    <ClInclude Include="QmMeshSetVertexColors.h" />
     <ClInclude Include="QmSkinSetWeights.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
