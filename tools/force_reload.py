@@ -27,7 +27,7 @@ IGNORED_MODULE_NAMES = []
 
 def force_reload(module_obj):
     items = _get_import_items(module_obj)
-    _reload_modules(reversed(items))
+    _reload_modules(items)
     _apply_updates(items)
 
 
@@ -92,10 +92,11 @@ def _get_import_items_rec(module, found_modules):
     children = _walk_ast_tree(tree, module)
 
     child_item = _ModuleItem(module, children)
-    result.append(child_item)
 
     for child in children:
         result.extend(_get_import_items_rec(child.module, found_modules))
+
+    result.append(child_item)
 
     return result
 
