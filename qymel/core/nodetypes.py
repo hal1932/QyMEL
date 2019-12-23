@@ -776,8 +776,9 @@ class DagNode(Entity):
     @property
     def root_node(self):
         # type: () -> DagNode
-        mfn = om2.MFnDagNode(self.mfn.dagRoot())
-        return _graphs.to_node_instance(mfn, mfn.getPath())
+        mdagpath = om2.MDagPath(self.mdagpath)
+        root_path = mdagpath.pop(mdagpath.length() - 1)
+        return _graphs.to_node_instance(om2.MFnDagNode(root_path), root_path)
 
     @property
     def is_world(self):
@@ -818,10 +819,20 @@ class DagNode(Entity):
         # type: () -> int
         return self.mfn.instanceCount(True)
 
+    @property
+    def is_intermediate(self):
+        # type: () -> bool
+        return self.mfn.isIntermediateObject
+
+    @property
+    def bounding_box(self):
+        # type: () -> om2.MBoundingBox
+        return self.mfn.boundingBox
+
     def __init__(self, obj):
         # type: (Union[om2.MObject, om2.MDagPath, str]) -> NoReturn
         if isinstance(obj, (str, unicode)):
-            _, dagpath = _graphs.get_mobject(obj)
+            _, obj = _graphs.get_mobject(obj)
 
         if obj is None:
             # self is World
@@ -848,18 +859,21 @@ class DagNode(Entity):
 
     def parent(self, index=0):
         # type: (int) -> DagNode
-        mfn = self.mfn
-        if index >= mfn.parentCount():
+        if self.is_world:
             return None
 
-        parent_mobj = mfn.parent(index)
-        return _graphs.to_node_instance(parent_mobj, om2.MFnDagNode(parent_mobj).getPath())
+        parent_mobj = self.mfn.parent(index)
+        parent_mfn = om2.MFnDependencyNode(parent_mobj)
+        parent_mfn_dag = om2.MFnDagNode(parent_mobj)
 
-    def parents(self):
-        # type: () -> List[DagNode]
+        return _graphs.to_node_instance(parent_mfn, parent_mfn_dag.getPath())
+
+    def parents(self, **kwargs):
+        # type: (Any) -> List[DagNode]
         if self.is_world:
             return []
-        return self.relatives(allParents=True)
+        kwargs['allParents'] = True
+        return self.relatives(**kwargs)
 
     def child(self, index=0):
         # type: (int) -> DagNode
@@ -870,10 +884,11 @@ class DagNode(Entity):
         child_mobj = mfn.child(index)
         return _graphs.to_node_instance(child_mobj, om2.MFnDagNode(child_mobj).getPath())
 
-    def children(self):
-        # type: () -> List[DagNode]
+    def children(self, **kwargs):
+        # type: (Any) -> List[DagNode]
         if not self.is_world:
-            return self.relatives(children=True)
+            kwargs['children'] = True
+            return self.relatives(**kwargs)
 
         result = []
 
@@ -882,6 +897,8 @@ class DagNode(Entity):
 
         self_hash = self.mobject_handle.hashCode()
         tmp_mobj_handle = om2.MObjectHandle()
+
+        no_intermediate = kwargs.get('noIntermediate', False)
 
         ite = om2.MItDependencyNodes()
         while not ite.isDone():
@@ -897,6 +914,8 @@ class DagNode(Entity):
 
             if mobj.hasFn(om2.MFn.kDagNode):
                 tmp_mfn_dag.setObject(mobj)
+                if no_intermediate and tmp_mfn_dag.isIntermediateObject:
+                    continue
                 if tmp_mfn_dag.parent(0).hasFn(om2.MFn.kWorld):
                     tmp_mfn.setObject(ite.thisNode())
                     node = _graphs.to_node_instance(tmp_mfn, tmp_mfn_dag.getPath())
@@ -910,8 +929,8 @@ class DagNode(Entity):
 
         return result
 
-    def ancestors(self):
-        # type: () -> List[DagNode]
+    def ancestors(self, **kwargs):
+        # type: (Any) -> List[DagNode]
         if self.is_world:
             return []
 
@@ -921,15 +940,19 @@ class DagNode(Entity):
         tmp_mfn = om2.MFnDependencyNode()
         tmp_mfn_dag = om2.MFnDagNode()
 
+        no_intermediate = kwargs.get('noIntermediate', False)
+
         while mfn.parentCount() > 0:
             parent_mobj = mfn.parent(0)
 
             if parent_mobj.hasFn(om2.MFn.kWorld):
                 break
 
-            tmp_mfn.setObject(parent_mobj)
             tmp_mfn_dag.setObject(parent_mobj)
+            if no_intermediate and tmp_mfn_dag.isIntermediateObject:
+                continue
 
+            tmp_mfn.setObject(parent_mobj)
             node = _graphs.to_node_instance(tmp_mfn, tmp_mfn_dag.getPath())
             result.append(node)
 
@@ -937,14 +960,15 @@ class DagNode(Entity):
 
         return result
 
-    def descendents(self):
-        # type: () -> List[DagNode]
+    def descendents(self, **kwargs):
+        # type: (Any) -> List[DagNode]
         if self.is_world:
-            return _graphs.ls_nodes()
-        return self.relatives(allDescendents=True)
+            return _graphs.ls_nodes(noIntermediate='noIntermediate' not in kwargs)
+        kwargs['allDescendents'] = True
+        return self.relatives(**kwargs)
 
-    def siblings(self):
-        # type: () -> List[Any]
+    def siblings(self, **kwargs):
+        # type: (Any) -> List[Any]
         if self.is_world:
             return []
 
@@ -954,7 +978,7 @@ class DagNode(Entity):
         parent_mobj = mfn.parent(0)
 
         if parent_mobj.hasFn(om2.MFn.kWorld):
-            result = [node for node in world.children() if node != self]
+            result = [node for node in world.children(**kwargs) if node != self]
         else:
             # self と同階層で self に一致しない DAG Node
             tmp_mfn = om2.MFnDependencyNode()
@@ -962,6 +986,8 @@ class DagNode(Entity):
 
             self_hash = self.mobject_handle.hashCode()
             tmp_mobj_handle = om2.MObjectHandle()
+
+            no_intermediate = kwargs.get('noIntermediate', False)
 
             parent_mfn = om2.MFnDagNode(parent_mobj)
             for i in range(parent_mfn.childCount()):
@@ -971,9 +997,12 @@ class DagNode(Entity):
                 if tmp_mobj_handle.hashCode() == self_hash:
                     continue
 
-                tmp_mfn.setObject(mobj)
                 tmp_mfn_dag.setObject(mobj)
 
+                if no_intermediate and tmp_mfn_dag.isIntermediateObject:
+                    continue
+
+                tmp_mfn.setObject(mobj)
                 node = _graphs.to_node_instance(tmp_mfn, tmp_mfn_dag.getPath())
                 result.append(node)
 
@@ -1044,18 +1073,34 @@ class Transform(DagNode):
     def create(**kwargs):
         return _graphs.create_node(Transform._mel_type, **kwargs)
 
+    @property
+    def transformation(self):
+        # type: () -> om2.MTransformationMatrix
+        return self.mfn.transformation()
+
     def __init__(self, obj):
         # type: (Union[om2.MObject, om2.MDagPath, str]) -> NoReturn
         super(Transform, self).__init__(obj)
 
-    def shape(self):
-        # type: () -> Shape
+    def shape_count(self):
+        # type: () -> int
+        count = 0
         mfn = self.mfn
         for i in range(mfn.childCount()):
-            child_mobj = mfn.child(i)
-            if child_mobj.hasFn(om2.MFn.kShape):
-                return _graphs.to_node_instance(om2.MFnDependencyNode(child_mobj), om2.MFnDagNode(child_mobj).getPath())
-        return None
+            child = mfn.child(i)
+            if child.hasFn(om2.MFn.kShape):
+                count += 1
+        return count
+
+    def shape(self):
+        # type: () -> Shape
+        mdagpath = om2.MDagPath(self.mdagpath)
+        try:
+            mdagpath.extendToShape()
+        except RuntimeError:
+            return None
+
+        return _graphs.to_node_instance(om2.MFnDependencyNode(mdagpath.node()), mdagpath)
 
     def shapes(self):
         # type: () -> List[Shape]
@@ -1068,8 +1113,16 @@ class Transform(DagNode):
 
     def instantiate(self, **kwargs):
         # type: (Any) -> Transform
-        transform = cmds.instance(self.mel_object, **kwargs)
+        transform = cmds.instance(self.mel_object, **kwargs)[0]
         return _graphs.eval_node(transform, om2.MFnDependencyNode())
+
+    def bounding_box(self):
+        # type: () -> om2.MBoundingBox
+        bbox = cmds.xform(self.mel_object, query=True, boundingBox=True)
+        return om2.MBoundingBox(
+            om2.MPoint(bbox[0], bbox[1], bbox[2]),
+            om2.MPoint(bbox[3], bbox[4], bbox[5])
+        )
 
 
 class Joint(Transform):
