@@ -204,6 +204,11 @@ class DisplayLayer(DependNode):
     def create(**kwargs):
         return DisplayLayer(cmds.createDisplayLayer(**kwargs))
 
+    @property
+    def display_type(self):
+        # type: () -> int
+        return self.displayType.get()
+
     def __init__(self, obj):
         # type: (Union[om2.MObject, str]) -> NoReturn
         super(DisplayLayer, self).__init__(obj)
@@ -291,8 +296,7 @@ class SkinCluster(GeometryFilter):
 
     def influences(self):
         # type: () -> List[Joint]
-        tmp_mfn = om2.MFnDependencyNode()
-        return [_graphs.eval_node(name, tmp_mfn) for name in self.mfn.influenceObjects()]
+        return [Joint(mdagpath) for mdagpath in self.mfn.influenceObjects()]
 
     def influence_index(self, joint):
         # type: (Joint) -> long
