@@ -202,8 +202,7 @@ class DisplayLayer(DependNode):
 
     @staticmethod
     def create(**kwargs):
-        node = cmds.createDisplayLayer(**kwargs)
-        return _graphs.eval_node(node, om2.MFnDependencyNode())
+        return DisplayLayer(cmds.createDisplayLayer(**kwargs))
 
     def __init__(self, obj):
         # type: (Union[om2.MObject, str]) -> NoReturn
@@ -284,7 +283,7 @@ class SkinCluster(GeometryFilter):
 
     @staticmethod
     def create(**kwargs):
-        return _graphs.create_node(SkinCluster._mel_type, **kwargs)
+        return SkinCluster(cmds.skinCluster(**kwargs))
 
     def __init__(self, obj):
         # type: (Union[om2.MObject, str]) -> NoReturn
@@ -374,7 +373,7 @@ class ObjectSet(Entity):
 
     @staticmethod
     def create(**kwargs):
-        return _graphs.create_node(ObjectSet._mel_type, **kwargs)
+        return ObjectSet(cmds.sets(**kwargs))
 
     def __init__(self, obj):
         # type: (Union[om2.MObject, str]) -> NoReturn
@@ -444,7 +443,7 @@ class AnimLayer(ObjectSet):
 
     @staticmethod
     def create(**kwargs):
-        return _graphs.create_node(AnimLayer._mel_type, **kwargs)
+        return AnimLayer(cmds.animLayer(**kwargs))
 
     def __init__(self, obj):
         # type: (Union[om2.MObject, str]) -> NoReturn
@@ -466,8 +465,7 @@ class ShadingEngine(ObjectSet):
     def create(**kwargs):
         kwargs['renderable'] = True
         kwargs.pop('r', None)
-        name = cmds.sets(**kwargs)
-        return _graphs.eval_node(name, om2.MFnDependencyNode())
+        return ShadingEngine(cmds.sets(**kwargs))
 
     def __init__(self, obj):
         # type: (Union[om2.MObject, str]) -> NoReturn
@@ -825,7 +823,7 @@ class DagNode(Entity):
         return self.mfn.isIntermediateObject
 
     @property
-    def bounding_box(self):
+    def local_bounding_box(self):
         # type: () -> om2.MBoundingBox
         return self.mfn.boundingBox
 
@@ -1131,7 +1129,7 @@ class Transform(DagNode):
         transform = cmds.instance(self.mel_object, **kwargs)[0]
         return _graphs.eval_node(transform, om2.MFnDependencyNode())
 
-    def bounding_box(self):
+    def world_bounding_box(self):
         # type: () -> om2.MBoundingBox
         bbox = cmds.xform(self.mel_object, query=True, boundingBox=True)
         return om2.MBoundingBox(
@@ -1153,7 +1151,7 @@ class Joint(Transform):
 
     @staticmethod
     def create(**kwargs):
-        return _graphs.create_node(Joint._mel_type, **kwargs)
+        return Joint(cmds.joint(**kwargs))
 
     def __init__(self, obj):
         # type: (Union[om2.MObject, om2.MDagPath, str]) -> NoReturn
@@ -1207,7 +1205,7 @@ class Camera(Shape):
 
     @staticmethod
     def create(**kwargs):
-        return _graphs.create_node(Camera._mel_type, **kwargs)
+        return Camera(cmds.camera(**kwargs))
 
     def __init__(self, obj):
         # type: (Union[om2.MObject, om2.MDagPath, str]) -> NoReturn
