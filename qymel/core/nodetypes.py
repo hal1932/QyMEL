@@ -1623,5 +1623,93 @@ class FileReference(DependNode):
         return result
 
 
+class Lambert(DependNode):
+
+    _mfn_type = om2.MFn.kLambert
+    _mfn_set = om2.MFnDependencyNode
+    _mel_type = 'lambert'
+
+    @staticmethod
+    def ls(*args, **kwargs):
+        kwargs['type'] = Lambert._mel_type
+        return _graphs.ls_nodes(*args, **kwargs)
+
+    @staticmethod
+    def create():
+        name = cmds.shadingNode(Lambert._mel_type, asShader=True)
+        sg = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name='{}.SG'.format(name))
+        cmds.connectAttr('{}.outColor'.format(name), '{}.surfaceShader'.format(sg))
+        return Lambert(name)
+
+
+class Reflect(Lambert):
+
+    _mfn_type = om2.MFn.kReflect
+    _mfn_set = om2.MFnDependencyNode
+    _mel_type = 'reflect'
+
+    @staticmethod
+    def ls(*args, **kwargs):
+        kwargs['type'] = Reflect._mel_type
+        return _graphs.ls_nodes(*args, **kwargs)
+
+
+class Phong(Reflect):
+
+    _mfn_type = om2.MFn.kPhong
+    _mfn_set = om2.MFnDependencyNode
+    _mel_type = 'phong'
+
+    @staticmethod
+    def ls(*args, **kwargs):
+        kwargs['type'] = Phong._mel_type
+        return _graphs.ls_nodes(*args, **kwargs)
+
+    @staticmethod
+    def create():
+        name = cmds.shadingNode(Phong._mel_type, asShader=True)
+        sg = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name='{}.SG'.format(name))
+        cmds.connectAttr('{}.outColor'.format(name), '{}.surfaceShader'.format(sg))
+        return Phong(name)
+
+
+class PhongE(Reflect):
+
+    _mfn_type = om2.MFn.kPhongExplorer
+    _mfn_set = om2.MFnDependencyNode
+    _mel_type = 'phongE'
+
+    @staticmethod
+    def ls(*args, **kwargs):
+        kwargs['type'] = PhongE._mel_type
+        return _graphs.ls_nodes(*args, **kwargs)
+
+    @staticmethod
+    def create():
+        name = cmds.shadingNode(PhongE._mel_type, asShader=True)
+        sg = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name='{}.SG'.format(name))
+        cmds.connectAttr('{}.outColor'.format(name), '{}.surfaceShader'.format(sg))
+        return PhongE(name)
+
+
+class Blinn(Reflect):
+
+    _mfn_type = om2.MFn.kBlinn
+    _mfn_set = om2.MFnDependencyNode
+    _mel_type = 'blinn'
+
+    @staticmethod
+    def ls(*args, **kwargs):
+        kwargs['type'] = Blinn._mel_type
+        return _graphs.ls_nodes(*args, **kwargs)
+
+    @staticmethod
+    def create():
+        name = cmds.shadingNode(Blinn._mel_type, asShader=True)
+        sg = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name='{}.SG'.format(name))
+        cmds.connectAttr('{}.outColor'.format(name), '{}.surfaceShader'.format(sg))
+        return Blinn(name)
+
+
 _nodes.NodeFactory.register(__name__)
 _nodes.NodeFactory.register_default(DependNode, DagNode)
