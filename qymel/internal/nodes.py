@@ -48,5 +48,9 @@ class NodeFactory(object):
         # type: (om2.MObject, om2.MDagPath) -> object
         cls = NodeFactory._default_cls_dict['node']
         if mdagpath is not None:
-            return cls(mdagpath)
+            # TODO: 例外処理を使いたくない
+            try:
+                return cls(mdagpath)
+            except:
+                pass
         return cls(mobject)

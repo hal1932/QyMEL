@@ -68,7 +68,12 @@ class MayaObject(object):
     @property
     def exists(self):
         # type: () -> bool
-        pass
+        mobj = self.mobject
+        if mobj is None:
+            return False
+        if mobj.isNull():
+            return False
+        return True
 
     def __init__(self, mobj):
         # type: (om2.MObject) -> NoReturn
@@ -79,7 +84,7 @@ class MayaObject(object):
 
     def __eq__(self, other):
         # type: (object) -> bool
-        if other is None:
+        if other is None or not other._mobj_handle.isValid():
             return False
         if not isinstance(other, MayaObject):
             return False
