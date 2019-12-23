@@ -899,6 +899,7 @@ class DagNode(Entity):
         tmp_mobj_handle = om2.MObjectHandle()
 
         no_intermediate = kwargs.get('noIntermediate', False)
+        type_name = kwargs.get('type', None)
 
         ite = om2.MItDependencyNodes()
         while not ite.isDone():
@@ -914,16 +915,24 @@ class DagNode(Entity):
 
             if mobj.hasFn(om2.MFn.kDagNode):
                 tmp_mfn_dag.setObject(mobj)
-                if no_intermediate and tmp_mfn_dag.isIntermediateObject:
-                    continue
-                if tmp_mfn_dag.parent(0).hasFn(om2.MFn.kWorld):
-                    tmp_mfn.setObject(ite.thisNode())
-                    node = _graphs.to_node_instance(tmp_mfn, tmp_mfn_dag.getPath())
-                    result.append(node)
+
+                is_ignored = no_intermediate and tmp_mfn_dag.isIntermediateObject
+                if not is_ignored:
+                    is_ignored = type_name is not None and tmp_mfn_dag.typeName != type_name
+
+                if not is_ignored:
+                    if tmp_mfn_dag.parent(0).hasFn(om2.MFn.kWorld):
+                        tmp_mfn.setObject(ite.thisNode())
+                        node = _graphs.to_node_instance(tmp_mfn, tmp_mfn_dag.getPath())
+                        result.append(node)
             else:
                 tmp_mfn.setObject(ite.thisNode())
-                node = _graphs.to_node_instance(tmp_mfn)
-                result.append(node)
+
+                is_ignored = type_name is not None and tmp_mfn.typeName != type_name
+
+                if not is_ignored:
+                    node = _graphs.to_node_instance(tmp_mfn)
+                    result.append(node)
 
             ite.next()
 
@@ -941,6 +950,7 @@ class DagNode(Entity):
         tmp_mfn_dag = om2.MFnDagNode()
 
         no_intermediate = kwargs.get('noIntermediate', False)
+        type_name = kwargs.get('type', None)
 
         while mfn.parentCount() > 0:
             parent_mobj = mfn.parent(0)
@@ -950,6 +960,8 @@ class DagNode(Entity):
 
             tmp_mfn_dag.setObject(parent_mobj)
             if no_intermediate and tmp_mfn_dag.isIntermediateObject:
+                continue
+            if type_name is not None and tmp_mfn_dag.typeName != type_name:
                 continue
 
             tmp_mfn.setObject(parent_mobj)
@@ -988,6 +1000,7 @@ class DagNode(Entity):
             tmp_mobj_handle = om2.MObjectHandle()
 
             no_intermediate = kwargs.get('noIntermediate', False)
+            type_name = kwargs.get('type', None)
 
             parent_mfn = om2.MFnDagNode(parent_mobj)
             for i in range(parent_mfn.childCount()):
@@ -1000,6 +1013,8 @@ class DagNode(Entity):
                 tmp_mfn_dag.setObject(mobj)
 
                 if no_intermediate and tmp_mfn_dag.isIntermediateObject:
+                    continue
+                if type_name is not None and tmp_mfn_dag.typeName != type_name:
                     continue
 
                 tmp_mfn.setObject(mobj)
