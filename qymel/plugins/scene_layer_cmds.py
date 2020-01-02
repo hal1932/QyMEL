@@ -273,8 +273,6 @@ class _LayerProxy(object):
 
     def load_file(self, file_path, namespace):
         # type: (str, str) -> NoReturn
-        current_elements = self.elements
-
         new_nodes = cmds.file(
             file_path,
             i=True,
@@ -283,18 +281,18 @@ class _LayerProxy(object):
             returnNewNodes=True,
             namespace=namespace
         )
-
         cmds.lockNode(new_nodes, lock=True)
-        for node in new_nodes:
-            self.__append_element(node)
+
+        prev_elements = self.elements
+        self.__extend_elements(new_nodes)
 
         self.__set_file_path(file_path)
         self.__set_namespace(namespace)
 
-        if len(current_elements) > 0:
-            cmds.lockNode(current_elements, lock=False)
-            cmds.lockNode(cmds.listRelatives(current_elements, allDescendents=True, fullPath=True) or [], lock=False)
-            cmds.delete(current_elements)
+        if len(prev_elements) > 0:
+            cmds.lockNode(prev_elements, lock=False)
+            cmds.lockNode(cmds.listRelatives(prev_elements, allDescendents=True, fullPath=True) or [], lock=False)
+            cmds.delete(prev_elements)
 
     def unload(self, recursive):
         # type: (bool) -> NoReturn
@@ -340,9 +338,10 @@ class _LayerProxy(object):
         if parent_layer is not None:
             cmds.connectAttr('{}.message'.format(self.layer_name), '{}.children'.format(parent_layer), nextAvailable=True)
 
-    def __append_element(self, node):
-        # type: (str) -> NoReturn
-        cmds.connectAttr('{}.message'.format(node), '{}.elements'.format(self.layer_name), nextAvailable=True)
+    def __extend_elements(self, nodes):
+        # type: (List[str]) -> NoReturn
+        for node in nodes:
+            cmds.connectAttr('{}.message'.format(node), '{}.elements'.format(self.layer_name), nextAvailable=True)
 
     def __clear_children(self):
         # type: () -> NoReturn
