@@ -214,7 +214,7 @@ class _EditOptions(object):
             if not cmds.objExists(parent_layer):
                 cmds.error('node "{}" is not found'.format(parent_layer))
             if cmds.nodeType(parent_layer) != 'qmSceneLayer':
-                cmds.error('node "{}" is not qnSceneLayer'.format(parent_layer))
+                cmds.error('node "{}" is not qmSceneLayer'.format(parent_layer))
 
         default_namespace = ':'
         if file_path is not None:
