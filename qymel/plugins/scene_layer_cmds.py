@@ -52,30 +52,32 @@ class QmSceneLayerQuery(om2.MPxCommand):
         parser = qm.ArgDatabase(self.syntax(), args)
         flags = parser.parse_flags(_QmSceneLayerQueryFlags)  # type: _QmSceneLayerQueryFlags
 
-        node_names = parser.getObjectStrings()
-        for name in node_names:
-            if not cmds.objExists(name):
-                cmds.error('node "{}" is not exists'.format(name))
+        layer_names = parser.getObjectStrings()
+        for layer_name in layer_names:
+            if not cmds.objExists(layer_name):
+                cmds.error('node "{}" is not exists'.format(layer_name))
 
         if flags.file_path.is_true:
             results = []
-            for node_name in node_names:
-                file_path = cmds.getAttr('{}.filePath'.format(node_name)) or ''
-                results.append(file_path)
+            for layer_name in layer_names:
+                proxy = _LayerProxy(layer_name)
+                results.append(proxy.file_path or '')
             self.setResult(results)
             return
 
         if flags.elements.is_true:
             elements = []
-            for name in node_names:
-                elements.extend(cmds.listConnections('{}.elements'.format(name)) or [])
+            for layer_name in layer_names:
+                proxy = _LayerProxy(layer_name)
+                elements.extend(proxy.elements)
             self.setResult(elements)
             return
 
         if flags.children.is_true:
             children = []
-            for name in node_names:
-                children.extend(cmds.listConnections('{}.children'.format(name)) or [])
+            for layer_name in layer_names:
+                proxy = _LayerProxy(layer_name)
+                children.extend(proxy.children)
             self.setResult(children)
             return
 
@@ -138,7 +140,7 @@ class QmSceneLayerEdit(om2.MPxCommand):
         flags = parser.parse_flags(_QmSceneLayerEditFlags)  # type: _QmSceneLayerEditFlags
         options = _EditOptions(flags)
 
-        editor = _LayerEditor()
+        editor = _LayerProxy()
 
         if flags.unload.is_true:
             if len(layer_names) != 1:
@@ -230,7 +232,33 @@ class _EditOptions(object):
         self.namespace = namespace
 
 
-class _LayerEditor(object):
+class _LayerProxy(object):
+
+    @property
+    def file_path(self):
+        # type: () -> str
+        return cmds.getAttr('{}.filePath'.format(self.layer_name))
+
+    @property
+    def namespace(self):
+        # type: () -> str
+        return cmds.getAttr('{}.namespace'.format(self.layer_name))
+
+    @property
+    def elements(self):
+        # type: () -> List[str]
+        return cmds.listConnections('{}.elements'.format(self.layer_name)) or []
+
+    @property
+    def children(self):
+        # type: () -> List[str]
+        return cmds.listConnections('{}.children'.format(self.layer_name)) or []
+
+    @property
+    def parent_layer(self):
+        # type: () -> str
+        parent = cmds.listConnections('{}.message'.format(self.layer_name)) or []
+        return parent[0] if len(parent) > 0 else None
 
     def __init__(self, layer_name=None):
         # type: (str) -> NoReturn
@@ -245,7 +273,7 @@ class _LayerEditor(object):
 
     def load_file(self, file_path, namespace):
         # type: (str, str) -> NoReturn
-        current_elements = cmds.listConnections('{}.elements'.format(self.layer_name)) or []
+        current_elements = self.elements
 
         new_nodes = cmds.file(
             file_path,
@@ -256,12 +284,12 @@ class _LayerEditor(object):
             namespace=namespace
         )
 
+        cmds.lockNode(new_nodes, lock=True)
         for node in new_nodes:
-            cmds.lockNode(node, lock=True)
-            cmds.connectAttr('{}.message'.format(node), '{}.elements'.format(self.layer_name), nextAvailable=True)
+            self.__append_element(node)
 
-        cmds.setAttr('{}.filePath'.format(self.layer_name), file_path, type='string')
-        cmds.setAttr('{}.namespace'.format(self.layer_name), namespace, type='string')
+        self.__set_file_path(file_path)
+        self.__set_namespace(namespace)
 
         if len(current_elements) > 0:
             cmds.lockNode(current_elements, lock=False)
@@ -270,16 +298,14 @@ class _LayerEditor(object):
 
     def unload(self, recursive):
         # type: (bool) -> NoReturn
-        children = cmds.listConnections('{}.children'.format(self.layer_name)) or []
-        for child in children:
-            cmds.disconnectAttr('{}.message'.format(child), '{}.children'.format(self.layer_name), nextAvailable=True)
-
         if recursive:
-            for child in children:
-                editor = _LayerEditor(child)
+            for child in self.children:
+                editor = _LayerProxy(child)
                 editor.unload(True)
 
-        current_elements = cmds.listConnections('{}.elements'.format(self.layer_name)) or []
+        self.__clear_children()
+
+        current_elements = self.elements
         if len(current_elements) > 0:
             cmds.lockNode(current_elements, lock=False)
             cmds.lockNode(cmds.listRelatives(current_elements, allDescendents=True, fullPath=True) or [], lock=False)
@@ -291,30 +317,45 @@ class _LayerEditor(object):
     def reload(self, recursive):
         # type: (bool) -> NoReturn
         if recursive:
-            for child in cmds.listConnections('{}.children'.format(self.layer_name)) or []:
-                editor = _LayerEditor(child)
+            for child in self.children:
+                editor = _LayerProxy(child)
                 editor.reload(True)
 
-        file_path = cmds.getAttr('{}.filePath'.format(self.layer_name))
+        file_path = self.file_path
         if file_path is not None:
-            namespace = cmds.getAttr('{}.namespace'.format(self.layer_name))
-            self.load_file(file_path, namespace)
-
-    def set_parent_layer(self, parent_layer):
-        # type: (str) -> NoReturn
-        current_parent = cmds.listConnections('{}.message'.format(self.layer_name)) or []
-        if len(current_parent) > 0:
-            cmds.disconnectAttr('{}.message'.format(self.layer_name), '{}.children'.format(current_parent[0]), nextAvailable=True)
-
-        if parent_layer is not None:
-            cmds.connectAttr('{}.message'.format(self.layer_name), '{}.children'.format(parent_layer), nextAvailable=True)
+            self.load_file(file_path, self.namespace)
 
     def set_namespace(self, namespace):
         # type: (str) -> NoReturn
-        current_namespace = cmds.getAttr('{}.namespace'.format(self.layer_name))
+        current_namespace = self.namespace
         if namespace != current_namespace:
             cmds.namespace(rename=(current_namespace, namespace))
-            cmds.setAttr('{}.namespace'.format(self.layer_name), namespace, type='string')
+            self.__set_namespace(namespace)
+
+    def set_parent_layer(self, parent_layer):
+        # type: (str) -> NoReturn
+        current_parent = self.parent_layer
+        if current_parent is not None:
+            cmds.disconnectAttr('{}.message'.format(self.layer_name), '{}.children'.format(current_parent), nextAvailable=True)
+        if parent_layer is not None:
+            cmds.connectAttr('{}.message'.format(self.layer_name), '{}.children'.format(parent_layer), nextAvailable=True)
+
+    def __append_element(self, node):
+        # type: (str) -> NoReturn
+        cmds.connectAttr('{}.message'.format(node), '{}.elements'.format(self.layer_name), nextAvailable=True)
+
+    def __clear_children(self):
+        # type: () -> NoReturn
+        for child in self.children:
+            cmds.disconnectAttr('{}.message'.format(child), '{}.children'.format(self.layer_name), nextAvailable=True)
+
+    def __set_file_path(self, file_path):
+        # type: (str) -> NoReturn
+        cmds.setAttr('{}.filePath'.format(self.layer_name), file_path, type='string')
+
+    def __set_namespace(self, namespace):
+        # type: (str) -> NoReturn
+        cmds.setAttr('{}.namespace'.format(self.layer_name), namespace, type='string')
 
 
 qm.setup_plugin(
