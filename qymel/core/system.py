@@ -252,10 +252,20 @@ class Workspace(object):
         return cmds.workspace(expandName=path)
 
     @staticmethod
+    def path_by_file_rule(rule_key):
+        rule = Workspace.file_rule(rule_key)
+        if rule is None:
+            return None
+        return os.path.join(
+            Workspace.root_directory(),
+            rule.value
+        ).replace(os.sep, '/')
+
+    @staticmethod
     def __entries(cls, entry):
         # type: (type, str) -> List[cls]
         kwargs = {'query': True, entry: True}
-        entries = cmds.workspace(kwargs)
+        entries = cmds.workspace(**kwargs)
         result = []  # type: List[cls]
         for i in range(len(entries) / 2):
             key = entries[i * 2]
@@ -267,7 +277,7 @@ class Workspace(object):
     def __entry(cls, entry, key, default_value):
         # type: (type, str, str, str) -> cls
         kwargs = {'{}Entry'.format(entry): key}
-        value = cmds.workspace(kwargs) or default_value
+        value = cmds.workspace(**kwargs) or default_value
         return cls(key, value)
 
 
