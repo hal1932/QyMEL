@@ -24,8 +24,8 @@ class _MethodInvoker(QObject):
         super(_MethodInvoker, self).__init__()
 
     def event(self, e):
-        # type: (_MethodInvokeEvent) -> NoReturn
-        e.func(*e.args, **e.kwargs)
+        # type: (_MethodInvokeEvent) -> Any
+        return e.func(*e.args, **e.kwargs)
 
 
 class Dispatcher(QObject):
