@@ -1,5 +1,7 @@
 # coding: utf-8
 from __future__ import absolute_import
+from six import *
+from six.moves import *
 from typing import *
 
 import itertools
@@ -87,7 +89,7 @@ class DependNode(_general.MayaObject):
 
     def __init__(self, obj):
         # type: (Union[om2.MObject, str]) -> NoReturn
-        if isinstance(obj, (str, unicode)):
+        if isinstance(obj, (str, text_type)):
             obj, _ = _graphs.get_mobject(obj)
 
         super(DependNode, self).__init__(obj)
@@ -833,7 +835,7 @@ class DagNode(Entity):
 
     def __init__(self, obj):
         # type: (Union[om2.MObject, om2.MDagPath, str]) -> NoReturn
-        if isinstance(obj, (str, unicode)):
+        if isinstance(obj, (str, text_type)):
             _, obj = _graphs.get_mobject(obj)
 
         if obj is None:

@@ -1,6 +1,7 @@
 # coding: utf-8
 from __future__ import absolute_import
 from typing import *
+from six import *
 from six.moves import *
 
 import maya.api.OpenMaya as om2
@@ -416,7 +417,7 @@ def _get_color_set_name(color_set, default_value):
     if color_set is None:
         return default_value
 
-    if isinstance(color_set, (str, unicode)):
+    if isinstance(color_set, (str, text_type)):
         return color_set
 
     return color_set.mel_object
@@ -427,7 +428,7 @@ def _get_uv_set_name(uv_set, default_value):
     if uv_set is None:
         return default_value
 
-    if isinstance(uv_set, (str, unicode)):
+    if isinstance(uv_set, (str, text_type)):
         return uv_set
 
     return uv_set.mel_object

@@ -1,5 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 from typing import *
 from six.moves import *
 
@@ -185,7 +185,6 @@ def connections(mfn):
         attr = mfn.attribute(i)
         # plug.setAttribute(attr)
         plug = mfn.findPlug(attr, True)
-        print plug.connectedTo(True, True)
         for other in plug.connectedTo(True, True):
             # result.append(other.node())
             result.append(other)

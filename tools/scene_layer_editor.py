@@ -1,5 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 from typing import *
 from six.moves import *
 
@@ -133,16 +133,13 @@ class ButtonDelegate(QStyledItemDelegate):
         self.__mouse_pos = event.pos()
         if event.type() in (QEvent.Enter, QEvent.MouseMove):
             # self.__mouse_pos = event.pos()
-            print 'enter/move'
             option.widget.update(index)
 
         elif event.type() == QEvent.Leave:
-            print 'leave'
             self.__mouse_pos = None
             option.widget.update(index)
 
         elif event.type() in (QEvent.MouseButtonPress, QEvent.MouseButtonDblClick) and event.button() == Qt.LeftButton:
-            print 'click'
             button_opt = self.__get_option(option)
             self.__is_pressed = button_opt.rect.contains(event.pos())
             option.widget.update(index)
@@ -151,7 +148,6 @@ class ButtonDelegate(QStyledItemDelegate):
                 return True
         
         elif event.type() == QEvent.MouseButtonRelease:
-            print 'release'
             self.__is_pressed = False
             option.widget.update(index)
 
@@ -231,13 +227,11 @@ class MainWindow(qu.MainWindowBase):
 
         def test():
             model = self.__layer_tree.model()
-            print '====='
             def p(idx):
                 parent = model.parent(idx)
                 return not parent.isValid() or self.__layer_tree.isExpanded(parent)
             for index in model.traverse(p):
                 item = index.internalPointer()
-                print item.name, self.__layer_tree.isExpanded(index)
         btn = QPushButton('aaa')
         btn.clicked.connect(test)
 

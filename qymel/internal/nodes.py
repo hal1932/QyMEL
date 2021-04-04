@@ -1,12 +1,14 @@
 # coding: utf-8
 from __future__ import absolute_import
 from typing import *
+from six import *
 from six.moves import *
 
 import sys
 import inspect
 
-import maya.api.OpenMaya as om2
+import maya.cmds as _cmds
+import maya.api.OpenMaya as _om2
 
 
 class NodeFactory(object):
@@ -34,7 +36,7 @@ class NodeFactory(object):
 
     @staticmethod
     def create(mel_type, mobject, mdagpath=None):
-        # type: (str, om2.MObject, om2.MDagPath) -> object
+        # type: (str, _om2.MObject, _om2.MDagPath) -> Any
         if mel_type not in NodeFactory._cls_dict:
             return None
 

@@ -1,5 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 from typing import *
 from six.moves import *
 
@@ -27,7 +27,7 @@ class ${ClassName}(${BaseClassName}):
 
     def __init__(self, obj):
         # type: (Union[om2.MObject, str]) -> NoReturn
-        if isinstance(obj, (str, unicode)):
+        if isinstance(obj, (str, text_type)):
             obj, _ = _graphs.get_mobject(obj)
         super(${ClassName}, self).__init__(obj)
 
@@ -41,7 +41,7 @@ with open(dest_file, 'w') as wf:
         rf.readline()
         for line in rf:
             name, parent, mfn_type, mfn_set, mel_type = line.strip().split(',')
-            print name
+            print(name)
             source = TEMPLATE
             source = source.replace('${ClassName}', name)
             source = source.replace('${BaseClassName}', parent)

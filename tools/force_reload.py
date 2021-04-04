@@ -1,6 +1,7 @@
 # coding: utf-8
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 from typing import *
+from six import *
 from six.moves import *
 
 import sys
@@ -8,6 +9,7 @@ import os
 import ast
 import inspect
 import types
+import codecs
 import distutils.sysconfig
 
 
@@ -35,7 +37,7 @@ class _ImportSymbolItem(object):
 
     def __init__(self, name):
         # type: (Union[str, ast.alias]) -> NoReturn
-        if isinstance(name, (str, unicode)):
+        if isinstance(name, (str, text_type)):
             self.name = name
             self.alias = None
         elif isinstance(name, ast.alias):
@@ -104,7 +106,7 @@ def _get_import_items_rec(module, found_modules):
 def _reload_modules(items):
     # type: (List[_ModuleItem]) -> NoReturn
     for item in items:
-        print 'reload: {}'.format(item.module.__name__)
+        print('reload: {}'.format(item.module.__name__))
         reload_module(item.module)
 
 
@@ -114,13 +116,13 @@ def _apply_updates(updated_items):
         module = item.module
         items = item.items
 
-        print module.__name__
+        # print(module.__name__)
 
         for sub_item in items:
             if sub_item.symbols is None:
                 continue
 
-            print '  {}'.format(sub_item.module.__name__)
+            # print('  {}'.format(sub_item.module.__name__))
 
             for symbol in sub_item.symbols:
                 symbol_name = symbol.alias if symbol.alias is not None else symbol.name
@@ -133,7 +135,7 @@ def _apply_updates(updated_items):
                 if id(module.__dict__[symbol_name]) == id(new_symbol_obj):
                     continue
 
-                print '    {}, {}: {} -> {}'.format(symbol_name, module.__dict__[symbol_name], id(module.__dict__[symbol_name]), id(new_symbol_obj))
+                # print('    {}, {}: {} -> {}'.format(symbol_name, module.__dict__[symbol_name], id(module.__dict__[symbol_name]), id(new_symbol_obj)))
                 module.__dict__[symbol_name] = new_symbol_obj
 
 
@@ -190,7 +192,7 @@ def _parse_module_source(module):
         # inspect.getsource() は内部でキャッシュが効いてるから、必ず最新のソースを取得するために自前で read() する
         # source = inspect.getsource(module)
         source_file = inspect.getsourcefile(module)
-        with open(source_file, 'r') as f:
+        with codecs.open(source_file, 'r', 'utf-8') as f:
             source = f.read()
     except TypeError:
         return None
