@@ -20,6 +20,7 @@ class _QmSceneLayerQueryFlags(qm.FlagsDefinition):
         self.file_path = qm.SyntaxFlag('f', 'filePath', om2.MSyntax.kBoolean)
         self.elements = qm.SyntaxFlag('e', 'elements', om2.MSyntax.kBoolean)
         self.children = qm.SyntaxFlag('c', 'children', om2.MSyntax.kBoolean)
+        self.root_nodes = qm.SyntaxFlag('rn', 'rootNodes', om2.MSyntax.kBoolean)
 
 
 class QmSceneLayerQuery(om2.MPxCommand):
@@ -52,17 +53,26 @@ class QmSceneLayerQuery(om2.MPxCommand):
         parser = qm.ArgDatabase(self.syntax(), args)
         flags = parser.parse_flags(_QmSceneLayerQueryFlags)  # type: _QmSceneLayerQueryFlags
 
+        if flags.root_nodes.is_true:
+            nodes = []
+            for node in cmds.ls(type='qmSceneLayer'):
+                proxy = _LayerProxy(node)
+                if proxy.parent_layer is None:
+                    nodes.append(node)
+            self.setResult(nodes)
+            return
+
         layer_names = parser.getObjectStrings()
         for layer_name in layer_names:
             if not cmds.objExists(layer_name):
                 cmds.error('node "{}" is not exists'.format(layer_name))
 
         if flags.file_path.is_true:
-            results = []
+            file_paths = []
             for layer_name in layer_names:
                 proxy = _LayerProxy(layer_name)
-                results.append(proxy.file_path or '')
-            self.setResult(results)
+                file_paths.append(proxy.file_path or '')
+            self.setResult(file_paths)
             return
 
         if flags.elements.is_true:
