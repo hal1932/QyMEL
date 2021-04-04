@@ -38,6 +38,9 @@ def _box(cls, items, kwargs):
 
     for k, v in kwargs.items():
         if k == 'contents_margins':
-            box.setContentsMargins(v)
+            if isinstance(v, int):
+                box.setContentsMargins(v, v, v, v)
+            else:
+                box.setContentsMargins(v)
 
     return box
