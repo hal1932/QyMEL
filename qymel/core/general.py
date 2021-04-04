@@ -1,6 +1,7 @@
 # coding: utf-8
 from __future__ import absolute_import
 from typing import *
+from six import *
 from six.moves import *
 
 import maya.cmds as cmds
@@ -20,7 +21,7 @@ def eval(obj_name):
     # type: (Union[str, Iterable[str]]) -> Any
     tmp_mfn_comp = om2.MFnComponent()
     tmp_mfn_node = om2.MFnDependencyNode()
-    if isinstance(obj_name, (str, unicode)):
+    if isinstance(obj_name, (str, text_type)):
         return _graphs.eval(obj_name, tmp_mfn_comp, tmp_mfn_node)
     else:
         return [_graphs.eval(name, tmp_mfn_comp, tmp_mfn_node) for name in obj_name]
@@ -56,7 +57,7 @@ class MayaObject(object):
         return self._mobj_handle
 
     @property
-    def is_null_object(self):
+    def is_null(self):
         # type: () -> bool
         return self._mobj_handle.object().isNull()
 
@@ -74,6 +75,16 @@ class MayaObject(object):
         if mobj.isNull():
             return False
         return True
+
+    @property
+    def api_type(self):
+        # type: () -> int
+        return self.mobject.apiType()
+
+    @property
+    def api_type_str(self):
+        # type: () -> str
+        return self.mobject.apiTypeStr
 
     def __init__(self, mobj):
         # type: (om2.MObject) -> NoReturn
@@ -195,7 +206,7 @@ class Plug(object):
 
     def __init__(self, plug):
         # type: (Union[om2.MPlug, str]) -> NoReturn
-        if isinstance(plug, (str, unicode)):
+        if isinstance(plug, (str, text_type)):
             plug = _graphs.get_mplug(plug)
         self._mplug = plug
         self._mfn_node = None
@@ -302,7 +313,7 @@ class Component(MayaObject):
 
     def __init__(self, obj, mdagpath):
         # type: (Union[om2.MObject, str], om2.MDagPath) -> NoReturn
-        if isinstance(obj, (str, unicode)):
+        if isinstance(obj, (str, text_type)):
             mdagpath, obj = _graphs.get_comp_mobject(obj)
         super(Component, self).__init__(obj)
         self._mdagpath = mdagpath
