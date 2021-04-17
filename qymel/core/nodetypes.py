@@ -433,8 +433,8 @@ class AnimCurve(DependNode):
     _mfn_set = _om2anim.MFnAnimCurve
     _mel_type = 'animCurve'
 
-    _input = float
-    _output = float
+    _input_type = None
+    _output_type = None
 
     @staticmethod
     def create(**kwargs):
@@ -451,7 +451,7 @@ class AnimCurve(DependNode):
 
     def value(self, index):
         # type: (int) -> float
-        return self.mfn.value(index)
+        return self._to_output(self.mfn.value(index))
 
     def keys(self):
         # type: () -> List[float]
@@ -489,80 +489,68 @@ class AnimCurve(DependNode):
         return True
 
     def _to_input(self, value):
-        # type: (float) -> Union[_om2.MTime, _om2.MAngle, float]
-        return value
+        # type: (float) -> float
+        input_type = self.__class__._input_type
+        if input_type is None:
+            return value
+        return input_type(value, input_type.uiUnit())
 
     def _from_input(self, value):
-        # type: (Union[_om2.MTime, _om2.MAngle, float]) -> float
-        return value
+        # type: (Union[_om2.MTime, _om2.MAngle, _om2.MDistance, float]) -> float
+        if isinstance(value, float):
+            return value
+        return value.asUnits(self.__class__._input_type.uiUnit())
 
     def _to_output(self, value):
-        # type: (Union[_om2.MTime, _om2.MAngle, float]) -> float
-        return value
+        # type: (float) -> float
+        output_type = self.__class__._output_type
+        if output_type is None:
+            return value
+        return output_type(value).asUnits(output_type.uiUnit())
 
 
 class AnimCurveTA(AnimCurve):
 
     _mel_type = 'animCurveTA'
 
+    _input_type = _om2.MTime
+    _output_type = _om2.MAngle
+
     @staticmethod
     def create(**kwargs):
         return _graphs.create_node(AnimCurveTA._mel_type, **kwargs)
-
-    def _to_input(self, value):
-        # type: (float) -> Union[_om2.MTime, _om2.MAngle, float]
-        return _om2.MTime(value)
-
-    def _from_input(self, value):
-        # type: (Union[_om2.MTime, _om2.MAngle, float]) -> float
-        return value.asUnits(_om2.MTime.asUnits())
-
-    def _to_output(self, value):
-        # type: (Union[_om2.MTime, _om2.MAngle, float]) -> float
-        return value.asUnits(_om2.MAngle.uiUnit())
 
 
 class AnimCurveTL(AnimCurve):
 
     _mel_type = 'animCurveTL'
 
+    _input_type = _om2.MTime
+    _output_type = _om2.MDistance
+
     @staticmethod
     def create(**kwargs):
         return _graphs.create_node(AnimCurveTL._mel_type, **kwargs)
-
-    def _to_input(self, value):
-        # type: (float) -> Union[_om2.MTime, _om2.MAngle, float]
-        return _om2.MTime(value)
-
-    def _from_input(self, value):
-        # type: (Union[_om2.MTime, _om2.MAngle, float]) -> float
-        return value.asUnits(_om2.MTime.uiUnit())
 
 
 class AnimCurveTT(AnimCurve):
 
     _mel_type = 'animCurveTT'
 
+    _input_type = _om2.MTime
+    _output_type = _om2.MTime
+
     @staticmethod
     def create(**kwargs):
         return _graphs.create_node(AnimCurveTT._mel_type, **kwargs)
-
-    def _to_input(self, value):
-        # type: (float) -> Union[_om2.MTime, _om2.MAngle, float]
-        return _om2.MTime(value)
-
-    def _from_input(self, value):
-        # type: (Union[_om2.MTime, _om2.MAngle, float]) -> float
-        return value.asUnits(_om2.MTime.uiUnit())
-
-    def _to_output(self, value):
-        # type: (Union[_om2.MTime, _om2.MAngle, float]) -> float
-        return value.asUnits(_om2.MTime.uiUnit())
 
 
 class AnimCurveTU(AnimCurve):
 
     _mel_type = 'animCurveTU'
+
+    _input_type = _om2.MTime
+    _output_type = None
 
     @staticmethod
     def create(**kwargs):
@@ -577,18 +565,20 @@ class AnimCurveUA(AnimCurve):
 
     _mel_type = 'animCurveUA'
 
+    _in_type = None
+    _out_type = _om2.MAngle
+
     @staticmethod
     def create(**kwargs):
         return _graphs.create_node(AnimCurveUA._mel_type, **kwargs)
-
-    def _to_output(self, value):
-        # type: (Union[_om2.MTime, _om2.MAngle, float]) -> float
-        return value.asUnits(_om2.MAngle.uiUnit())
 
 
 class AnimCurveUL(AnimCurve):
 
     _mel_type = 'animCurveUL'
+
+    _input_type = None
+    _output_type = _om2.MDistance
 
     @staticmethod
     def create(**kwargs):
@@ -599,18 +589,20 @@ class AnimCurveUT(AnimCurve):
 
     _mel_type = 'animCurveUT'
 
+    _input_type = None
+    _output_type = _om2.MTime
+
     @staticmethod
     def create(**kwargs):
         return _graphs.create_node(AnimCurveUT._mel_type, **kwargs)
-
-    def _to_output(self, value):
-        # type: (Union[_om2.MTime, _om2.MAngle, float]) -> float
-        return value.asUnits(_om2.MTime.uiUnit())
 
 
 class AnimCurveUU(AnimCurve):
 
     _mel_type = 'animCurveUU'
+
+    _input_type = None
+    _output_type = None
 
     @staticmethod
     def ls(*args, **kwargs):
