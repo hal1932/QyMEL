@@ -4,6 +4,7 @@ from typing import *
 from six import *
 from six.moves import *
 
+import sys
 import os
 import glob
 
@@ -27,7 +28,10 @@ class PluginsInfo(object):
         plugins_root = os.path.join(
             os.path.dirname(__file__),
             '..',
-            'plugins'
+            'plugins',
+            'bin',
+            sys.platform,
+            _cmds.about(version=True)
         )
         plugins_root.replace(os.sep, '/')
 
