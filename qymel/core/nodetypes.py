@@ -4,6 +4,7 @@ from six import *
 from six.moves import *
 from typing import *
 
+import os
 import collections
 
 import maya.cmds as _cmds
@@ -1323,6 +1324,22 @@ class FileReference(DependNode):
     _mfn_type = _om2.MFn.kReference
     _mfn_set = _om2.MFnReference
     _mel_type = 'reference'
+
+    @staticmethod
+    def create(file_path, namespace=None, depth=None):
+        # type: (str, str, str) -> FilReference
+        kwargs = {
+            'reference': True,
+            'namespace': os.path.splitext(os.path.basename(file_path))[0]
+        }
+        if namespace is not None:
+            kwargs['namespace'] = namespace
+        if depth is not None:
+            kwargs['loadReferenceDepth'] = depth
+
+        file = _cmds.file(file_path, **kwargs)
+        node = _cmds.referenceQuery(file, referenceNode=True)
+        return FileReference(node)
 
     @property
     def file_path(self):
