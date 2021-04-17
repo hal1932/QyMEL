@@ -4,6 +4,8 @@ from six import *
 from six.moves import *
 from typing import *
 
+import collections
+
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 import maya.api.OpenMayaAnim as _om2anim
@@ -65,7 +67,7 @@ class DependNode(_general.MayaObject):
     @property
     def is_default_node(self):
         # type: () -> bool
-        return self.mfn.isDefaultNode()
+        return self.mfn.isDefaultNode
 
     @property
     def name(self):
@@ -91,6 +93,11 @@ class DependNode(_general.MayaObject):
     def is_locked(self):
         # type: () -> bool
         return self.mfn.isLocked
+
+    @property
+    def is_from_referenced_file(self):
+        # type: () -> bool
+        return self.mfn.isFromReferencedFile
 
     def __init__(self, obj):
         if isinstance(obj, (str, text_type)):
@@ -374,12 +381,17 @@ class ObjectSet(Entity):
 
     def extend(self, objs, force=False):
         # type: (Iterable[Union[DependNode, _general.Component]], bool) -> NoReturn
-        for obj in objs:
-            self.add(obj, force)
+        if not force:
+            _cmds.sets(*[o.mel_object for o in objs], addElement=self.mel_object)
+        else:
+            _cmds.sets(*[o.mel_object for o in objs], forceElement=self.mel_object)
 
     def remove(self, obj):
-        # type: (Union[DependNode, _general.Component]) -> NoReturn
-        _cmds.sets(obj.mel_object, remove=self.mel_object)
+        # type: (Union[DependNode, _general.Component, Iterable[DependNode], Iterable[_general.Component]]) -> NoReturn
+        if isinstance(obj, collections.Iterable):
+            _cmds.sets(*[o.mel_object for o in obj], remove=self.mel_object)
+        else:
+            _cmds.sets(obj.mel_object, remove=self.mel_object)
 
     def clear(self):
         # type: () -> NoReturn
