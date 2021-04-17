@@ -12,6 +12,7 @@ import maya.api.OpenMayaAnim as _om2anim
 
 from . import general as _general
 from . import iterators as _iterators
+from . import plugins as _plugins
 from ..internal import nodes as _nodes
 from ..internal import graphs as _graphs
 
@@ -1450,3 +1451,5 @@ class Blinn(Reflect):
 
 _nodes.NodeFactory.register(__name__)
 _nodes.NodeFactory.register_default(DependNode, DagNode)
+
+_plugins.load_plugins()
