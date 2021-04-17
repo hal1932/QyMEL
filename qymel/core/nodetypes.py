@@ -1062,6 +1062,10 @@ class Camera(Shape):
     def create(**kwargs):
         return Camera(_cmds.camera(**kwargs))
 
+    def is_startup_camera(self):
+        # type: () -> bool
+        return _cmds.camera(self.mel_object, query=True, startupCamera=True)
+
 
 class GeometryShape(Shape):
 
