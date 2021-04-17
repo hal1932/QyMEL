@@ -18,11 +18,19 @@ class DependNode(_general.MayaObject):
 
     _mfn_type = _om2.MFn.kDependencyNode
     _mfn_set = _om2.MFnDependencyNode
-    _mel_type = ''
+    _mel_type = None
 
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs.pop('type', None)
+    @classmethod
+    def ls(cls, *args, **kwargs):
+        # type: (Any, Any) -> List[DependNode]
+        mel_type = cls._mel_type
+        if 'typ' in kwargs:
+            del kwargs['type']
+        if not mel_type:
+            if 'type' in kwargs:
+                del kwargs['type']
+        else:
+            kwargs['type'] = mel_type
         return _graphs.ls_nodes(*args, **kwargs)
 
     @property
@@ -33,7 +41,6 @@ class DependNode(_general.MayaObject):
     @property
     def exists(self):
         # type: () -> bool
-        # return cmds.objExists(self.mel_object)
         return not self.mobject.isNull()
 
     @property
@@ -118,7 +125,7 @@ class DependNode(_general.MayaObject):
         return plug
 
     def connections(self, **kwargs):
-        # type: (Any) -> Iterable[Any]
+        # type: (Any) -> Union[List[DependNode, _general.Plug]]
         # 自前でプラグを辿るより listConnections のほうが速い
         others = _cmds.listConnections(self.mel_object, **kwargs) or []
 
@@ -129,7 +136,7 @@ class DependNode(_general.MayaObject):
         return [_graphs.eval_node(name, tmp_mfn) for name in others]
 
     def sources(self, **kwargs):
-        # type: (Any) -> Iterable[Any]
+        # type: (Any) -> Union[List[DependNode, _general.Plug]]
         kwargs.pop('s', None)
         kwargs.pop('d', None)
         kwargs['source'] = True
@@ -137,7 +144,7 @@ class DependNode(_general.MayaObject):
         return self.connections(**kwargs)
 
     def destinations(self, **kwargs):
-        # type: (Any) -> Iterable[Any]
+        # type: (Any) -> Union[List[DependNode, _general.Plug]]
         kwargs.pop('s', None)
         kwargs.pop('d', None)
         kwargs['source'] = False
@@ -145,6 +152,7 @@ class DependNode(_general.MayaObject):
         return self.connections(**kwargs)
 
     def histories(self, **kwargs):
+        # type: (Any) -> List[DependNode]
         nodes = _cmds.listHistory(self.mel_object, **kwargs)
         tmp_mfn = _om2.MFnDependencyNode()
         return [_graphs.eval_node(name, tmp_mfn) for name in nodes]
@@ -154,9 +162,11 @@ class DependNode(_general.MayaObject):
         _cmds.rename(self.mel_object, new_name)
 
     def lock(self):
+        # type: () -> NoReturn
         _cmds.lockNode(self.mel_object, lock=True)
 
     def unlock(self):
+        # type: () -> NoReturn
         _cmds.lockNode(self.mel_object, lock=False)
 
     def duplicate(self, **kwargs):
@@ -165,13 +175,13 @@ class DependNode(_general.MayaObject):
         return _graphs.eval_node(duplicated_node_name, _om2.MFnDependencyNode())
 
     def delete(self):
+        # type: () -> NoReturn
         _cmds.delete(self.mel_object)
 
 
 class ContainerBase(DependNode):
 
     _mfn_type = _om2.MFn.kContainerBase
-    _mfn_set = _om2.MFnDependencyNode
     _mel_type = 'containerBase'
 
     @staticmethod
@@ -183,17 +193,11 @@ class ContainerBase(DependNode):
 class DisplayLayer(DependNode):
 
     _mfn_type = _om2.MFn.kDisplayLayer
-    _mfn_set = _om2.MFnDependencyNode
     _mel_type = 'displayLayer'
 
     DISPLAY_TYPE_NORMAL = 0
     DISPLAY_TYPE_TEMPLATE = 1
     DISPLAY_TYPE_REFERENCE = 2
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = DisplayLayer._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create(**kwargs):
@@ -237,13 +241,7 @@ class DisplayLayer(DependNode):
 class GeometryFilter(DependNode):
 
     _mfn_type = _om2.MFn.kGeometryFilt
-    _mfn_set = _om2.MFnDependencyNode
     _mel_type = 'geometryFilter'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = GeometryFilter._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create(**kwargs):
@@ -255,11 +253,6 @@ class SkinCluster(GeometryFilter):
     _mfn_type = _om2.MFn.kSkinClusterFilter
     _mfn_set = _om2anim.MFnSkinCluster
     _mel_type = 'skinCluster'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = SkinCluster._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create(**kwargs):
@@ -339,11 +332,6 @@ class ObjectSet(Entity):
     _mel_type = 'objectSet'
 
     @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = ObjectSet._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
-
-    @staticmethod
     def create(**kwargs):
         return ObjectSet(_cmds.sets(**kwargs))
 
@@ -401,13 +389,7 @@ class ObjectSet(Entity):
 class AnimLayer(ObjectSet):
 
     _mfn_type = _om2.MFn.kAnimLayer
-    _mfn_set = _om2.MFnSet
     _mel_type = 'animLayer'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = AnimLayer._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create(**kwargs):
@@ -417,13 +399,7 @@ class AnimLayer(ObjectSet):
 class ShadingEngine(ObjectSet):
 
     _mfn_type = _om2.MFn.kShadingEngine
-    _mfn_set = _om2.MFnSet
     _mel_type = 'shadingEngine'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = ShadingEngine._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create(**kwargs):
@@ -446,11 +422,6 @@ class AnimCurve(DependNode):
 
     _input = float
     _output = float
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = AnimCurve._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create(**kwargs):
@@ -522,11 +493,6 @@ class AnimCurveTA(AnimCurve):
     _mel_type = 'animCurveTA'
 
     @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = AnimCurveTA._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
-
-    @staticmethod
     def create(**kwargs):
         return _graphs.create_node(AnimCurveTA._mel_type, **kwargs)
 
@@ -548,11 +514,6 @@ class AnimCurveTL(AnimCurve):
     _mel_type = 'animCurveTL'
 
     @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = AnimCurveTL._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
-
-    @staticmethod
     def create(**kwargs):
         return _graphs.create_node(AnimCurveTL._mel_type, **kwargs)
 
@@ -568,11 +529,6 @@ class AnimCurveTL(AnimCurve):
 class AnimCurveTT(AnimCurve):
 
     _mel_type = 'animCurveTT'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = AnimCurveTT._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create(**kwargs):
@@ -596,11 +552,6 @@ class AnimCurveTU(AnimCurve):
     _mel_type = 'animCurveTU'
 
     @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = AnimCurveTU._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
-
-    @staticmethod
     def create(**kwargs):
         return _graphs.create_node(AnimCurveTU._mel_type, **kwargs)
 
@@ -612,11 +563,6 @@ class AnimCurveTU(AnimCurve):
 class AnimCurveUA(AnimCurve):
 
     _mel_type = 'animCurveUA'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = AnimCurveUA._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create(**kwargs):
@@ -632,11 +578,6 @@ class AnimCurveUL(AnimCurve):
     _mel_type = 'animCurveUL'
 
     @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = AnimCurveUL._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
-
-    @staticmethod
     def create(**kwargs):
         return _graphs.create_node(AnimCurveUL._mel_type, **kwargs)
 
@@ -644,11 +585,6 @@ class AnimCurveUL(AnimCurve):
 class AnimCurveUT(AnimCurve):
 
     _mel_type = 'animCurveUT'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = AnimCurveUT._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create(**kwargs):
@@ -679,11 +615,11 @@ class DagNode(Entity):
     _mfn_set = _om2.MFnDagNode
     _mel_type = None
 
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs.pop('type', None)
+    @classmethod
+    def ls(cls, *args, **kwargs):
+        # type: (Any, Any) -> List[DagNode]
         kwargs['dagObjects'] = True
-        return _graphs.ls_nodes(*args, **kwargs)
+        return cls.__bases__[0].ls(*args, **kwargs)
 
     @property
     def mdagpath(self):
@@ -1001,11 +937,6 @@ class Transform(DagNode):
     _mel_type = 'transform'
 
     @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = Transform._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
-
-    @staticmethod
     def create(**kwargs):
         return _graphs.create_node(Transform._mel_type, **kwargs)
 
@@ -1060,13 +991,7 @@ class Transform(DagNode):
 class Joint(Transform):
 
     _mfn_type = _om2.MFn.kJoint
-    _mfn_set = _om2.MFnTransform
     _mel_type = 'joint'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = Joint._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create(**kwargs):
@@ -1076,13 +1001,7 @@ class Joint(Transform):
 class Shape(DagNode):
 
     _mfn_type = _om2.MFn.kShape
-    _mfn_set = _om2.MFnDagNode
     _mel_type = 'shape'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = Shape._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     def shading_groups(self):
         # type: () -> [ShadingEngine]
@@ -1110,61 +1029,28 @@ class Camera(Shape):
     _mel_type = 'camera'
 
     @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = Camera._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
-
-    @staticmethod
     def create(**kwargs):
         return Camera(_cmds.camera(**kwargs))
 
 
 class GeometryShape(Shape):
 
-    _mfn_type = None
-    _mfn_set = _om2.MFnDagNode
     _mel_type = 'geometryShape'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = GeometryShape._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
 
 class DeformableShape(GeometryShape):
 
-    _mfn_type = None
-    _mfn_set = _om2.MFnDagNode
     _mel_type = 'deformableShape'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = DeformableShape._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
 
 class ControlPoint(DeformableShape):
 
-    _mfn_type = None
-    _mfn_set = _om2.MFnDagNode
     _mel_type = 'controlPoint'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = ControlPoint._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
 
 class SurfaceShape(ControlPoint):
 
-    _mfn_type = None
-    _mfn_set = _om2.MFnDagNode
     _mel_type = 'surfaceShape'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = SurfaceShape._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
 
 class ColorSet(object):
@@ -1258,11 +1144,6 @@ class Mesh(SurfaceShape):
     _mfn_type = _om2.MFn.kMesh
     _mfn_set = _om2.MFnMesh
     _mel_type = 'mesh'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = Mesh._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create(**kwargs):
@@ -1409,11 +1290,6 @@ class FileReference(DependNode):
     _mfn_set = _om2.MFnReference
     _mel_type = 'reference'
 
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = FileReference._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
-
     @property
     def file_path(self):
         # type: () -> str
@@ -1505,13 +1381,7 @@ class FileReference(DependNode):
 class Lambert(DependNode):
 
     _mfn_type = _om2.MFn.kLambert
-    _mfn_set = _om2.MFnDependencyNode
     _mel_type = 'lambert'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = Lambert._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create():
@@ -1524,25 +1394,13 @@ class Lambert(DependNode):
 class Reflect(Lambert):
 
     _mfn_type = _om2.MFn.kReflect
-    _mfn_set = _om2.MFnDependencyNode
     _mel_type = 'reflect'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = Reflect._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
 
 class Phong(Reflect):
 
     _mfn_type = _om2.MFn.kPhong
-    _mfn_set = _om2.MFnDependencyNode
     _mel_type = 'phong'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = Phong._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create():
@@ -1555,13 +1413,7 @@ class Phong(Reflect):
 class PhongE(Reflect):
 
     _mfn_type = _om2.MFn.kPhongExplorer
-    _mfn_set = _om2.MFnDependencyNode
     _mel_type = 'phongE'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = PhongE._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create():
@@ -1574,13 +1426,7 @@ class PhongE(Reflect):
 class Blinn(Reflect):
 
     _mfn_type = _om2.MFn.kBlinn
-    _mfn_set = _om2.MFnDependencyNode
     _mel_type = 'blinn'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = Blinn._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
     @staticmethod
     def create():
