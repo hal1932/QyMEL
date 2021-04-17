@@ -458,13 +458,6 @@ class AnimCurve(DependNode):
         mfn = self.mfn
         return [self._from_input(mfn.input(i)) for i in range(mfn.numKeys)]
 
-    def key_range(self):
-        # type: () -> Tuple[float, float]
-        mfn = self.mfn
-        start = mfn.input(0)
-        end = mfn.input(mfn.numKeys - 1)
-        return self._from_input(start), self._from_input(end)
-
     def values(self):
         # type: () -> List[float]
         mfn = self.mfn
@@ -475,9 +468,27 @@ class AnimCurve(DependNode):
         value = self.mfn.evaluate(self._to_input(time))
         return self._to_output(value)
 
-    def add_destination(self, plug):
-        # type: (_general.Plug) -> NoReturn
-        self.output.connect(plug)
+    def in_tangent_type(self, index):
+        # type: (int) -> int
+        return self.mfn.inTangentType(index)
+
+    def out_tangent_type(self, index):
+        # type: (int) -> int
+        return self.mfn.outTangentType(index)
+
+    def set_tangent_type(self, index=None, in_type=None, out_type=None):
+        # type: (Union[int, Tuple[int, int]], int, int) -> NoReturn
+        kwargs = {}
+        if isinstance(index, int):
+            index = (index, 0)
+        kwargs['index'] = index
+
+        if in_type is not None:
+            kwargs['inTangentType'] = self._tangent_type_int_to_str(in_type)
+        if out_type is not None:
+            kwargs['outTangentType'] = self._tangent_type_int_to_str(out_type)
+
+        _cmds.keyTangent(self.mel_object, **kwargs)
 
     def set_keyframe(self, **kwargs):
         # type: (Any) -> bool
@@ -507,6 +518,20 @@ class AnimCurve(DependNode):
         if output_type is None:
             return value
         return output_type(value).asUnits(output_type.uiUnit())
+
+    def _tangent_type_int_to_str(self, i):
+        # type: (int) -> str
+        types = {
+            _om2anim.MFnAnimCurve.kTangentFixed: 'fixed',
+            _om2anim.MFnAnimCurve.kTangentLinear: 'linear',
+            _om2anim.MFnAnimCurve.kTangentFlat: 'flat',
+            _om2anim.MFnAnimCurve.kTangentStep: 'step',
+            _om2anim.MFnAnimCurve.kTangentStepNext: 'stepnext',
+            _om2anim.MFnAnimCurve.kTangentClamped: 'clamped',
+            _om2anim.MFnAnimCurve.kTangentPlateau: 'plateau',
+            _om2anim.MFnAnimCurve.kTangentAuto: 'auto',
+        }
+        return types[i]
 
 
 class AnimCurveTA(AnimCurve):
