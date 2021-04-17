@@ -6,18 +6,18 @@ from six.moves import *
 
 import functools
 
-import maya.cmds as cmds
+import maya.cmds as _cmds
 
 
 class UndoChunk(object):
 
     def __enter__(self):
-        cmds.undoInfo(openChunk=True)
+        _cmds.undoInfo(openChunk=True)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         # type: (type, Exception, str) -> NoReturn
-        cmds.undoInfo(closeChunk=True)
+        _cmds.undoInfo(closeChunk=True)
         raise exc_val
 
 

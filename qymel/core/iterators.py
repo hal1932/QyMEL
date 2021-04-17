@@ -4,7 +4,7 @@ from typing import *
 from six import *
 from six.moves import *
 
-import maya.api.OpenMaya as om2
+import maya.api.OpenMaya as _om2
 
 
 class _Iterator(object):
@@ -15,7 +15,7 @@ class _Iterator(object):
 
     @property
     def mobject(self):
-        # type: () -> om2.MObject
+        # type: () -> _om2.MObject
         return self._miter.currentItem()
 
     def __init__(self, miter, comp):
@@ -62,7 +62,7 @@ class MeshVertexIter(_Iterator):
 
     @property
     def connected_edge_indices(self):
-        # type: () -> om2.MIntArray
+        # type: () -> _om2.MIntArray
         return self._miter.getConnectedEdges()
 
     @property
@@ -72,7 +72,7 @@ class MeshVertexIter(_Iterator):
 
     @property
     def connected_face_indices(self):
-        # type: () -> om2.MIntArray
+        # type: () -> _om2.MIntArray
         return self._miter.getConnectedFaces()
 
     @property
@@ -82,7 +82,7 @@ class MeshVertexIter(_Iterator):
 
     @property
     def connected_vertex_indices(self):
-        # type: () -> om2.MIntArray
+        # type: () -> _om2.MIntArray
         return self._miter.getConnectedVertices()
 
     @property
@@ -91,7 +91,7 @@ class MeshVertexIter(_Iterator):
         return self._miter.onBoundary()
 
     def __init__(self, miter, comp, mfn_mesh):
-        # type: (om2.MItMeshVertex, Component, om2.MFnMesh) -> NoReturn
+        # type: (_om2.MItMeshVertex, Component, _om2.MFnMesh) -> NoReturn
         super(MeshVertexIter, self).__init__(miter, comp)
         self._mfn_mesh = mfn_mesh
 
@@ -102,33 +102,33 @@ class MeshVertexIter(_Iterator):
         return self._miter.hasColor()
 
     def color(self, color_set=None, face_id=None):
-        # type: (Union[ColorSet, str], int) -> om2.MColor
+        # type: (Union[ColorSet, str], int) -> _om2.MColor
         color_set_name = _get_color_set_name(color_set, None)
         if face_id is not None:
             return self._miter.getColor(color_set_name, face_id)
         return self._miter.getColor(color_set_name)
 
     def colors(self, color_set=None):
-        # type: (Union[ColorSet, str]) -> om2.MColorArray
+        # type: (Union[ColorSet, str]) -> _om2.MColorArray
         color_set_name = _get_color_set_name(color_set, None)
         return self._miter.getColors(color_set_name)
 
     def color_indices(self, color_set=None):
-        # type: (Union[ColorSet, str]) -> om2.MIntArray
+        # type: (Union[ColorSet, str]) -> _om2.MIntArray
         color_set_name = _get_color_set_name(color_set, None)
         return self._miter.getColorIndices(None)
 
-    def normal(self, space=om2.MSpace.kObject):
-        # type: (int) -> om2.MVector
+    def normal(self, space=_om2.MSpace.kObject):
+        # type: (int) -> _om2.MVector
         # MItMeshVertex.getNormalを引数付きで呼ぶとMayaが落ちる
         return self._mfn_mesh.getVertexNormal(self.index, True, space)
 
     def normal_indices(self):
-        # type: () -> om2.MIntArray
+        # type: () -> _om2.MIntArray
         return self._miter.getNormalIndices()
 
-    def normals(self, space=om2.MSpace.kObject):
-        # type: (int) -> om2.MVectorArray
+    def normals(self, space=_om2.MSpace.kObject):
+        # type: (int) -> _om2.MVectorArray
         return self._miter.getNormals(space)
 
     def uv(self, uv_set=None):
@@ -137,7 +137,7 @@ class MeshVertexIter(_Iterator):
         return self._miter.getUV(uv_set_name)
 
     def uv_indices(self, uv_set=None):
-        # type: (Union[UvSet, str]) -> om2.MIntArray
+        # type: (Union[UvSet, str]) -> _om2.MIntArray
         uv_set_name = _get_uv_set_name(uv_set, None)
         return self._miter.getUVIndices(uv_set_name)
 
@@ -157,8 +157,8 @@ class MeshVertexIter(_Iterator):
         uv_set_name = _get_uv_set_name(uv_set, None)
         return self._miter.numUVs(uv_set_name)
 
-    def position(self, space=om2.MSpace.kObject):
-        # type: (int) -> om2.MPoint
+    def position(self, space=_om2.MSpace.kObject):
+        # type: (int) -> _om2.MPoint
         return self._miter.position(space)
 
 
@@ -171,27 +171,27 @@ class MeshFaceIter(_Iterator):
 
     @property
     def connected_edge_indices(self):
-        # type: () -> om2.MIntArray
+        # type: () -> _om2.MIntArray
         return self._miter.getConnectedEdges()
 
     @property
     def connected_face_indices(self):
-        # type: () -> om2.MIntArray
+        # type: () -> _om2.MIntArray
         return self._miter.getConnectedFaces()
 
     @property
     def connected_vertex_indices(self):
-        # type: () -> om2.MIntArray
+        # type: () -> _om2.MIntArray
         return self._miter.getConnectedVertices()
 
     @property
     def edge_indices(self):
-        # type: () -> om2.MIntArray
+        # type: () -> _om2.MIntArray
         return self._miter.getEdges()
 
     @property
     def vertex_indices(self):
-        # type: () -> om2.MIntArray
+        # type: () -> _om2.MIntArray
         return self._miter.getVertices()
 
     @property
@@ -225,44 +225,44 @@ class MeshFaceIter(_Iterator):
         return self._miter.numTriangles()
 
     def __init__(self, miter, comp):
-        # type: (om2.MItMeshPolygon, Component) -> NoReturn
+        # type: (_om2.MItMeshPolygon, Component) -> NoReturn
         super(MeshFaceIter, self).__init__(miter, comp)
 
     def _next(self):
         self._miter.next(self._miter)
 
-    def center(self, space=om2.MSpace.kObject):
-        # type: (int) -> om2.MPoint
+    def center(self, space=_om2.MSpace.kObject):
+        # type: (int) -> _om2.MPoint
         return self._miter.center(space)
 
-    def area(self, space=om2.MSpace.kObject):
+    def area(self, space=_om2.MSpace.kObject):
         # type: (int) -> float
         return self._miter.getArea(space)
 
-    def normal(self, space=om2.MSpace.kObject, vertex_id=None):
-        # type: (int, int) -> om2.MVector
+    def normal(self, space=_om2.MSpace.kObject, vertex_id=None):
+        # type: (int, int) -> _om2.MVector
         if vertex_id is not None:
             return self._miter.getNormal(vertex_id, space)
         return self._miter.getNormal(space)
 
-    def normals(self, space=om2.MSpace.kObject):
-        # type: (int) -> om2.MVectorArray
+    def normals(self, space=_om2.MSpace.kObject):
+        # type: (int) -> _om2.MVectorArray
         return self._miter.getNormals(space)
 
-    def points(self, space=om2.MSpace.kObject):
-        # type: (int) -> om2.MPointArray
+    def points(self, space=_om2.MSpace.kObject):
+        # type: (int) -> _om2.MPointArray
         return self._miter.getPoints(space)
 
-    def triangle(self, index, space=om2.MSpace.kObject):
-        # type: (int, int) -> Dict[int, om2.MPoint]
+    def triangle(self, index, space=_om2.MSpace.kObject):
+        # type: (int, int) -> Dict[int, _om2.MPoint]
         points, vertices = self._miter.getTriangle(index, space)
         result = {}
         for i, vertex_id in enumerate(vertices):
             result[vertex_id] = points[i]
         return result
 
-    def triangles(self, space=om2.MSpace.kObject):
-        # type: (int) -> List[Dict[int, om2.MPoint]]
+    def triangles(self, space=_om2.MSpace.kObject):
+        # type: (int) -> List[Dict[int, _om2.MPoint]]
         data = self._miter.getTriangles(space)
         points = data[0]
         vertices = data[1]
@@ -288,18 +288,18 @@ class MeshEdgeIter(_Iterator):
 
     @property
     def connected_edge_indices(self):
-        # type: () -> om2.MIntArray
+        # type: () -> _om2.MIntArray
         return self._miter.getConnectedEdges()
 
     @property
     def connected_face_indices(self):
-        # type: () -> om2.MIntArray
+        # type: () -> _om2.MIntArray
         return self._miter.getConnectedFaces()
 
     @property
     def vertex_indices(self):
-        # type: () -> om2.MIntArray
-        return om2.MIntArray([self._miter.vertexId(0), self._miter.vertexId(1)])
+        # type: () -> _om2.MIntArray
+        return _om2.MIntArray([self._miter.vertexId(0), self._miter.vertexId(1)])
 
     @property
     def on_boudary(self):
@@ -312,20 +312,20 @@ class MeshEdgeIter(_Iterator):
         return self._miter.isSmooth
 
     def __init__(self, miter, comp):
-        # type: (om2.MItMeshEdge, Component) -> NoReturn
+        # type: (_om2.MItMeshEdge, Component) -> NoReturn
         super(MeshEdgeIter, self).__init__(miter, comp)
 
-    def center(self, space=om2.MSpace.kObject):
-        # type: (int) -> om2.MPoint
+    def center(self, space=_om2.MSpace.kObject):
+        # type: (int) -> _om2.MPoint
         return self._miter.center(space)
 
-    def length(self, space=om2.MSpace.kObject):
+    def length(self, space=_om2.MSpace.kObject):
         # type: (int) -> float
         return self._miter.length(space)
 
-    def points(self, space=om2.MSpace.kObject):
-        # type: (int) -> om2.MPointArray
-        return om2.MPointArray([self._miter.point(0, space), self._miter.point(1, space)])
+    def points(self, space=_om2.MSpace.kObject):
+        # type: (int) -> _om2.MPointArray
+        return _om2.MPointArray([self._miter.point(0, space), self._miter.point(1, space)])
 
 
 class MeshVertexFaceIter(_Iterator):
@@ -357,11 +357,11 @@ class MeshVertexFaceIter(_Iterator):
         return self._miter.hasColor()
 
     def __init__(self, miter, comp):
-        # type: (om2.MItMeshFaceVertex, Component) -> NoReturn
+        # type: (_om2.MItMeshFaceVertex, Component) -> NoReturn
         super(MeshVertexFaceIter, self).__init__(miter, comp)
 
     def color(self, color_set=None):
-        # type: (Union[ColorSet, str]) -> om2.MColor
+        # type: (Union[ColorSet, str]) -> _om2.MColor
         color_set_name = _get_color_set_name(color_set, '')
         return self._miter.getColor(color_set_name)
 
@@ -370,17 +370,17 @@ class MeshVertexFaceIter(_Iterator):
         color_set_name = _get_color_set_name(color_set, '')
         return self._miter.getColorIndex(color_set_name)
 
-    def normal(self, space=om2.MSpace.kObject):
-        # type: (int) -> om2.MVector
+    def normal(self, space=_om2.MSpace.kObject):
+        # type: (int) -> _om2.MVector
         return self._miter.getNormal(space)
 
-    def tangent(self, space=om2.MSpace.kObject, uv_set=None):
-        # type: (int, Union[UvSet, str]) -> om2.MVector
+    def tangent(self, space=_om2.MSpace.kObject, uv_set=None):
+        # type: (int, Union[UvSet, str]) -> _om2.MVector
         uv_set_name = _get_uv_set_name(uv_set, 'map1')
         return self._miter.getTangent(space, uv_set_name)
 
-    def binormal(self, space=om2.MSpace.kObject, uv_set=None):
-        # type: (int, Union[UvSet, str]) -> om2.MVector
+    def binormal(self, space=_om2.MSpace.kObject, uv_set=None):
+        # type: (int, Union[UvSet, str]) -> _om2.MVector
         uv_set_name = _get_uv_set_name(uv_set, 'map1')
         return self._miter.getBinormal(space, uv_set_name)
 
@@ -407,8 +407,8 @@ class MeshVertexFaceIter(_Iterator):
         uv_set_name = _get_uv_set_name(uv_set, 'map1')
         return self._miter.hasUVs(uv_set_name)
 
-    def position(self, space=om2.MSpace.kObject):
-        # type: (int) -> om2.MPoint
+    def position(self, space=_om2.MSpace.kObject):
+        # type: (int) -> _om2.MPoint
         return self._miter.position(space)
 
 

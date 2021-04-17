@@ -4,8 +4,8 @@ from typing import *
 from six import *
 from six.moves import *
 
-import maya.cmds as cmds
-import maya.api.OpenMaya as om2
+import maya.cmds as _cmds
+import maya.api.OpenMaya as _om2
 
 from . import nodes as _nodes
 from . import plugs as _plugs
@@ -17,10 +17,10 @@ def ls(*args, **kwargs):
     result = []
 
     kwargs['long'] = True
-    tmp_mfn_node = om2.MFnDependencyNode()
-    tmp_mfn_comp = om2.MFnComponent()
+    tmp_mfn_node = _om2.MFnDependencyNode()
+    tmp_mfn_comp = _om2.MFnComponent()
 
-    for obj_name in cmds.ls(*args, **kwargs):
+    for obj_name in _cmds.ls(*args, **kwargs):
         obj = eval(obj_name, tmp_mfn_comp, tmp_mfn_node)
         result.append(obj)
 
@@ -32,9 +32,9 @@ def ls_nodes(*args, **kwargs):
 
     kwargs['long'] = True
     kwargs['objectsOnly'] = True
-    tmp_mfn = om2.MFnDependencyNode()
+    tmp_mfn = _om2.MFnDependencyNode()
 
-    for node_name in cmds.ls(*args, **kwargs):
+    for node_name in _cmds.ls(*args, **kwargs):
         node = eval_node(node_name, tmp_mfn)
         if node is not None:
             result.append(node)
@@ -43,7 +43,7 @@ def ls_nodes(*args, **kwargs):
 
 
 def eval(obj_name, tmp_mfn_comp, tmp_mfn_node):
-    # type: (str, om2.MFnComponent, om2.MFnDependencyNode) -> Any
+    # type: (str, _om2.MFnComponent, _om2.MFnDependencyNode) -> Any
     if '.' in obj_name:
         plug = eval_plug(obj_name)
         if plug is not None:
@@ -77,7 +77,7 @@ def eval_plug(plug_name):
 
 
 def eval_component(comp_name, tmp_mfn_comp):
-    # type: (str, om2.MFnComponent) -> Any
+    # type: (str, _om2.MFnComponent) -> Any
     mdagpath = None
     mobj = None
     try:
@@ -94,10 +94,10 @@ def eval_component(comp_name, tmp_mfn_comp):
 
 
 def eval_node(node_name, tmp_mfn_node):
-    # type: (str, om2.MFnDependencyNode) -> Any
+    # type: (str, _om2.MFnDependencyNode) -> Any
     mobj, mdagpath = get_mobject(node_name)
 
-    if mobj.hasFn(om2.MFn.kDependencyNode):
+    if mobj.hasFn(_om2.MFn.kDependencyNode):
         tmp_mfn_node.setObject(mobj)
         node = to_node_instance(tmp_mfn_node, mdagpath)
         return node
@@ -106,13 +106,13 @@ def eval_node(node_name, tmp_mfn_node):
 
 
 def create_node(*args, **kwargs):
-    node_name = cmds.createNode(*args, **kwargs)
+    node_name = _cmds.createNode(*args, **kwargs)
     mobj, mdagpath = get_mobject(node_name)
-    return to_node_instance(om2.MFnDependencyNode(mobj), mdagpath)
+    return to_node_instance(_om2.MFnDependencyNode(mobj), mdagpath)
 
 
 def to_node_instance(mfn, mdagpath=None):
-    # type: (om2.MFnDependencyNode, om2.MDagPath) -> Any
+    # type: (_om2.MFnDependencyNode, _om2.MDagPath) -> Any
     type_name = mfn.typeName
     mobj = mfn.object()
 
@@ -124,34 +124,34 @@ def to_node_instance(mfn, mdagpath=None):
 
 
 def get_mobject(node_name):
-    # type: (str) -> (om2.MObject, om2.MDagPath)
-    sel = om2.MSelectionList()
+    # type: (str) -> (_om2.MObject, _om2.MDagPath)
+    sel = _om2.MSelectionList()
     sel.add(node_name)
     mobj = sel.getDependNode(0)
 
-    if mobj.hasFn(om2.MFn.kDagNode):
+    if mobj.hasFn(_om2.MFn.kDagNode):
         return mobj, sel.getDagPath(0)
 
     return mobj, None
 
 
 def get_world_mobject():
-    # type: () -> om2.MObject
-    ite = om2.MItDag()
+    # type: () -> _om2.MObject
+    ite = _om2.MItDag()
     while not ite.isDone():
         mobj = ite.currentItem()
-        if mobj.hasFn(om2.MFn.kWorld):
+        if mobj.hasFn(_om2.MFn.kWorld):
             return mobj
     raise RuntimeError('cannot find the MObject of the World')
 
 
 def _to_plug_instance(mplug):
-    # type: (om2.MPlug) -> object
+    # type: (_om2.MPlug) -> object
     return _plugs.PlugFactory.create(mplug)
 
 
 def to_comp_instance(mfn, mdagpath, mobject):
-    # type: (om2.MFnComponent, om2.MDagPath, om2.MObject) -> object
+    # type: (_om2.MFnComponent, _om2.MDagPath, _om2.MObject) -> object
     comp_type = mfn.componentType
 
     comp = _components.ComponentFactory.create(comp_type, mdagpath, mobject)
@@ -162,24 +162,24 @@ def to_comp_instance(mfn, mdagpath, mobject):
 
 
 def get_mplug(name):
-    # type: (str) -> om2.MPlug
-    sel = om2.MSelectionList()
+    # type: (str) -> _om2.MPlug
+    sel = _om2.MSelectionList()
     sel.add(name)
     return sel.getPlug(0)
 
 
 def get_comp_mobject(name):
-    # type: (str) -> (om2.MDagPath, om2.MObject)
-    sel = om2.MSelectionList()
+    # type: (str) -> (_om2.MDagPath, _om2.MObject)
+    sel = _om2.MSelectionList()
     sel.add(name)
     return sel.getComponent(0)
 
 
 def connections(mfn):
-    # type: (om2.MFnDependencyNode) -> Set[om2.MObject]
+    # type: (_om2.MFnDependencyNode) -> Set[_om2.MObject]
     result = []
 
-    # plug = om2.MPlug()
+    # plug = _om2.MPlug()
     # plug.setMObject(mfn.object())
 
     for i in range(mfn.attributeCount()):

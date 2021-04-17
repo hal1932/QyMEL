@@ -7,8 +7,8 @@ from six.moves import *
 import sys
 
 try:
-    import maya.OpenMayaUI as omui
-    from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
+    import maya.OpenMayaUI as _omui
+    from maya.app.general.mayaMixin import MayaQWidgetBaseMixin as _MayaWidgetBaseMixin
     _MAYA = True
 except ImportError:
     _MAYA = False
@@ -47,7 +47,7 @@ class AppBase(object):
             sys.exit(app.exec_())
 
     def _initialize(self, app):
-        # type: (QApplication) -> nore
+        # type: (QApplication) -> NoReturn
         pass
 
     def _create_window(self):
@@ -94,11 +94,11 @@ class _MainWindowBase(QMainWindow):
 if _MAYA:
     def get_maya_window():
         # type: () -> QWidget
-        maya_main_window_ptr = omui.MQtUtil.mainWindow()
+        maya_main_window_ptr = _omui.MQtUtil.mainWindow()
         return wrapInstance(long(maya_main_window_ptr), QWidget)
 
 
-    class MainWindowBase(_MainWindowBase, MayaQWidgetBaseMixin):
+    class MainWindowBase(_MainWindowBase, _MayaWidgetBaseMixin):
 
         def __init__(self):
             maya_window = get_maya_window()

@@ -7,7 +7,6 @@ from six.moves import *
 import sys
 import inspect
 
-import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 
 
@@ -47,7 +46,7 @@ class NodeFactory(object):
 
     @staticmethod
     def create_default(mobject, mdagpath=None):
-        # type: (om2.MObject, om2.MDagPath) -> object
+        # type: (_om2.MObject, _om2.MDagPath) -> object
         cls = NodeFactory._default_cls_dict['node']
         if mdagpath is not None:
             # TODO: 例外処理を使いたくない

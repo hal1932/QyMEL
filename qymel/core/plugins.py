@@ -6,11 +6,9 @@ from six.moves import *
 
 import os
 import glob
-import functools
-import collections
 
-import maya.cmds as cmds
-import maya.api.OpenMaya as om2
+import maya.cmds as _cmds
+import maya.api.OpenMaya as _om2
 
 
 class PluginsInfo(object):
@@ -66,14 +64,14 @@ def load_plugins():
     plugins = PluginsInfo()
     add_maya_plugin_path(plugins.root_directory)
     for name in plugins.plugin_names:
-        cmds.loadPlugin(name, quiet=True)
+        _cmds.loadPlugin(name, quiet=True)
 
 
 def unload_plugins(force=False):
     # type: (bool) -> NoReturn
     plugins = PluginsInfo()
     for name in plugins.plugin_names:
-        cmds.unloadPlugin(name, force=force)
+        _cmds.unloadPlugin(name, force=force)
 
 
 class PluginSetup(object):
@@ -83,7 +81,7 @@ class PluginSetup(object):
 class CommandPluginSetup(PluginSetup):
 
     def __init__(self, name, creator=None, syntax_creator=None):
-        # type: (str, Callable[[], om2.MPxCommand], Callable[[], om2.MSyntax]) -> NoReturn
+        # type: (str, Callable[[], _om2.MPxCommand], Callable[[], _om2.MSyntax]) -> NoReturn
         self.name = name
         self.creator = creator
         self.syntax_creator = syntax_creator
@@ -91,8 +89,8 @@ class CommandPluginSetup(PluginSetup):
 
 class NodePluginSetup(PluginSetup):
 
-    def __init__(self, name, type_id, creator=None, initializer=None, node_type=om2.MPxNode.kDependNode, classification='utility/general'):
-        # type: (str, om2.MTypeId, Callable[[], om2.MPxNode], Callable[[], None], int, str) -> NoReturn
+    def __init__(self, name, type_id, creator=None, initializer=None, node_type=_om2.MPxNode.kDependNode, classification='utility/general'):
+        # type: (str, _om2.MTypeId, Callable[[], _om2.MPxNode], Callable[[], None], int, str) -> NoReturn
         self.name = name
         self.type_id = type_id
         self.creator = creator
@@ -112,8 +110,8 @@ def setup_plugin(plugin_globals, setups, vendor='Unknown', version='Unknown', ap
         pass
 
     def _initialize_plugin(mobj):
-        # type: (om2.MObject) -> NoReturn
-        mplugin = om2.MFnPlugin(mobj, vendor, version, api_version)
+        # type: (_om2.MObject) -> NoReturn
+        mplugin = _om2.MFnPlugin(mobj, vendor, version, api_version)
 
         for setup in setups:
             if isinstance(setup, CommandPluginSetup):
@@ -126,8 +124,8 @@ def setup_plugin(plugin_globals, setups, vendor='Unknown', version='Unknown', ap
                 mplugin.registerNode(setup.name, setup.type_id, setup.creator, setup.initializer, setup.node_type, setup.classification)
 
     def _uninitialize_plugin(mobj):
-        # type: (om2.MObject) -> NoReturn
-        mplugin = om2.MFnPlugin(mobj)
+        # type: (_om2.MObject) -> NoReturn
+        mplugin = _om2.MFnPlugin(mobj)
         for setup in setups:
             if isinstance(setup, CommandPluginSetup):
                 mplugin.deregisterCommand(setup.name)
@@ -184,17 +182,17 @@ class FlagsDefinition(object):
         return self.__dict__.values()
 
     def apply_to(self, syntax):
-        # type: (om2.MSyntax) -> NoReturn
+        # type: (_om2.MSyntax) -> NoReturn
         for flag in self.flags():
             syntax.addFlag(flag.short_name, flag.long_name, flag.value_type)
             if flag.is_multi_use:
                 syntax.makeFlagMultiUse(flag.short_name)
 
 
-class ArgDatabase(om2.MArgDatabase):
+class ArgDatabase(_om2.MArgDatabase):
 
     def __init__(self, syntax, args):
-        # type: (om2.MSyntax, om2.MArgList) -> NoReturn
+        # type: (_om2.MSyntax, _om2.MArgList) -> NoReturn
         super(ArgDatabase, self).__init__(syntax, args)
 
     def parse_flags(self, flags_definition_cls):
@@ -233,20 +231,20 @@ class ArgDatabase(om2.MArgDatabase):
     def __get_flag_value(self, flag):
         # type: (SyntaxFlag) -> Any
         try:
-            if flag.value_type == om2.MSyntax.kBoolean:
+            if flag.value_type == _om2.MSyntax.kBoolean:
                 return self.flagArgumentBool(flag.short_name, 0)
-            if flag.value_type == om2.MSyntax.kString:
+            if flag.value_type == _om2.MSyntax.kString:
                 return self.flagArgumentString(flag.short_name, 0)
 
         except RuntimeError:
             return None
 
     def __get_flag_values(self, flag, args):
-        # type: (SyntaxFlag, om2.MArgList) -> List[Any]
+        # type: (SyntaxFlag, _om2.MArgList) -> List[Any]
         try:
-            if flag.value_type == om2.MSyntax.kBoolean:
+            if flag.value_type == _om2.MSyntax.kBoolean:
                 return [args.asBool(i) for i in range(len(args))]
-            if flag.value_type == om2.MSyntax.kString:
+            if flag.value_type == _om2.MSyntax.kString:
                 return [args.asString(i) for i in range(len(args))]
 
         except RuntimeError:

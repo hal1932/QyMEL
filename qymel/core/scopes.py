@@ -4,9 +4,9 @@ from typing import *
 from six import *
 from six.moves import *
 
-import functools
+import types
 
-import maya.cmds as cmds
+import maya.cmds as _cmds
 
 
 class _Scope(object):
@@ -15,7 +15,7 @@ class _Scope(object):
         self._on_enter()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # type: (Type, Exception, TracebackType) -> bool
+        # type: (Type, Exception, types.TracebackType) -> bool
         self._on_exit()
         return False  # 例外伝搬を止めない
 
@@ -29,10 +29,10 @@ class _Scope(object):
 class UndoScope(_Scope):
 
     def _on_enter(self):
-        cmds.undoInfo(openChunk=True)
+        _cmds.undoInfo(openChunk=True)
 
     def _on_exit(self):
-        cmds.undoInfo(closeChunk=True)
+        _cmds.undoInfo(closeChunk=True)
 
 
 def undo_scope(func):
@@ -49,10 +49,10 @@ class KeepSelectionScope(_Scope):
         self.selection = []  # type: List[str]
 
     def _on_enter(self):
-        self.selection = cmds.ls(sl=True)
+        self.selection = _cmds.ls(sl=True)
 
     def _on_exit(self):
-        cmds.select(self.selection, replace=True)
+        _cmds.select(self.selection, replace=True)
 
 
 def keep_selection_scope(func):

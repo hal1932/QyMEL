@@ -7,6 +7,8 @@ from six.moves import *
 import sys
 import inspect
 
+import maya.api.OpenMaya as _om2
+
 
 class ComponentFactory(object):
 
@@ -30,7 +32,7 @@ class ComponentFactory(object):
 
     @staticmethod
     def create(comp_type, mdagpath, mobject):
-        # type: (om2.MFn, om2.MDagPath, om2.MObject) -> object
+        # type: (_om2.MFn, _om2.MDagPath, _om2.MObject) -> object
         if comp_type not in ComponentFactory._cls_dict:
             return None
 
@@ -39,7 +41,7 @@ class ComponentFactory(object):
 
     @staticmethod
     def create_default(mdagpath, mobject):
-        # type: (om2.MDagPath, om2.MObject) -> object
+        # type: (_om2.MDagPath, _om2.MObject) -> object
         cls = ComponentFactory._default_cls
         return cls(mdagpath, mobject)
 
