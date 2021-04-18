@@ -64,6 +64,11 @@ class Scene(object):
     @staticmethod
     def name():
         # type: () -> str
+        return _cmds.file(query=True, sceneName=True, shortName=True)
+
+    @staticmethod
+    def path():
+        # type: () -> str
         return _cmds.file(query=True, sceneName=True)
 
     @staticmethod
