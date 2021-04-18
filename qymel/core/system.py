@@ -351,6 +351,8 @@ class Namespace(object):
         kwargs = {'addNamespace': name}
         if parent is not None:
             kwargs['parent'] = parent.mel_object
+        else:
+            kwargs['parent'] = Namespace.root.mel_object
         ns = _cmds.namespace(**kwargs)
         return Namespace(ns)
 
