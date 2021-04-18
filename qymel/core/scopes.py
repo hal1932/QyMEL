@@ -12,7 +12,7 @@ import cProfile
 import maya.cmds as _cmds
 
 
-class _Scope(object):
+class Scope(object):
 
     def __enter__(self):
         self._on_enter()
@@ -29,7 +29,7 @@ class _Scope(object):
         pass
 
 
-class UndoScope(_Scope):
+class UndoScope(Scope):
 
     def _on_enter(self):
         _cmds.undoInfo(openChunk=True)
@@ -46,7 +46,7 @@ def undo_scope(func):
     return _
 
 
-class KeepSelectionScope(_Scope):
+class KeepSelectionScope(Scope):
 
     def __init__(self):
         self.selection = []  # type: List[str]
@@ -66,7 +66,7 @@ def keep_selection_scope(func):
     return _
 
 
-class ViewportPauseScope(_Scope):
+class ViewportPauseScope(Scope):
 
     def __init__(self):
         self.paused = False
@@ -89,7 +89,7 @@ def viewport_pause_scope(func):
     return _
 
 
-class ProfileScope(_Scope):
+class ProfileScope(Scope):
 
     def __init__(self, callback=None):
         # type: (Callable[[pstats.Stats], None]) -> NoReturn
