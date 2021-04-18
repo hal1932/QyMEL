@@ -43,11 +43,6 @@ class DependNode(_general.MayaObject):
         return self.full_name
 
     @property
-    def exists(self):
-        # type: () -> bool
-        return not self.mobject.isNull()
-
-    @property
     def mfn(self):
         mfn_set = self.__class__._mfn_set
 

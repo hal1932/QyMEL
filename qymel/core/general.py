@@ -18,7 +18,7 @@ def deprecated(message):
     def _deprecated(func):
         @functools.wraps(func)
         def _(*args, **kwargs):
-            print(message)
+            print(u'[DEPRECATED] {} is deprecated. {}'.format(func.__name__, message))
             return func(*args, **kwargs)
         return _
     return _deprecated
@@ -71,23 +71,17 @@ class MayaObject(object):
     @property
     def is_null(self):
         # type: () -> bool
-        return self._mobj_handle.object().isNull()
+        return self.mobject.isNull()
 
     @property
     def mel_object(self):
         # type: () -> Union[str, Tuple[str]]
         pass
 
-    @deprecated('use MayaObject.is_null')
     @property
     def exists(self):
         # type: () -> bool
-        mobj = self.mobject
-        if mobj is None:
-            return False
-        if mobj.isNull():
-            return False
-        return True
+        return not self.is_null
 
     @property
     def api_type(self):
@@ -219,6 +213,7 @@ class Plug(object):
             plug = _graphs.get_mplug(plug)
         self._mplug = _graphs.keep_mplug(plug)
         self._mfn_node = None
+        self._node = None  # type: DependNode
 
     def __str__(self):
         # type: () -> str
@@ -247,6 +242,17 @@ class Plug(object):
         attr_mobj = _om2.MFnDependencyNode(mplug.node()).attribute(item)
         child_mplug = mplug.child(attr_mobj)
         return Plug(child_mplug)
+
+    def node(self):
+        # type: () -> DependNode
+        if self._node is None:
+            mfn_node = self.mfn_node
+            if isinstance(mfn_node, _om2.MFnDagNode):
+                mdagpath = mfn_node.getPath()
+                self._node = _graphs.to_node_instance(mfn_node, mdagpath)
+            else:
+                self._node = _graphs.to_node_instance(mfn_node)
+        return self._node
 
     def get(self):
         # type: () -> Any
