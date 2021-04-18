@@ -392,6 +392,16 @@ class Namespace(object):
         # type: () -> str
         return "{}('{}')".format(self.__class__.__name__, self.name)
 
+    def __eq__(self, other):
+        # type: (Any) -> bool
+        if isinstance(other, (str, text_type)):
+            if not _om2.MNamespace.namespaceExists(other):
+                return False
+            other = Namespace(other)
+        if isinstance(other, Namespace):
+            return self.mel_object == other.mel_object
+        return False
+
     def set_current(self):
         # type: () -> NoReturn
         _cmds.namespace(setNamespace=self.mel_object)
