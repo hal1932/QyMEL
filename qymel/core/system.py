@@ -415,7 +415,7 @@ class Namespace(object):
         if recursive:
             for child in self.children():
                 child.delete(delete_contents, recursive)
-        _cmds.namespace(self.mel_object, deleteNamespace=True, deleteContents=delete_contents)
+        _cmds.namespace(removeNamespace=self.mel_object, deleteNamespaceContent=delete_contents)
         self.__abs_name = None
 
     def add(self, node):
