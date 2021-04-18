@@ -62,8 +62,8 @@ def _get_component_list_data(mplug):
 
 
 _api_type_table = {
-    _om2.MFn.kDoubleLinearAttribute: lambda plug: plug.asDouble(),
-    _om2.MFn.kFloatLinearAttribute: lambda plug: plug.asFloat(),
+    _om2.MFn.kDoubleLinearAttribute: lambda plug: plug.asMDistance().asUnits(_om2.MDistance.uiUnit()),
+    _om2.MFn.kFloatLinearAttribute: lambda plug: plug.asMDistance().asUnits(_om2.MDistance.uiUnit()),
     _om2.MFn.kDoubleAngleAttribute: lambda plug: plug.asMAngle().asUnits(_om2.MAngle.uiUnit()),
     _om2.MFn.kFloatAngleAttribute: lambda plug: plug.asMAngle().asUnits(_om2.MAngle.uiUnit()),
     _om2.MFn.kEnumAttribute: lambda plug: plug.asInt(),
