@@ -168,6 +168,36 @@ def get_mplug(name):
     return sel.getPlug(0)
 
 
+def keep_mplug(mplug):
+    # type: (_om2.MPlug) -> _om2.MPlug
+    # ネットワークプラグはメモリ管理がMaya内部で行われるので
+    # 内部でdeleteされないようにノンネットワークプラグに変換しておく
+    if not mplug.isNetworked:
+        return mplug
+
+    # https://github.com/ryusas/cymel/blob/05089ea6e34c79723590e9350dc45d5c970fd8f4/python/cymel/core/cyobjects/python/_api2mplug.py#L149
+    mattr = mplug.attribute()
+
+    if mplug.isElement:
+        index_attrs = [(mplug.logicalIndex(), mattr)]
+        mp = mplug.array()
+    else:
+        index_attrs = []
+        mp = mplug
+
+    while mp.isChild:
+        mp = mp.parent()
+        if mp.isElement:
+            index_attrs.append((mp.logicalIndex(), mp.attribute()))
+            mp = mp.array()
+
+    mplug = _om2.MPlug(mplug.node(), mattr)
+    for index, attr in index_attrs:
+        mplug.selectAncestorLogicalIndex(index, attr)
+
+    return mplug
+
+
 def get_comp_mobject(name):
     # type: (str) -> (_om2.MDagPath, _om2.MObject)
     sel = _om2.MSelectionList()
@@ -179,15 +209,10 @@ def connections(mfn):
     # type: (_om2.MFnDependencyNode) -> Set[_om2.MObject]
     result = []
 
-    # plug = _om2.MPlug()
-    # plug.setMObject(mfn.object())
-
     for i in range(mfn.attributeCount()):
         attr = mfn.attribute(i)
-        # plug.setAttribute(attr)
         plug = mfn.findPlug(attr, True)
         for other in plug.connectedTo(True, True):
-            # result.append(other.node())
             result.append(other)
 
     return result

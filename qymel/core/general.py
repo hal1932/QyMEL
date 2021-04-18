@@ -4,12 +4,24 @@ from typing import *
 from six import *
 from six.moves import *
 
+import functools
+
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 
 from ..internal import graphs as _graphs
 from ..internal import plugs as _plugs
 from ..internal import components as _components
+
+
+def deprecated(message):
+    def _deprecated(func):
+        @functools.wraps(func)
+        def _(*args, **kwargs):
+            print(message)
+            return func(*args, **kwargs)
+        return _
+    return _deprecated
 
 
 def ls(*args, **kwargs):
@@ -66,6 +78,7 @@ class MayaObject(object):
         # type: () -> Union[str, Tuple[str]]
         pass
 
+    @deprecated('use MayaObject.is_null')
     @property
     def exists(self):
         # type: () -> bool
@@ -151,7 +164,7 @@ class Plug(object):
         return self._mfn_node
 
     @property
-    def is_null_object(self):
+    def is_null(self):
         # type: () -> bool
         return self._mplug.isNull
 
@@ -196,11 +209,6 @@ class Plug(object):
         return self._mplug.isLocked
 
     @property
-    def is_networked(self):
-        # type: () -> bool
-        return self._mplug.isNetworked
-
-    @property
     def exists(self):
         # type: () -> bool
         return _cmds.objExists(self.mel_object)
@@ -209,7 +217,7 @@ class Plug(object):
         # type: (Union[_om2.MPlug, str]) -> NoReturn
         if isinstance(plug, (str, text_type)):
             plug = _graphs.get_mplug(plug)
-        self._mplug = plug
+        self._mplug = _graphs.keep_mplug(plug)
         self._mfn_node = None
 
     def __str__(self):
