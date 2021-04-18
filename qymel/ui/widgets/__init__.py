@@ -4,7 +4,7 @@ from typing import *
 from six import *
 from six.moves import *
 
-from .pyside_module import *
+from ui.pyside_module import *
 
 
 def hline():
@@ -16,6 +16,22 @@ def hline():
 
 
 def vline():
+    # type: () -> QFrame
+    frame = QFrame()
+    frame.setFrameShape(QFrame.VLine)
+    frame.setFrameShadow(QFrame.Sunken)
+    return frame
+
+
+def hseparator():
+    # type: () -> QFrame
+    frame = QFrame()
+    frame.setFrameShape(QFrame.HLine)
+    frame.setFrameShadow(QFrame.Sunken)
+    return frame
+
+
+def vseparator():
     # type: () -> QFrame
     frame = QFrame()
     frame.setFrameShape(QFrame.VLine)

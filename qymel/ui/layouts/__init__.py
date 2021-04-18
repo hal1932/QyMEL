@@ -4,7 +4,7 @@ from typing import *
 from six import *
 from six.moves import *
 
-from .pyside_module import *
+from ..pyside_module import *
 
 
 class _Stretch(object): pass
@@ -43,5 +43,7 @@ def _box(cls, items, kwargs):
                 box.setContentsMargins(v, v, v, v)
             else:
                 box.setContentsMargins(v)
+        elif k == 'spacing':
+            box.setSpacing(v)
 
     return box
