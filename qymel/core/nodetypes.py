@@ -976,6 +976,16 @@ class Transform(DagNode):
         # type: () -> _om2.MTransformationMatrix
         return self.mfn.transformation()
 
+    def has_shape(self):
+        # type: () -> bool
+        count = 0
+        mfn = self.mfn
+        for i in range(mfn.childCount()):
+            child = mfn.child(i)
+            if child.hasFn(_om2.MFn.kShape):
+                return True
+        return False
+
     def shape_count(self):
         # type: () -> int
         count = 0
@@ -1053,6 +1063,12 @@ class Shape(DagNode):
         return SkinCluster(names[0])
 
 
+class Locator(Shape):
+
+    _mfn_type = _om2.MFn.kLocator
+    _mel_type = 'locator'
+
+
 class Camera(Shape):
 
     _mfn_type = _om2.MFn.kCamera
@@ -1086,6 +1102,18 @@ class ControlPoint(DeformableShape):
 class SurfaceShape(ControlPoint):
 
     _mel_type = 'surfaceShape'
+
+
+class CurveShape(ControlPoint):
+
+    _mel_type = 'curveShape'
+
+
+class NurbsCurve(CurveShape):
+
+    _mfn_type = _om2.MFn.kNurbsCurveGeom
+    _mfn_set = _om2.MFnNurbsCurve
+    _mel_type = 'nurbsCurve'
 
 
 class ColorSet(object):
@@ -1429,17 +1457,29 @@ class FileReference(DependNode):
         return result
 
 
+class FileTexture(DependNode):
+
+    _mfn_type = _om2.MFn.kFileTexture
+    _mel_type = 'file'
+
+
+class Place2dTexture(DependNode):
+
+    _mfn_type = _om2.MFn.kPlace2dTexture
+    _mel_type = 'place2dTexture'
+
+
 class Lambert(DependNode):
 
     _mfn_type = _om2.MFn.kLambert
     _mel_type = 'lambert'
 
-    @staticmethod
-    def create():
-        name = _cmds.shadingNode(Lambert._mel_type, asShader=True)
+    @classmethod
+    def create(cls):
+        name = _cmds.shadingNode(cls._mel_type, asShader=True)
         sg = _cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name='{}.SG'.format(name))
         _cmds.connectAttr('{}.outColor'.format(name), '{}.surfaceShader'.format(sg))
-        return Lambert(name)
+        return cls(name)
 
 
 class Reflect(Lambert):
@@ -1453,38 +1493,17 @@ class Phong(Reflect):
     _mfn_type = _om2.MFn.kPhong
     _mel_type = 'phong'
 
-    @staticmethod
-    def create():
-        name = _cmds.shadingNode(Phong._mel_type, asShader=True)
-        sg = _cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name='{}.SG'.format(name))
-        _cmds.connectAttr('{}.outColor'.format(name), '{}.surfaceShader'.format(sg))
-        return Phong(name)
-
 
 class PhongE(Reflect):
 
     _mfn_type = _om2.MFn.kPhongExplorer
     _mel_type = 'phongE'
 
-    @staticmethod
-    def create():
-        name = _cmds.shadingNode(PhongE._mel_type, asShader=True)
-        sg = _cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name='{}.SG'.format(name))
-        _cmds.connectAttr('{}.outColor'.format(name), '{}.surfaceShader'.format(sg))
-        return PhongE(name)
-
 
 class Blinn(Reflect):
 
     _mfn_type = _om2.MFn.kBlinn
     _mel_type = 'blinn'
-
-    @staticmethod
-    def create():
-        name = _cmds.shadingNode(Blinn._mel_type, asShader=True)
-        sg = _cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name='{}.SG'.format(name))
-        _cmds.connectAttr('{}.outColor'.format(name), '{}.surfaceShader'.format(sg))
-        return Blinn(name)
 
 
 _nodes.NodeFactory.register(__name__)
