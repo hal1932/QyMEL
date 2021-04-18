@@ -160,7 +160,7 @@ class DependNode(_general.MayaObject):
         kwargs['destination'] = True
         return self.connections(**kwargs)
 
-    def histories(self, **kwargs):
+    def history(self, **kwargs):
         # type: (Any) -> List[DependNode]
         nodes = _cmds.listHistory(self.mel_object, **kwargs)
         tmp_mfn = _om2.MFnDependencyNode()
