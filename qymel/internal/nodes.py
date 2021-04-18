@@ -14,6 +14,7 @@ class NodeFactory(object):
 
     _cls_dict = {}  # Dict[str, type]
     _default_cls_dict = {}  # Dict[str, type]
+    _dynamic_cls_cache = {}  # Dict[str, type]
 
     @staticmethod
     def register(module_name):
@@ -45,13 +46,31 @@ class NodeFactory(object):
         return cls(mobject)
 
     @staticmethod
-    def create_default(mobject, mdagpath=None):
-        # type: (_om2.MObject, _om2.MDagPath) -> object
-        cls = NodeFactory._default_cls_dict['node']
-        if mdagpath is not None:
-            # TODO: 例外処理を使いたくない
-            try:
-                return cls(mdagpath)
-            except:
-                pass
+    def create_default(mfn, mdagpath=None):
+        # type: (_om2.MFnDependencyNode, _om2.MDagPath) -> object
+        mobject = mfn.object()  # type: _om2.MObject
+        cls = NodeFactory.__create_dynamic_node_type(mfn, mobject)
+
+        if mobject.hasFn(_om2.MFn.kDagNode) and mdagpath is not None:
+            return cls(mdagpath)
+
         return cls(mobject)
+
+    @staticmethod
+    def __create_dynamic_node_type(mfn, mobject):
+        # type: (_om2.MFnDependencyNode, _om2.MObject) -> type
+        type_name = mfn.typeName
+        cls = NodeFactory._dynamic_cls_cache.get(type_name, None)
+        if cls is not None:
+            return cls
+
+        if mobject.hasFn(_om2.MFn.kDagNode):
+            base_cls = NodeFactory._default_cls_dict['dag_node']
+        else:
+            base_cls = NodeFactory._default_cls_dict['node']
+
+        cls_name = type_name[0].upper() + type_name[1:]
+        cls = type(cls_name, (base_cls,), {})
+        NodeFactory._dynamic_cls_cache[type_name] = cls
+
+        return cls
