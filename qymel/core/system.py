@@ -77,12 +77,12 @@ class Scene(object):
         return file_path.replace(os.sep, '/')
 
     @staticmethod
-    def new_file(force=False):
+    def new(force=False):
         # type: (bool) -> str
         return _cmds.file(new=True, force=force)
 
     @staticmethod
-    def open_file(file_path, **kwargs):
+    def open(file_path, **kwargs):
         # type: (str, Any) -> Union[str, List[_nodetypes.DependNode]]
         file_path = Scene.normalize_path(file_path)
         kwargs['open'] = True
@@ -95,7 +95,7 @@ class Scene(object):
         return result
 
     @staticmethod
-    def rename_file(new_file_path):
+    def rename(new_file_path):
         # type: (str) -> str
         _, ext = os.path.split(new_file_path)
         file_type = FileTranslator.find_by_extension(ext)
@@ -106,10 +106,10 @@ class Scene(object):
         return _cmds.file(rename=new_file_path)
 
     @staticmethod
-    def save_file(file_path=None, file_type=None, force=False):
+    def save(file_path=None, file_type=None, force=False):
         # type: (str, str, bool) -> str
         if file_path is not None:
-            Scene.rename_file(file_path)
+            Scene.rename(file_path)
 
         kwargs = {'save': True, 'force': force}
         if file_type is not None:
