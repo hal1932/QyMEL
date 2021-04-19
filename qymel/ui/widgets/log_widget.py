@@ -28,6 +28,10 @@ class LogWidget(QWidget):
         self.error_format = QTextCharFormat()
         self.error_format.setForeground(QBrush(QColor(235, 20, 20)))
 
+        self.critical_format = QTextCharFormat()
+        self.critical_format.setForeground(QBrush(QColor(235, 20, 20)))
+        self.critical_format.setBackground(QBrush(QColor(235, 235, 235)))
+
         self.auto_flush = True
         self.timestamp_format = '%H:%M:%S'
 
@@ -69,6 +73,10 @@ class LogWidget(QWidget):
         # type: (str) -> NoReturn
         self.__append(u'{}\n'.format(text), self.error_format)
 
+    def append_critical_line(self, text):
+        # type: (str) -> NoReturn
+        self.__append(u'{}\n'.format(text), self.critical_format)
+
     def __append(self, text, char_format):
         # type: (str, str) -> NoReturn
         if len(text) == 0:
@@ -81,6 +89,7 @@ class LogWidget(QWidget):
         cursor = self.__editor.textCursor()
         cursor.movePosition(QTextCursor.End)
         cursor.setCharFormat(char_format)
+
         cursor.insertText(text)
 
         if self.auto_flush:
@@ -136,7 +145,7 @@ class _LogHandler(logging.Handler):
                 self.__view.append_error_line(record.getMessage())
 
             elif record.levelno == logging.CRITICAL:
-                self.__view.append_error_line(record.getMessage())
+                self.__view.append_critical_line(record.getMessage())
 
         except:
             self.handleError(record)
