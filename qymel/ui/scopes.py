@@ -25,3 +25,40 @@ def wait_cursor_scope(func):
         with WaitCursorScope():
             func(*args, **kwargs)
     return _
+
+
+class KeepRowSelectionScope(_scopes.Scope):
+
+    def __init__(self, view):
+        # type: (Union[QAbstractItemView]) -> NoReturn
+        self.__view = view
+        self.__selection = None  # type: List[QModelIndex]
+
+    def _on_enter(self):
+        indices = self.__view.selectedIndexes()
+
+        model = self.__view.model()
+        if isinstance(model, QSortFilterProxyModel):
+            indices = [model.mapToSource(index) for index in indices]
+
+        self.__selection = indices
+
+    def _on_exit(self):
+        if self.__selection is None:
+            return
+
+        view = self.__view
+
+        mode = view.selectionMode()
+        view.setSelectionMode(QAbstractItemView.MultiSelection)
+
+        indices = self.__selection
+
+        model = self.__view.model()
+        if isinstance(model, QSortFilterProxyModel):
+            indices = [model.mapFromSource(index) for index in indices]
+
+        for index in indices:
+            view.selectRow(index.row())
+
+        view.setSelectionMode(mode)

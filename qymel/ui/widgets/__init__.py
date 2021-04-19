@@ -4,7 +4,7 @@ from typing import *
 from six import *
 from six.moves import *
 
-from ui.pyside_module import *
+from ..pyside_module import *
 
 
 def hline():
@@ -37,3 +37,15 @@ def vseparator():
     frame.setFrameShape(QFrame.VLine)
     frame.setFrameShadow(QFrame.Sunken)
     return frame
+
+
+class Clickable(QWidget):
+
+    clicked = Signal()
+
+    def __init__(self, parent=None):
+        super(Clickable, self).__init__(parent)
+
+    def mouseReleaseEvent(self, e):
+        # type: (QMouseEvent) -> NoReturn
+        self.clicked.emit()
