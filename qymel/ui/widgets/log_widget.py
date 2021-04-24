@@ -55,12 +55,12 @@ class LogWidget(QWidget):
         self.auto_flush = True
         self.timestamp_format = '%H:%M:%S'
 
-        self.__editor = _LogTextEdit(max_blocks=max_blocks)
+        self._editor = _LogTextEdit(max_blocks=max_blocks)
 
         editor_layout = QVBoxLayout()
         editor_layout.setContentsMargins(1, 1, 1, 1)
         editor_layout.setSpacing(0)
-        editor_layout.addWidget(self.__editor)
+        editor_layout.addWidget(self._editor)
         self.setLayout(editor_layout)
 
     def create_handler(self, level=logging.NOTSET):
@@ -69,35 +69,35 @@ class LogWidget(QWidget):
 
     def clear(self):
         # type: () -> NoReturn
-        self.__editor.clear()
+        self._editor.clear()
 
     def flush(self):
         # type: () -> NoReturn
-        cursor = self.__editor.textCursor()
+        cursor = self._editor.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
         QApplication.processEvents()
 
     def append_debug_line(self, text):
         # type: (str) -> NoReturn
-        self.__append(u'{}\n'.format(text), self.debug_format)
+        self._append(u'{}\n'.format(text), self.debug_format)
 
     def append_info_line(self, text):
         # type: (str) -> NoReturn
-        self.__append(u'{}\n'.format(text), self.info_format)
+        self._append(u'{}\n'.format(text), self.info_format)
 
     def append_warning_line(self, text):
         # type: (str) -> NoReturn
-        self.__append(u'{}\n'.format(text), self.warning_format)
+        self._append(u'{}\n'.format(text), self.warning_format)
 
     def append_error_line(self, text):
         # type: (str) -> NoReturn
-        self.__append(u'{}\n'.format(text), self.error_format)
+        self._append(u'{}\n'.format(text), self.error_format)
 
     def append_critical_line(self, text):
         # type: (str) -> NoReturn
-        self.__append(u'{}\n'.format(text), self.critical_format)
+        self._append(u'{}\n'.format(text), self.critical_format)
 
-    def __append(self, text, char_format):
+    def _append(self, text, char_format):
         # type: (str, str) -> NoReturn
         if len(text) == 0:
             return
@@ -106,7 +106,7 @@ class LogWidget(QWidget):
             ts = datetime.datetime.now().strftime(self.timestamp_format)
             text = u'[{}] {}'.format(ts, text)
 
-        cursor = self.__editor.textCursor()
+        cursor = self._editor.textCursor()
         cursor.movePosition(QTextCursor.End)
         cursor.setCharFormat(char_format)
 
