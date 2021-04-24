@@ -8,6 +8,26 @@ import logging
 import datetime
 
 from ..pyside_module import *
+from ...core import scopes as _scopes
+
+
+class LoggingContext(object):
+
+    auto_flush = False
+
+
+class LogAutoFlushScope(_scopes.Scope):
+
+    def __init__(self, enable_auto_flush=False):
+        # type: (bool) -> NoReturn
+        self.__scoped_value = enable_auto_flush
+        self.__current_value = LoggingContext.auto_flush
+
+    def _on_enter(self):
+        LoggingContext.auto_flush = self.__scoped_value
+
+    def _on_exit(self):
+        LoggingContext.auto_flush = self.__current_value
 
 
 class LogWidget(QWidget):
@@ -92,7 +112,7 @@ class LogWidget(QWidget):
 
         cursor.insertText(text)
 
-        if self.auto_flush:
+        if self.auto_flush or LoggingContext.auto_flush:
             self.flush()
 
 
