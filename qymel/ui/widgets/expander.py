@@ -5,6 +5,7 @@ from six import *
 from six.moves import *
 
 from ..pyside_module import *
+from .. import layouts as _layouts
 
 
 class _Clickable(QWidget):
@@ -21,6 +22,16 @@ class _Clickable(QWidget):
 
 class Expander(QFrame):
 
+    @property
+    def header_layout(self):
+        # type: () -> QLayout
+        return self._header_layout
+
+    @property
+    def content_layout(self):
+        # type: () -> QLayout
+        return self._content_layout
+
     def __init__(self, parent=None):
         # type: (QObject) -> NoReturn
         super(Expander, self).__init__(parent)
@@ -30,10 +41,15 @@ class Expander(QFrame):
         self._toggle_image = QLabel()
         self._toggle_image.setPixmap(self._toggle_pix)
 
+        self._header_layout = QHBoxLayout()
+        self._content_layout = QHBoxLayout()
+
         self._header = _Clickable()
+        self._header.setLayout(self._header_layout)
         self._header.clicked.connect(self.toggle)
 
         self._content = QWidget()
+        self._content.setLayout(self._content_layout)
         self._content.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self._content.setMaximumHeight(0)
         self._content.setMinimumHeight(0)
@@ -53,22 +69,22 @@ class Expander(QFrame):
 
     def set_header_widget(self, header):
         # type: (QWidget) -> NoReturn
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout = self._header_layout
+        _layouts.delete_layout_children(layout)
+
         layout.addWidget(self._toggle_image)
         layout.addWidget(header)
         layout.addStretch()
-        self._header.setLayout(layout)
 
         self._update_layout()
 
     def set_content_widget(self, content):
         # type: (QWidget) -> NoReturn
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout = self._content_layout
+        _layouts.delete_layout_children(layout)
+
         layout.addWidget(content)
         layout.addStretch()
-        self._content.setLayout(layout)
 
         self._update_layout()
 
