@@ -127,3 +127,20 @@ class Expander(QFrame):
             self.expand()
         else:
             self.collapse()
+
+
+if __name__ == '__main__':
+    widget = QWidget()
+    layout = QVBoxLayout()
+    widget.setLayout(layout)
+
+    for _ in range(3):
+        expander = Expander()
+        expander.header_layout.setContentsMargins(1, 1, 1, 1)
+        expander.content_layout.setContentsMargins(1, 1, 1, 1)
+        expander.set_header_widget(QLabel('aaa'))
+        expander.set_content_widget(QPushButton('bbb'))
+        layout.addWidget(expander)
+    layout.addStretch()
+
+    widget.show()
