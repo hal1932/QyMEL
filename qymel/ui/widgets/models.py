@@ -7,9 +7,6 @@ from six.moves import *
 from ..pyside_module import *
 
 
-TTableItem = TypeVar('TTableItem')
-
-
 class Binding(object):
 
     def __init__(self, path):
@@ -25,7 +22,7 @@ class Binding(object):
         setattr(obj, self.path, value)
 
 
-class TableDefinition(object):
+class _BindDefinition(object):
 
     def __init__(self, bindings=None):
         # type: (Optional[dict[Qt.ItemDataRole, str]]) -> NoReturn
@@ -39,6 +36,159 @@ class TableDefinition(object):
         if not isinstance(binding, Binding):
             binding = Binding(binding)
         self.bindings[role] = binding
+
+
+_TItem = TypeVar('_TItem')
+_TBindDef = TypeVar('_TBindDef', bound=_BindDefinition)
+
+
+class _ItemsModel(QStandardItemModel, Generic[_TItem, _TBindDef]):
+
+    def __init__(self, parent=None):
+        # type: (QObject) -> NoReturn
+        super(_ItemsModel, self).__init__(parent)
+        self._items = []  # type: list[_TItem]
+        self._columns = []  # type: list[_TBindDef]
+
+    def append(self, item):
+        # type: (_TItem) -> NoReturn
+        self.beginInsertRows(QModelIndex(), len(self._items), len(self._items))
+        self._items.append(item)
+        self.endInsertRows()
+
+    def extend(self, items):
+        # type: (Sequence[_TItem]) -> NoReturn
+        self.beginInsertRows(QModelIndex(), len(self._items), len(self._items) + len(items))
+        self._items.extend(items)
+        self.endInsertRows()
+
+    def replace(self, items):
+        # type: (Sequence[_TItem]) -> NoReturn
+        self._items = []
+        self.extend(items)
+
+    def clear(self):
+        self.replace([])
+
+    def index(self, row, column, parent=QModelIndex()):
+        # type: (int, int, QModelIndex) -> QModelIndex
+        if self._columns:
+            return self.createIndex(row, column, 0) if self.hasIndex(row, column, parent) else QModelIndex()
+        return super(_ItemsModel, self).index(row, column, parent)
+
+    def rowCount(self, parent=QModelIndex()):
+        # type: (QModelIndex) -> int
+        if self._items:
+            return len(self._items)
+        return super(_ItemsModel, self).rowCount()
+
+    def columnCount(self, parent=QModelIndex()):
+        # type: (QModelIndex) -> int
+        if self._columns:
+            return len(self._columns)
+        return super(_ItemsModel, self).columnCount()
+
+    def data(self, index, role=Qt.DisplayRole):
+        # type: (QModelIndex, Qt.ItemDataRole) -> Any
+        if not self._is_index_valid(index):
+            return None
+
+        if self._columns and self._items:
+            column = self._columns[index.column()]
+            if column:
+                binding = column.bindings.get(role)
+                if binding:
+                    return binding.value(self._items[index.row()])
+
+        return super(_ItemsModel, self).data(index, role)
+
+    def setData(self, index, value, role=Qt.EditRole):
+        # type: (QModelIndex, TTableItem, Qt.ItemDataRole) -> bool
+        print(role)
+        if not self._is_index_valid(index):
+            return False
+
+        if self._columns and self._items:
+            column = self._columns[index.column()]
+            if column:
+                binding = column.bindings.get(role)
+                if binding:
+                    binding.set_value(self._items[index.row()], value)
+                    return True
+
+        return super(_ItemsModel, self).setData(index, value, role)
+
+    def _define_column(self, index, column):
+        # type: (int, _BindDefinition) -> NoReturn
+        self._columns.insert(index, column)
+
+    def _is_index_valid(self, index):
+        # type: (QModelIndex) -> bool
+        if not index.isValid():
+            return False
+        if self._items:
+            return 0 <= index.row() < len(self._items)
+        return True
+
+
+#
+# ListModel
+#
+
+TListItem = TypeVar('TListItem')
+
+
+class ListDefinition(_BindDefinition):
+
+    def __init__(self, header=None, bindings=None):
+        # type: (Optional[str], Optional[dict[Qt.ItemDataRole, str]]) -> NoReturn
+        super(ListDefinition, self).__init__(bindings)
+        self.header = header
+
+
+class ListModel(_ItemsModel[TListItem, ListDefinition]):
+    """
+    >>>class ListItem(object):
+    >>> def __init__(self, index, name, color):
+    >>>     self.index = index
+    >>>     self.name = name
+    >>>     self.color = color
+    >>>
+    >>> view = QListView()
+    >>> model = ListModel()
+    >>> view.setModel(model)
+    >>>
+    >>> model.append(ListItem(0, 'aaa', QColor(Qt.red)))
+    >>> model.append(ListItem(1, 'bbb', QColor(Qt.green)))
+    >>> model.append(ListItem(2, 'ccc', QColor(Qt.blue)))
+    >>>
+    >>> column = ListDefinition('aaa', bindings={
+    >>>     Qt.DisplayRole: 'name',
+    >>>     Qt.ForegroundRole: 'color',
+    >>>     Qt.EditRole: 'name'
+    >>> })
+    >>> model.define(column)
+    >>>
+    >>> view.show()
+    """
+
+    def __init__(self, parent=None):
+        super(ListModel, self).__init__(parent)
+
+    def define(self, definition):
+        # type: (ListDefinition) -> NoReturn
+        self._define_column(0, definition)
+
+
+#
+# TableModel
+#
+
+TTableItem = TypeVar('TTableItem')
+
+
+class TableDefinition(_BindDefinition):
+    pass
 
 
 class TableColumn(TableDefinition):
@@ -56,7 +206,7 @@ class TableHeaderColumn(TableDefinition):
         super(TableHeaderColumn, self).__init__(bindings)
 
 
-class TableModel(QStandardItemModel, Generic[TTableItem]):
+class TableModel(_ItemsModel[TTableItem, TableColumn]):
     """
     >>> class TableItem(object):
     >>>     def __init__(self, index, name, color):
@@ -93,56 +243,15 @@ class TableModel(QStandardItemModel, Generic[TTableItem]):
 
     def __init__(self, parent=None):
         super(TableModel, self).__init__(parent)
-        self._columns = []  # type: list[TableColumn]
         self._header_column = None  # type: Optional[TableHeaderColumn]
-        self._items = []  # type: list[TTableItem]
-
-    def define_column(self, index, column):
-        # type: (int, TableColumn) -> NoReturn
-        self._columns.insert(index, column)
 
     def define_header_column(self, header_column):
         # type: (TableHeaderColumn) -> NoReturn
         self._header_column = header_column
 
-    def append(self, item):
-        # type: (TTableItem) -> NoReturn
-        self.beginInsertRows(QModelIndex(), len(self._items), len(self._items))
-        self._items.append(item)
-        self.endInsertRows()
-
-    def extend(self, items):
-        # type: (Sequence[TTableItem]) -> NoReturn
-        self.beginInsertRows(QModelIndex(), len(self._items), len(self._items) + len(items))
-        self._items.extend(items)
-        self.endInsertRows()
-
-    def replace(self, items):
-        # type: (Sequence[TTableItem]) -> NoReturn
-        self.beginResetModel()
-        self._items = items
-        self.endResetModel()
-
-    def clear(self):
-        self.replace([])
-
-    def index(self, row, column, parent=QModelIndex()):
-        # type: (int, int, QModelIndex) -> QModelIndex
-        if self._columns:
-            return self.createIndex(row, column, 0) if self.hasIndex(row, column, parent) else QModelIndex()
-        return super(TableModel, self).index(row, column, parent)
-
-    def rowCount(self, parent=QModelIndex()):
-        # type: (QModelIndex) -> int
-        if self._items:
-            return len(self._items)
-        return super(TableModel, self).rowCount()
-
-    def columnCount(self, parent=QModelIndex()):
-        # type: (QModelIndex) -> int
-        if self._columns:
-            return len(self._columns)
-        return super(TableModel, self).columnCount()
+    def define_column(self, index, column):
+        # type: (int, TableColumn) -> NoReturn
+        self._define_column(index, column)
 
     def headerData(self, section, orientation, role):
         # type: (int, Qt.Orientation, Qt.ItemDataRole) -> Optional[str]
@@ -158,41 +267,3 @@ class TableModel(QStandardItemModel, Generic[TTableItem]):
                 return binding.value(self._items[section])
 
         return super(TableModel, self).headerData(section, orientation, role)
-
-    def data(self, index, role=Qt.DisplayRole):
-        # type: (QModelIndex, Qt.ItemDataRole) -> Any
-        if not self._is_index_valid(index):
-            return None
-
-        if self._columns and self._items:
-            column = self._columns[index.column()]
-            if column:
-                binding = column.bindings.get(role)
-                if binding:
-                    return binding.value(self._items[index.row()])
-
-        return super(TableModel, self).data(index, role)
-
-    def setData(self, index, value, role=Qt.EditRole):
-        # type: (QModelIndex, TTableItem, Qt.ItemDataRole) -> bool
-        print(role)
-        if not self._is_index_valid(index):
-            return False
-
-        if self._columns and self._items:
-            column = self._columns[index.column()]
-            if column:
-                binding = column.bindings.get(role)
-                if binding:
-                    binding.set_value(self._items[index.row()], value)
-                    return True
-
-        return super(TableModel, self).setData(index, value, role)
-
-    def _is_index_valid(self, index):
-        # type: (QModelIndex) -> bool
-        if not index.isValid():
-            return False
-        if self._items:
-            return 0 <= index.row() < len(self._items)
-        return True
