@@ -25,7 +25,7 @@ class Binding(object):
 class _BindDefinition(object):
 
     def __init__(self, bindings=None):
-        # type: (Optional[dict[Qt.ItemDataRole, str]]) -> NoReturn
+        # type: (Optional[dict[Qt.ItemDataRole, Union[Binding, str]]]) -> NoReturn
         self.bindings = {}  # type: dict[Qt.ItemDataRole, Binding]
         if bindings:
             for role, path in bindings.items():
@@ -187,7 +187,7 @@ class TableDefinition(_BindDefinition):
 class TableColumn(TableDefinition):
 
     def __init__(self, header=None, bindings=None):
-        # type: (Optional[str], Optional[dict[Qt.ItemDataRole, str]]) -> NoReturn
+        # type: (Optional[str], Optional[dict[Qt.ItemDataRole, Union[Binding, str]]]) -> NoReturn
         super(TableColumn, self).__init__(bindings)
         self.header = header
 
@@ -195,7 +195,7 @@ class TableColumn(TableDefinition):
 class TableHeaderColumn(TableDefinition):
 
     def __init__(self, bindings=None):
-        # type: (Optional[dict[Qt.ItemDataRole, str]]) -> NoReturn
+        # type: (Optional[dict[Qt.ItemDataRole, Union[Binding, str]]]) -> NoReturn
         super(TableHeaderColumn, self).__init__(bindings)
 
 
