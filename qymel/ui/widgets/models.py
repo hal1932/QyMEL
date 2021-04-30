@@ -187,7 +187,7 @@ class TableDefinition(_BindDefinition):
 class TableColumn(TableDefinition):
 
     def __init__(self, header=None, bindings=None):
-        # type: (Optional[str], Optional[dict[Qt.ItemDataRole, Union[Binding, str]]]) -> NoReturn
+        # type: (Optional[dict[Qt.ItemDataRole, Any]], Optional[dict[Qt.ItemDataRole, Union[Binding, str]]]) -> NoReturn
         super(TableColumn, self).__init__(bindings)
         self.header = header
 
@@ -249,10 +249,10 @@ class TableModel(_ItemsModel[TTableItem, TableColumn]):
     def headerData(self, section, orientation, role):
         # type: (int, Qt.Orientation, Qt.ItemDataRole) -> Optional[str]
         if self._columns and orientation == Qt.Horizontal:
-            if role == Qt.DisplayRole and section < len(self._columns):
+            if section < len(self._columns):
                 column = self._columns[section]
                 if column:
-                    return column.header
+                    return column.header.get(role)
 
         if self._header_column and orientation == Qt.Vertical:
             binding = self._header_column.bindings.get(role)
