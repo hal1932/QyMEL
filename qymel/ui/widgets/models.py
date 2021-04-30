@@ -217,15 +217,25 @@ class TableModel(_ItemsModel[TTableItem, TableColumn]):
     >>>
     >>> header_column = TableHeaderColumn({Qt.DisplayRole: 'color'})
     >>>
-    >>> column_id = TableColumn('id', bindings={
-    >>>     Qt.DisplayRole: 'index',
-    >>>     Qt.ForegroundRole: 'color'
-    >>> })
-    >>>
-    >>> column_name = TableColumn('name', bindings={
-    >>>     Qt.DisplayRole: 'name',
-    >>>     Qt.EditRole: 'name'
-    >>> })
+    >>> column_id = TableColumn(
+    >>>     header={
+    >>>         Qt.DisplayRole: 'id',
+    >>>         Qt.ForegroundRole: QColor(Qt.red)
+    >>>     },
+    >>>     bindings={
+    >>>         Qt.DisplayRole: 'index',
+    >>>         Qt.ForegroundRole: 'color'
+    >>>     }
+    >>> )
+    >>> column_name = TableColumn(
+    >>>     header={
+    >>>         Qt.DisplayRole: 'name'
+    >>>     },
+    >>>     bindings={
+    >>>         Qt.DisplayRole: 'name',
+    >>>         Qt.EditRole: 'name'
+    >>>     }
+    >>> )
     >>>
     >>> model.define_header_column(header_column)
     >>> model.define_column(0, column_id)
@@ -250,9 +260,8 @@ class TableModel(_ItemsModel[TTableItem, TableColumn]):
         # type: (int, Qt.Orientation, Qt.ItemDataRole) -> Optional[str]
         if self._columns and orientation == Qt.Horizontal:
             if section < len(self._columns):
-                column = self._columns[section]
-                if column:
-                    return column.header.get(role)
+                header = self._columns[section].header
+                return header.get(role)
 
         if self._header_column and orientation == Qt.Vertical:
             binding = self._header_column.bindings.get(role)
