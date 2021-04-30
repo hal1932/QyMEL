@@ -139,11 +139,7 @@ TListItem = TypeVar('TListItem')
 
 
 class ListDefinition(_BindDefinition):
-
-    def __init__(self, header=None, bindings=None):
-        # type: (Optional[str], Optional[dict[Qt.ItemDataRole, str]]) -> NoReturn
-        super(ListDefinition, self).__init__(bindings)
-        self.header = header
+    pass
 
 
 class ListModel(_ItemsModel[TListItem, ListDefinition]):
@@ -162,7 +158,7 @@ class ListModel(_ItemsModel[TListItem, ListDefinition]):
     >>> model.append(ListItem(1, 'bbb', QColor(Qt.green)))
     >>> model.append(ListItem(2, 'ccc', QColor(Qt.blue)))
     >>>
-    >>> column = ListDefinition('aaa', bindings={
+    >>> column = ListDefinition(bindings={
     >>>     Qt.DisplayRole: 'name',
     >>>     Qt.ForegroundRole: 'color',
     >>>     Qt.EditRole: 'name'
@@ -171,9 +167,6 @@ class ListModel(_ItemsModel[TListItem, ListDefinition]):
     >>>
     >>> view.show()
     """
-
-    def __init__(self, parent=None):
-        super(ListModel, self).__init__(parent)
 
     def define(self, definition):
         # type: (ListDefinition) -> NoReturn
