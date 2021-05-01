@@ -70,6 +70,23 @@ class _ItemsModel(QStandardItemModel, Generic[_TItem, _TBindDef]):
     def clear(self):
         self.replace([])
 
+    def item(self, index):
+        # type: (Union[QModelIndex, int]) -> _TItem
+        if self._items:
+            if isinstance(index, QModelIndex):
+                index = index.row()
+            return self._items[index]
+
+        if isinstance(index, int):
+            index = self.index(index, 0, QModelIndex())
+        return super(_ItemsModel, self).itemFromIndex(index)
+
+    def column(self, index):
+        # type: (int) -> Optional[_TBindDef]
+        if self._columns:
+            return self._columns[index]
+        return None
+
     def index(self, row, column, parent=QModelIndex()):
         # type: (int, int, QModelIndex) -> QModelIndex
         if self._columns:
@@ -93,7 +110,7 @@ class _ItemsModel(QStandardItemModel, Generic[_TItem, _TBindDef]):
         if not self._is_index_valid(index):
             return None
 
-        if self._columns and self._items:
+        if self._columns and self._items and index.column() < len(self._columns):
             column = self._columns[index.column()]
             if column:
                 binding = column.bindings.get(role)
@@ -103,12 +120,11 @@ class _ItemsModel(QStandardItemModel, Generic[_TItem, _TBindDef]):
         return super(_ItemsModel, self).data(index, role)
 
     def setData(self, index, value, role=Qt.EditRole):
-        # type: (QModelIndex, TTableItem, Qt.ItemDataRole) -> bool
-        print(role)
+        # type: (QModelIndex, _TItem, Qt.ItemDataRole) -> bool
         if not self._is_index_valid(index):
             return False
 
-        if self._columns and self._items:
+        if self._columns and self._items and 0 <= index.column() < len(self._columns):
             column = self._columns[index.column()]
             if column:
                 binding = column.bindings.get(role)
@@ -269,3 +285,77 @@ class TableModel(_ItemsModel[TTableItem, TableColumn]):
                 return binding.value(self._items[section])
 
         return super(TableModel, self).headerData(section, orientation, role)
+
+
+#
+# TreeView
+#
+
+TTreeItem = TypeVar('TTreeItem', bound=QStandardItem)
+
+
+class TreeDefinition(_BindDefinition):
+
+    def __init__(self, header=None, bindings=None):
+        # type: (Optional[dict[Qt.ItemDataRole, Any]], Optional[dict[Qt.ItemDataRole, Union[Binding, str]]]) -> NoReturn
+        super(TreeDefinition, self).__init__(bindings)
+        self.header = header
+
+
+class TreeModel(QStandardItemModel, Generic[TTreeItem]):
+
+    def __init__(self, parent=None):
+        super(TreeModel, self).__init__(parent)
+        self._root = self.invisibleRootItem()  # type: QStandardItem
+        self._columns = []  # type: list[TreeDefinition]
+
+    def define_column(self, index, definition):
+        # type: (int, TreeDefinition) -> NoReturn
+        self._columns.insert(index, definition)
+        self._root.setColumnCount(len(self._columns))
+
+    def columnCount(self, parent=QModelIndex()):
+        # type: (QModelIndex) -> int
+        if self._columns:
+            return len(self._columns)
+        return super(TreeModel, self).columnCount()
+
+    def append(self, item):
+        # type: (TTreeItem) -> NoReturn
+        self._root.appendRow(item)
+
+    def headerData(self, section, orientation, role):
+        # type: (int, Qt.Orientation, Qt.ItemDataRole) -> Optional[str]
+        if self._columns and orientation == Qt.Horizontal:
+            if section < len(self._columns):
+                header = self._columns[section].header
+                return header.get(role)
+
+        return super(TreeModel, self).headerData(section, orientation, role)
+
+    def data(self, index, role=Qt.DisplayRole):
+        # type: (QModelIndex, Qt.ItemDataRole) -> Any
+        if not index.isValid():
+            return None
+
+        if self._columns and 0 <= index.column() < len(self._columns):
+            binding = self._columns[index.column()].bindings.get(role)
+            item = self.itemFromIndex(self.index(index.row(), 0, index.parent()))
+            if binding and item:
+                return binding.value(item)
+
+        return super(TreeModel, self).data(index, role)
+
+    def setData(self, index, value, role=Qt.EditRole):
+        # type: (QModelIndex, TTreeItem, Qt.ItemDataRole) -> bool
+        if not index.isValid():
+            return False
+
+        if self._columns and 0 <= index.column() < len(self._columns):
+            binding = self._columns[index.column()].bindings.get(role)
+            item = self.itemFromIndex(self.index(index.row(), 0, index.parent()))
+            if binding and item:
+                binding.set_value(item, value)
+                return True
+
+        return super(TreeModel, self).setData(index, value, role)
