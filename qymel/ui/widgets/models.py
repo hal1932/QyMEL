@@ -88,7 +88,7 @@ class _ItemsModel(QStandardItemModel, Generic[_TItem, _TBindDef]):
 
     def extend(self, items):
         # type: (Sequence[_TItem]) -> NoReturn
-        self.beginInsertRows(QModelIndex(), len(self._items), len(self._items) + len(items))
+        self.beginInsertRows(QModelIndex(), len(self._items), len(self._items) + len(items) - 1)
         self._items.extend(items)
         self.endInsertRows()
 
