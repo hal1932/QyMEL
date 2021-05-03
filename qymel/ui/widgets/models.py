@@ -389,6 +389,19 @@ class TreeItem(object):
             child._parent = self
             child._model = model
 
+    def extend_children(self, children):
+        # type: (Sequence[TreeItem]) -> NoReturn
+        model = self._model
+
+        model.beginInsertRows(model.index_from_item(self), self.child_count, self.child_count + len(children) - 1)
+        self._children.extend(children)
+        model.endInsertRows()
+
+        for child in children:
+            if child:
+                child._parent = self
+                child._model = model
+
     def clear_children(self):
         # type: () -> NoReturn
         model = self._model
@@ -456,10 +469,14 @@ class TreeModel(QAbstractItemModel, Generic[TTreeItem]):
 
     def append(self, item):
         # type: (TTreeItem) -> NoReturn
-        self.beginInsertRows(QModelIndex(), self._root.child_count, self._root.child_count)
         self._root.append_child(item)
-        self.endInsertRows()
-        item._model = self
+
+    def extend(self, items):
+        # type: (Sequence[TTreeItem]) -> NoReturn
+        self._root.extend_children(items)
+
+    def clear(self):
+        self._root.clear_children()
 
     def item_from_index(self, index):
         # type: (QModelIndex) -> Optional[TTreeItem]
