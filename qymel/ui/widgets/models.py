@@ -38,7 +38,7 @@ class _BindDefinition(object):
         self.bindings[role] = binding
 
 
-_TItem = TypeVar('_TItem', bound=QStandardItemModel)
+_TItem = TypeVar('_TItem')
 _TBindDef = TypeVar('_TBindDef', bound=_BindDefinition)
 
 
@@ -67,12 +67,16 @@ class _Binder(Generic[_TItem, _TBindDef]):
 
     def binding(self, index, role):
         # type: (QModelIndex, Qt.ItemDataRole) -> Optional[Binding]
-        if self._columns and 0 <= index.column() < len(self._columns):
+        if index.isValid() and self._columns and 0 <= index.column() < len(self._columns):
             return self._columns[index.column()].bindings.get(role)
         return None
 
+    def is_bound(self, index, role):
+        # type: (QModelIndex, Qt.ItemDataRole) -> bool
+        return self.binding(index, role) is not None
 
-class _ItemsModel(QStandardItemModel, Generic[_TItem, _TBindDef]):
+
+class _ItemsModel(QAbstractItemModel, Generic[_TItem, _TBindDef]):
 
     def __init__(self, parent=None):
         # type: (QObject) -> NoReturn
@@ -92,77 +96,83 @@ class _ItemsModel(QStandardItemModel, Generic[_TItem, _TBindDef]):
         self._items.extend(items)
         self.endInsertRows()
 
+    def insert(self, index, items):
+        # type: (Union[int, QModelIndex], Union[_TItem, Sequence[_TItem]]) -> NoReturn
+        if isinstance(index, QModelIndex):
+            index = index.row()
+        if not isinstance(items, Sequence):
+            items = [items]
+
+        self.beginInsertRows(QModelIndex(), index, index + len(items) - 1)
+        for item in items:
+            self._items.insert(index, item)
+            index += 1
+        self.endInsertRows()
+
     def replace(self, items):
         # type: (Sequence[_TItem]) -> NoReturn
+        self.beginResetModel()
         self._items = []
-        self.extend(items)
+        self._items.extend(items)
+        self.endResetModel()
 
     def clear(self):
-        self.replace([])
+        self.beginResetModel()
+        self._items = []
+        self.endResetModel()
 
     def item(self, index):
         # type: (Union[QModelIndex, int]) -> _TItem
-        if self._binder.is_enabled:
-            if isinstance(index, QModelIndex):
-                index = index.row()
-            return self._items[index]
-
-        if isinstance(index, int):
-            index = self.index(index, 0, QModelIndex())
-        return super(_ItemsModel, self).itemFromIndex(index)
+        if isinstance(index, QModelIndex):
+            index = index.row()
+        return self._items[index]
 
     def flags(self, index):
         # type: (QModelIndex) -> Qt.ItemFlags
-        flags = super(_ItemsModel, self).flags(index)
-        if self._binder.is_enabled:
-            if self._binder.binding(index, Qt.EditRole):
-                flags |= Qt.ItemIsEditable
-            else:
-                flags &= not Qt.ItemIsEditable
+        flags = Qt.ItemIsEnabled
+        if self._binder.is_bound(index, Qt.EditRole):
+            flags |= Qt.ItemIsEditable
+        else:
+            flags &= not Qt.ItemIsEditable
         return flags
 
     def index(self, row, column, parent=QModelIndex()):
         # type: (int, int, QModelIndex) -> QModelIndex
-        if self._binder.is_enabled:
-            return self.createIndex(row, column, 0) if self.hasIndex(row, column, parent) else QModelIndex()
-        return super(_ItemsModel, self).index(row, column, parent)
+        if 0 <= row < self.rowCount(parent):
+            return self.createIndex(row, column, self.item(row))
+        return QModelIndex()
+
+    def parent(self, index=QModelIndex()):
+        # type: (QModelIndex) -> QModelIndex
+        return QModelIndex()
+
+    def hasChildren(self, parent=QModelIndex()):
+        # type: (QModelIndex) -> bool
+        return False
 
     def rowCount(self, parent=QModelIndex()):
         # type: (QModelIndex) -> int
-        if self._binder.is_enabled:
-            return len(self._items)
-        return super(_ItemsModel, self).rowCount()
+        return len(self._items)
 
     def columnCount(self, parent=QModelIndex()):
         # type: (QModelIndex) -> int
-        if self._binder.is_enabled:
-            return self._binder.count
-        return super(_ItemsModel, self).columnCount(parent)
+        return self._binder.count
 
     def data(self, index, role=Qt.DisplayRole):
         # type: (QModelIndex, Qt.ItemDataRole) -> Any
-        if not index.isValid():
-            return None
-
-        if self._binder.is_enabled:
-            binding = self._binder.binding(index, role)
-            if binding:
-                return binding.value(self._items[index.row()])
-
-        return super(_ItemsModel, self).data(index, role)
+        binding = self._binder.binding(index, role)
+        if binding:
+            return binding.value(self._items[index.row()])
+        return None
 
     def setData(self, index, value, role=Qt.EditRole):
         # type: (QModelIndex, _TItem, Qt.ItemDataRole) -> bool
-        if not index.isValid():
-            return False
-
-        if self._binder.is_enabled:
-            binding = self._binder.binding(index, role)
-            if binding:
-                binding.set_value(self._items[index.row()], value)
-                return True
-
-        return super(_ItemsModel, self).setData(index, value, role)
+        binding = self._binder.binding(index, role)
+        if binding:
+            binding.set_value(self._items[index.row()], value)
+            self.dataChanged.emit(index, index)
+            return True
+        return False
 
     def _define_column(self, index, definition):
         # type: (int, _TBindDef) -> NoReturn
@@ -173,7 +183,7 @@ class _ItemsModel(QStandardItemModel, Generic[_TItem, _TBindDef]):
 # ListModel
 #
 
-TListItem = TypeVar('TListItem', bound=QStandardItem)
+TListItem = TypeVar('TListItem')
 
 
 class ListDefinition(_BindDefinition):
@@ -215,7 +225,7 @@ class ListModel(_ItemsModel[TListItem, ListDefinition]):
 # TableModel
 #
 
-TTableItem = TypeVar('TTableItem', bound=_TItem)
+TTableItem = TypeVar('TTableItem')
 
 
 class TableDefinition(_BindDefinition):
@@ -337,13 +347,19 @@ class TreeItem(object):
     >>>     def expand(self):
     >>>         self.clear_children()
     >>>         child = MyTreeItem(...)
-    >>>         child.set_expandable(True)
     >>>         self.append_child(child)
+    >>>         child.append_child(None)  # appending a dummy child to be able to expanding
     """
 
     @property
     def child_count(self):
+        # type: () -> int
         return len(self.children)
+
+    @property
+    def has_children(self):
+        # type: () -> bool
+        return self.child_count > 0
 
     @property
     def parent(self):
@@ -355,17 +371,11 @@ class TreeItem(object):
         # type: () -> Sequence[TTreeItem]
         return self._children
 
-    def __init__(self, parent=None):
-        # type: (Optional[TreeItem]) -> NoReturn
-        self._parent = parent
-        self._children = []  # type: list[TreeItem]
+    def __init__(self):
+        # type: () -> NoReturn
+        self._parent = None  # type: Optional[TTreeItem]
+        self._children = []  # type: list[TTreeItem]
         self._model = None  # type: QAbstractItemModel
-
-    def set_expandable(self, value):
-        if value:
-            self._children.append(None)
-        else:
-            self._children = []
 
     def child(self, index):
         # type: (int) -> Optional[TTreeItem]
@@ -378,32 +388,34 @@ class TreeItem(object):
         return self._children.index(child)
 
     def append_child(self, child):
-        # type: (TTreeItem) -> NoReturn
-        model = self._model
-
-        model.beginInsertRows(model.index_from_item(self), self.child_count, self.child_count)
-        self._children.append(child)
-        model.endInsertRows()
-
-        if child:
-            child._parent = self
-            child._model = model
+        # type: (Optional[TTreeItem]) -> NoReturn
+        self.insert_children(self.child_count, [child])
 
     def extend_children(self, children):
-        # type: (Sequence[TreeItem]) -> NoReturn
+        # type: (Sequence[Optional[TreeItem]]) -> NoReturn
+        self.insert_children(self.child_count, children)
+
+    def insert_children(self, index, children):
+        # type: (int, Sequence[Optional[TreeItem]]) -> NoReturn
+        if not self._model:
+            raise RuntimeError('cannot edit children before the node is inserted to the parent')
+
         model = self._model
 
-        model.beginInsertRows(model.index_from_item(self), self.child_count, self.child_count + len(children) - 1)
-        self._children.extend(children)
-        model.endInsertRows()
-
+        model.beginInsertRows(model.index_from_item(self), index, index + len(children) - 1)
         for child in children:
+            self._children.insert(index, child)
             if child:
                 child._parent = self
                 child._model = model
+            index += 1
+        model.endInsertRows()
 
     def clear_children(self):
         # type: () -> NoReturn
+        if not self._model:
+            raise RuntimeError('cannot edit children before the node is inserted to the parent')
+
         model = self._model
 
         model.beginRemoveRows(model.index_from_item(self), 0, self.child_count)
@@ -478,6 +490,11 @@ class TreeModel(QAbstractItemModel, Generic[TTreeItem]):
     def clear(self):
         self._root.clear_children()
 
+    def replace(self, items):
+        # type: (Sequence[TTreeItem]) -> NoReturn
+        self.clear()
+        self.extend(items)
+
     def item_from_index(self, index):
         # type: (QModelIndex) -> Optional[TTreeItem]
         if not index.isValid():
@@ -538,6 +555,13 @@ class TreeModel(QAbstractItemModel, Generic[TTreeItem]):
             parent_item = parent.internalPointer()
         child_item = parent_item.child(row)
         return self.createIndex(row, column, child_item)
+
+    def hasChildren(self, parent=QModelIndex()):
+        # type: (QModelIndex) -> bool
+        item = self.item_from_index(parent) if parent.isValid() else self._root
+        if item:
+            return item.has_children
+        return False
 
     def data(self, index, role=Qt.DisplayRole):
         # type: (QModelIndex, Qt.ItemDataRole) -> Any
