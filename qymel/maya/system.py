@@ -10,7 +10,7 @@ import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 
 from . import nodetypes as _nodetypes
-from ..internal import graphs as _graphs
+from .internal import graphs as _graphs
 
 
 class _DictEntry(object):

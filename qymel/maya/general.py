@@ -2,16 +2,15 @@
 from __future__ import absolute_import, print_function, division
 from typing import *
 from six import *
-from six.moves import *
 
 import functools
 
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 
-from ..internal import graphs as _graphs
-from ..internal import plugs as _plugs
-from ..internal import components as _components
+from .internal import components as _components
+from .internal import graphs as _graphs
+from .internal import plugs as _plugs
 
 
 def deprecated(message):

@@ -9,8 +9,6 @@ import types
 import pstats
 import cProfile
 
-import maya.cmds as _cmds
-
 
 class Scope(object):
 
@@ -27,66 +25,6 @@ class Scope(object):
 
     def _on_exit(self):
         pass
-
-
-class UndoScope(Scope):
-
-    def _on_enter(self):
-        _cmds.undoInfo(openChunk=True)
-
-    def _on_exit(self):
-        _cmds.undoInfo(closeChunk=True)
-
-
-def undo_scope(func):
-    @functools.wraps(func)
-    def _(*args, **kwargs):
-        with UndoScope():
-            func(*args, **kwargs)
-    return _
-
-
-class KeepSelectionScope(Scope):
-
-    def __init__(self):
-        self.selection = []  # type: List[str]
-
-    def _on_enter(self):
-        self.selection = _cmds.ls(sl=True)
-
-    def _on_exit(self):
-        _cmds.select(self.selection, replace=True)
-
-
-def keep_selection_scope(func):
-    @functools.wraps(func)
-    def _(*args, **kwargs):
-        with KeepSelectionScope():
-            func(*args, **kwargs)
-    return _
-
-
-class ViewportPauseScope(Scope):
-
-    def __init__(self):
-        self.paused = False
-
-    def _on_enter(self):
-        self.paused = _cmds.ogs(query=True, pause=True)
-        if not self.paused:
-            _cmds.ogs(pause=True)
-
-    def _on_exit(self):
-        if _cmds.ogs(query=True, pause=True) != self.paused:
-            _cmds.ogs(pause=True)
-
-
-def viewport_pause_scope(func):
-    @functools.wraps(func)
-    def _(*args, **kwargs):
-        with ViewportPauseScope():
-            func(*args, **kwargs)
-    return _
 
 
 class ProfileScope(Scope):

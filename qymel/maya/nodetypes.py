@@ -4,7 +4,6 @@ from six import *
 from six.moves import *
 from typing import *
 
-import os
 import collections
 
 import maya.cmds as _cmds
@@ -14,8 +13,8 @@ import maya.api.OpenMayaAnim as _om2anim
 from . import general as _general
 from . import iterators as _iterators
 from . import plugins as _plugins
-from ..internal import nodes as _nodes
-from ..internal import graphs as _graphs
+from .internal import nodes as _nodes
+from .internal import graphs as _graphs
 
 
 class DependNode(_general.MayaObject):
