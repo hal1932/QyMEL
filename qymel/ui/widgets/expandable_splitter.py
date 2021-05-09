@@ -13,6 +13,12 @@ __all__ = ['ExpandableSplitter']
 
 
 class ExpandableSplitter(QSplitter):
+    """
+    >>> splitter = ExpandableSplitter()
+    >>> splitter.addWidget(QPushButton('aaa'))
+    >>> splitter.addWidget(QPushButton('bbb'))
+    >>> splitter.show()
+    """
 
     def __init__(self, *args, **kwargs):
         super(ExpandableSplitter, self).__init__(*args, **kwargs)

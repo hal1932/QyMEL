@@ -15,13 +15,26 @@ __all__ = ['LoggingContext', 'LogAutoFlushScope', 'LogWidget']
 
 
 class LoggingContext(object):
+    """
+    >>> logger = logging.getLogger(__name__)
+    >>> LoggingContext.auto_flush = True
+    >>> logger.info('info')
+    >>> logger.warning('warning')
+    >>> LoggingContext.auto_flush = False
+    """
 
     auto_flush = False
 
 
 class LogAutoFlushScope(_scopes.Scope):
+    """
+    >>> logger = logging.getLogger(__name__)
+    >>> with LogAutoFlushScope():
+    >>>     logger.info('info')
+    >>>     logger.warning('warning')
+    """
 
-    def __init__(self, enable_auto_flush=False):
+    def __init__(self, enable_auto_flush=True):
         # type: (bool) -> NoReturn
         self.__scoped_value = enable_auto_flush
         self.__current_value = LoggingContext.auto_flush
@@ -34,6 +47,12 @@ class LogAutoFlushScope(_scopes.Scope):
 
 
 class LogWidget(QWidget):
+    """
+    >>> logger = logging.getLogger(__name__)
+    >>> viewer = LogWidget()
+    >>> logger.handlers.append(viewer.create_handler())
+    >>> viewer.show()
+    """
 
     def __init__(self, max_blocks=1000, parent=None):
         # type: (int, QObject) -> NoReturn
