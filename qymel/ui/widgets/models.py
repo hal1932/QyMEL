@@ -12,8 +12,8 @@ __all__ = [
     'ListDefinition',
     'ListModel',
     'TableDefinition',
-    'TableColumn',
-    'TableHeaderColumn',
+    'TableColumnDefinition',
+    'TableHeaderColumnDefinition',
     'TableModel',
     'TreeDefinition',
     'TreeItem',
@@ -246,22 +246,22 @@ class TableDefinition(BindDefinition):
     pass
 
 
-class TableColumn(TableDefinition):
+class TableColumnDefinition(TableDefinition):
 
     def __init__(self, header=None, bindings=None):
         # type: (Optional[dict[Qt.ItemDataRole, Any]], Optional[dict[Qt.ItemDataRole, Union[Binding, str]]]) -> NoReturn
-        super(TableColumn, self).__init__(bindings)
+        super(TableColumnDefinition, self).__init__(bindings)
         self.header = header
 
 
-class TableHeaderColumn(TableDefinition):
+class TableHeaderColumnDefinition(TableDefinition):
 
     def __init__(self, bindings=None):
         # type: (Optional[dict[Qt.ItemDataRole, Union[Binding, str]]]) -> NoReturn
-        super(TableHeaderColumn, self).__init__(bindings)
+        super(TableHeaderColumnDefinition, self).__init__(bindings)
 
 
-class TableModel(ItemsModel[TTableItem, TableColumn]):
+class TableModel(ItemsModel[TTableItem, TableColumnDefinition]):
     """
     >>> class TableItem(object):
     >>>     def __init__(self, index, name, color):
@@ -277,9 +277,9 @@ class TableModel(ItemsModel[TTableItem, TableColumn]):
     >>> model.append(TableItem(1, 'bbb', QColor(Qt.green)))
     >>> model.append(TableItem(2, 'ccc', QColor(Qt.blue)))
     >>>
-    >>> header_column = TableHeaderColumn({Qt.DisplayRole: 'color'})
+    >>> header_column = TableHeaderColumnDefinition({Qt.DisplayRole: 'color'})
     >>>
-    >>> column_id = TableColumn(
+    >>> column_id = TableColumnDefinition(
     >>>     header={
     >>>         Qt.DisplayRole: 'id',
     >>>         Qt.ForegroundRole: QColor(Qt.red)
@@ -289,7 +289,7 @@ class TableModel(ItemsModel[TTableItem, TableColumn]):
     >>>         Qt.ForegroundRole: 'color'
     >>>     }
     >>> )
-    >>> column_name = TableColumn(
+    >>> column_name = TableColumnDefinition(
     >>>     header={
     >>>         Qt.DisplayRole: 'name'
     >>>     },
@@ -308,14 +308,14 @@ class TableModel(ItemsModel[TTableItem, TableColumn]):
 
     def __init__(self, parent=None):
         super(TableModel, self).__init__(parent)
-        self._header_column = None  # type: Optional[TableHeaderColumn]
+        self._header_column = None  # type: Optional[TableHeaderColumnDefinition]
 
     def define_header_column(self, header_column):
-        # type: (TableHeaderColumn) -> NoReturn
+        # type: (TableHeaderColumnDefinition) -> NoReturn
         self._header_column = header_column
 
     def define_column(self, index, column):
-        # type: (int, TableColumn) -> NoReturn
+        # type: (int, TableColumnDefinition) -> NoReturn
         self._define_column(index, column)
 
     def headerData(self, section, orientation, role):

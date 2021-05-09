@@ -53,8 +53,8 @@ class MainWindow(MainWindowBase):
         list_model.append(ListItem(1, 'bbb', QColor(Qt.green)))
         list_model.append(ListItem(2, 'ccc', QColor(Qt.blue)))
 
-        list_model.insert(1, ListItem(5, 'ddd', None))
-        list_model.insert(2, [ListItem(6, 'eee', None), ListItem(7, 'fff', None)])
+        # list_model.insert(1, ListItem(5, 'ddd', None))
+        # list_model.insert(2, [ListItem(6, 'eee', None), ListItem(7, 'fff', None)])
 
         column = ListDefinition(bindings={
             Qt.DisplayRole: 'name',
@@ -76,9 +76,9 @@ class MainWindow(MainWindowBase):
         ])
         # table_model.append(TableItem(0, 'aaa', QColor(Qt.red)))
 
-        header_column = TableHeaderColumn({Qt.DisplayRole: 'name'})
+        header_column = TableHeaderColumnDefinition({Qt.DisplayRole: 'name'})
 
-        column_id = TableColumn(
+        column_id = TableColumnDefinition(
             header={
                 Qt.DisplayRole: 'id',
                 Qt.ForegroundRole: QColor(Qt.red)
@@ -88,7 +88,7 @@ class MainWindow(MainWindowBase):
                 Qt.ForegroundRole: 'color'
             }
         )
-        column_name = TableColumn(
+        column_name = TableColumnDefinition(
             header={
                 Qt.DisplayRole: 'name'
             },
