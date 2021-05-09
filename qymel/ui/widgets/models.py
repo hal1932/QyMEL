@@ -13,6 +13,7 @@ __all__ = [
     'ListModel',
     'TableDefinition',
     'TableColumn',
+    'TableHeaderColumn',
     'TableModel',
     'TreeDefinition',
     'TreeItem',
