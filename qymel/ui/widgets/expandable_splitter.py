@@ -14,6 +14,16 @@ __all__ = ['ExpandableSplitter']
 
 class ExpandableSplitter(QSplitter):
 
+    def __init__(self, *args, **kwargs):
+        super(ExpandableSplitter, self).__init__(*args, **kwargs)
+
+        def _splitter_moved(pos, index):
+            handle = self.handle(index)
+            if isinstance(handle, ExpandableSplitterHandle):
+                handle.on_splitter_moved(pos)
+
+        self.splitterMoved.connect(_splitter_moved)
+
     def createHandle(self):
         # type: () -> QSplitterHandle
         return ExpandableSplitterHandle(self.orientation(), self)
@@ -32,15 +42,32 @@ class ExpandableSplitterHandle(QSplitterHandle):
 
         self.setOrientation(orientation)
 
+    def on_splitter_moved(self, pos):
+        # type: (int) -> NoReturn
+        if pos == 0:
+            for expander in self.__expanders:
+                disabled = expander.direction == ExpandDirection.LEFT or expander.direction == ExpandDirection.UPPER
+                expander.enable(not disabled)
+        elif pos == self.__range[1]:
+            for expander in self.__expanders:
+                disabled = expander.direction == ExpandDirection.RIGHT or expander.direction == ExpandDirection.LOWER
+                expander.enable(not disabled)
+        else:
+            for expander in self.__expanders:
+                expander.enable(True)
+
     def setOrientation(self, orientation):
+        super(ExpandableSplitterHandle, self).setOrientation(orientation)
+
         if orientation == Qt.Horizontal:
             self.__expanders = [Expander(ExpandDirection.RIGHT), Expander(ExpandDirection.LEFT)]
         else:
             self.__expanders = [Expander(ExpandDirection.LOWER), Expander(ExpandDirection.UPPER)]
-        super(ExpandableSplitterHandle, self).setOrientation(orientation)
 
     def resizeEvent(self, event):
         # type: (QResizeEvent) -> NoReturn
+        super(ExpandableSplitterHandle, self).resizeEvent(event)
+
         for expander in self.__expanders:
             expander.resize(self.rect())
 
@@ -59,6 +86,8 @@ class ExpandableSplitterHandle(QSplitterHandle):
 
     def mouseMoveEvent(self, event):
         # type: (QMouseEvent) -> NoReturn
+        super(ExpandableSplitterHandle, self).mouseMoveEvent(event)
+
         QApplication.restoreOverrideCursor()
 
         need_to_repainted = False
@@ -71,24 +100,33 @@ class ExpandableSplitterHandle(QSplitterHandle):
         if need_to_repainted:
             self.repaint()
 
-        super(ExpandableSplitterHandle, self).mouseMoveEvent(event)
-
     def leaveEvent(self, event):
         # type: (QEvent) -> NoReturn
+        super(ExpandableSplitterHandle, self).leaveEvent(event)
+
         if any(expander.activate(False) for expander in self.__expanders):
             self.repaint()
         QApplication.restoreOverrideCursor()
-        super(ExpandableSplitterHandle, self).leaveEvent(event)
+
+    def mousePressEvent(self, event):
+        # type: (QMouseEvent) -> NoReturn
+        super(ExpandableSplitterHandle, self).mousePressEvent(event)
+
+        pos = self.__current_position()
+        if self.__range[0] < pos < self.__range[1]:
+            self.__last_pos = pos
 
     def mouseReleaseEvent(self, event):
         # type: (QMouseEvent) -> NoReturn
+        super(ExpandableSplitterHandle, self).mouseReleaseEvent(event)
+
+        current_pos = self.__current_position()
+
         for expander in self.__expanders:
-            expander.enable(True)
+            if not expander.is_enabled:
+                continue
 
             if expander.contains(event.pos()):
-                pos = self.pos()
-
-                current_pos = 0
                 next_pos = 0
                 last_pos = self.__last_pos
                 min_pos, max_pos = self.__range
@@ -96,7 +134,6 @@ class ExpandableSplitterHandle(QSplitterHandle):
                 enabled = True
 
                 if expander.direction == ExpandDirection.RIGHT:
-                    current_pos = pos.x()
                     if current_pos == min_pos:
                         next_pos = last_pos
                     else:
@@ -105,7 +142,6 @@ class ExpandableSplitterHandle(QSplitterHandle):
                         enabled = False
 
                 elif expander.direction == ExpandDirection.LEFT:
-                    current_pos = pos.x()
                     if current_pos == max_pos:
                         next_pos = last_pos
                     else:
@@ -114,7 +150,6 @@ class ExpandableSplitterHandle(QSplitterHandle):
                         enabled = False
 
                 elif expander.direction == ExpandDirection.UPPER:
-                    current_pos = pos.y()
                     if current_pos == max_pos:
                         next_pos = last_pos
                     else:
@@ -123,7 +158,6 @@ class ExpandableSplitterHandle(QSplitterHandle):
                         enabled = False
 
                 elif expander.direction == ExpandDirection.LOWER:
-                    current_pos = pos.y()
                     if current_pos == min_pos:
                         next_pos = last_pos
                     else:
@@ -131,11 +165,18 @@ class ExpandableSplitterHandle(QSplitterHandle):
                         last_pos = current_pos
                         enabled = False
 
-                if next_pos != current_pos:
+                if next_pos != current_pos and last_pos:
                     self.moveSplitter(next_pos)
                     self.__last_pos = last_pos
 
                 expander.enable(enabled)
+
+    def __current_position(self):
+        # type: () -> int
+        pos = self.pos()
+        if self.orientation() == Qt.Horizontal:
+            return pos.x()
+        return pos.y()
 
 
 class ExpandDirection(enum.Enum):
@@ -155,6 +196,11 @@ class Expander(object):
     def direction(self):
         # type: () -> ExpandDirection
         return self.__direction
+
+    @property
+    def is_enabled(self):
+        # type: () -> bool
+        return self.__enabled
 
     def __init__(self, direction):
         # type: (ExpandDirection, QRect) -> NoReturn
