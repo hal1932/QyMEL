@@ -11,6 +11,9 @@ from ..pyside_module import *
 from ...core import scopes as _scopes
 
 
+__all__ = ['LoggingContext', 'LogAutoFlushScope', 'LogWidget']
+
+
 class LoggingContext(object):
 
     auto_flush = False
@@ -55,7 +58,7 @@ class LogWidget(QWidget):
         self.auto_flush = True
         self.timestamp_format = '%H:%M:%S'
 
-        self._editor = _LogTextEdit(max_blocks=max_blocks)
+        self._editor = LogTextEdit(max_blocks=max_blocks)
 
         editor_layout = QVBoxLayout()
         editor_layout.setContentsMargins(1, 1, 1, 1)
@@ -65,7 +68,7 @@ class LogWidget(QWidget):
 
     def create_handler(self, level=logging.NOTSET):
         # type: (int) -> logging.Handler
-        return _LogHandler(self, level)
+        return LogHandler(self, level)
 
     def clear(self):
         # type: () -> NoReturn
@@ -116,11 +119,11 @@ class LogWidget(QWidget):
             self.flush()
 
 
-class _LogTextEdit(QTextEdit):
+class LogTextEdit(QTextEdit):
 
     def __init__(self, max_blocks=0, parent=None):
         # type: (int, QObject) -> NoReturn
-        super(_LogTextEdit, self).__init__(parent)
+        super(LogTextEdit, self).__init__(parent)
         self.setReadOnly(True)
         self.textChanged.connect(self.__scroll_to_end)
 
@@ -142,11 +145,11 @@ class _LogTextEdit(QTextEdit):
         scroll_bar.setValue(scroll_bar.maximum())
 
 
-class _LogHandler(logging.Handler):
+class LogHandler(logging.Handler):
 
     def __init__(self, view, level):
         # type: (LogWidget, int) -> NoReturn
-        super(_LogHandler, self).__init__(level)
+        super(LogHandler, self).__init__(level)
         self.__view = view
 
     def emit(self, record):

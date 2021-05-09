@@ -8,16 +8,7 @@ from ..pyside_module import *
 from .. import layouts as _layouts
 
 
-class _Clickable(QWidget):
-
-    clicked = Signal()
-
-    def __init__(self, parent=None):
-        super(_Clickable, self).__init__(parent)
-
-    def mouseReleaseEvent(self, e):
-        # type: (QMouseEvent) -> NoReturn
-        self.clicked.emit()
+__all__ = ['Expander']
 
 
 class Expander(QFrame):
@@ -60,7 +51,7 @@ class Expander(QFrame):
         self._header_layout = QHBoxLayout()
         self._content_layout = QHBoxLayout()
 
-        self._header = _Clickable()
+        self._header = Clickable()
         self._header.setLayout(self._header_layout)
         self._header.clicked.connect(self.toggle)
 
@@ -143,3 +134,15 @@ class Expander(QFrame):
             self.expand()
         else:
             self.collapse()
+
+
+class Clickable(QWidget):
+
+    clicked = Signal()
+
+    def __init__(self, parent=None):
+        super(Clickable, self).__init__(parent)
+
+    def mouseReleaseEvent(self, e):
+        # type: (QMouseEvent) -> NoReturn
+        self.clicked.emit()

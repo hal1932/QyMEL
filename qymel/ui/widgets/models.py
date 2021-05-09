@@ -7,6 +7,19 @@ from six.moves import *
 from ..pyside_module import *
 
 
+__all__ = [
+    'Binding',
+    'ListDefinition',
+    'ListModel',
+    'TableDefinition',
+    'TableColumn',
+    'TableModel',
+    'TreeDefinition',
+    'TreeItem',
+    'TreeModel'
+]
+
+
 class Binding(object):
 
     def __init__(self, path):
@@ -22,7 +35,7 @@ class Binding(object):
         setattr(obj, self.path, value)
 
 
-class _BindDefinition(object):
+class BindDefinition(object):
 
     def __init__(self, bindings=None):
         # type: (Optional[dict[Qt.ItemDataRole, Union[Binding, str]]]) -> NoReturn
@@ -38,11 +51,11 @@ class _BindDefinition(object):
         self.bindings[role] = binding
 
 
-_TItem = TypeVar('_TItem')
-_TBindDef = TypeVar('_TBindDef', bound=_BindDefinition)
+TItem = TypeVar('TItem')
+TBindDef = TypeVar('TBindDef', bound=BindDefinition)
 
 
-class _Binder(Generic[_TItem, _TBindDef]):
+class Binder(Generic[TItem, TBindDef]):
 
     @property
     def is_enabled(self):
@@ -55,14 +68,14 @@ class _Binder(Generic[_TItem, _TBindDef]):
         return len(self._columns)
 
     def __init__(self):
-        self._columns = []  # type: list[_TBindDef]
+        self._columns = []  # type: list[TBindDef]
 
     def column(self, index):
-        # type: (int) -> _TBindDef
+        # type: (int) -> TBindDef
         return self._columns[index]
 
     def set_binding(self, index, column):
-        # type: (int, _BindDefinition) -> NoReturn
+        # type: (int, BindDefinition) -> NoReturn
         self._columns.insert(index, column)
 
     def binding(self, index, role):
@@ -76,28 +89,28 @@ class _Binder(Generic[_TItem, _TBindDef]):
         return self.binding(index, role) is not None
 
 
-class _ItemsModel(QAbstractItemModel, Generic[_TItem, _TBindDef]):
+class ItemsModel(QAbstractItemModel, Generic[TItem, TBindDef]):
 
     def __init__(self, parent=None):
         # type: (QObject) -> NoReturn
-        super(_ItemsModel, self).__init__(parent)
-        self._binder = _Binder()
-        self._items = []  # type: list[_TItem]
+        super(ItemsModel, self).__init__(parent)
+        self._binder = Binder()
+        self._items = []  # type: list[TItem]
 
     def append(self, item):
-        # type: (_TItem) -> NoReturn
+        # type: (TItem) -> NoReturn
         self.beginInsertRows(QModelIndex(), len(self._items), len(self._items))
         self._items.append(item)
         self.endInsertRows()
 
     def extend(self, items):
-        # type: (Sequence[_TItem]) -> NoReturn
+        # type: (Sequence[TItem]) -> NoReturn
         self.beginInsertRows(QModelIndex(), len(self._items), len(self._items) + len(items) - 1)
         self._items.extend(items)
         self.endInsertRows()
 
     def insert(self, index, items):
-        # type: (Union[int, QModelIndex], Union[_TItem, Sequence[_TItem]]) -> NoReturn
+        # type: (Union[int, QModelIndex], Union[TItem, Sequence[TItem]]) -> NoReturn
         if isinstance(index, QModelIndex):
             index = index.row()
         if not isinstance(items, Sequence):
@@ -110,7 +123,7 @@ class _ItemsModel(QAbstractItemModel, Generic[_TItem, _TBindDef]):
         self.endInsertRows()
 
     def replace(self, items):
-        # type: (Sequence[_TItem]) -> NoReturn
+        # type: (Sequence[TItem]) -> NoReturn
         self.beginResetModel()
         self._items = []
         self._items.extend(items)
@@ -122,7 +135,7 @@ class _ItemsModel(QAbstractItemModel, Generic[_TItem, _TBindDef]):
         self.endResetModel()
 
     def item(self, index):
-        # type: (Union[QModelIndex, int]) -> _TItem
+        # type: (Union[QModelIndex, int]) -> TItem
         if isinstance(index, QModelIndex):
             index = index.row()
         return self._items[index]
@@ -166,7 +179,7 @@ class _ItemsModel(QAbstractItemModel, Generic[_TItem, _TBindDef]):
         return None
 
     def setData(self, index, value, role=Qt.EditRole):
-        # type: (QModelIndex, _TItem, Qt.ItemDataRole) -> bool
+        # type: (QModelIndex, TItem, Qt.ItemDataRole) -> bool
         binding = self._binder.binding(index, role)
         if binding:
             binding.set_value(self._items[index.row()], value)
@@ -175,7 +188,7 @@ class _ItemsModel(QAbstractItemModel, Generic[_TItem, _TBindDef]):
         return False
 
     def _define_column(self, index, definition):
-        # type: (int, _TBindDef) -> NoReturn
+        # type: (int, TBindDef) -> NoReturn
         self._binder.set_binding(index, definition)
 
 
@@ -186,11 +199,11 @@ class _ItemsModel(QAbstractItemModel, Generic[_TItem, _TBindDef]):
 TListItem = TypeVar('TListItem')
 
 
-class ListDefinition(_BindDefinition):
+class ListDefinition(BindDefinition):
     pass
 
 
-class ListModel(_ItemsModel[TListItem, ListDefinition]):
+class ListModel(ItemsModel[TListItem, ListDefinition]):
     """
     >>>class ListItem(object):
     >>> def __init__(self, index, name, color):
@@ -228,7 +241,7 @@ class ListModel(_ItemsModel[TListItem, ListDefinition]):
 TTableItem = TypeVar('TTableItem')
 
 
-class TableDefinition(_BindDefinition):
+class TableDefinition(BindDefinition):
     pass
 
 
@@ -247,7 +260,7 @@ class TableHeaderColumn(TableDefinition):
         super(TableHeaderColumn, self).__init__(bindings)
 
 
-class TableModel(_ItemsModel[TTableItem, TableColumn]):
+class TableModel(ItemsModel[TTableItem, TableColumn]):
     """
     >>> class TableItem(object):
     >>>     def __init__(self, index, name, color):
@@ -323,10 +336,10 @@ class TableModel(_ItemsModel[TTableItem, TableColumn]):
 # TreeView
 #
 
-TTreeItem = TypeVar('TTreeItem', bound=_TItem)
+TTreeItem = TypeVar('TTreeItem', bound=TItem)
 
 
-class TreeDefinition(_BindDefinition):
+class TreeDefinition(BindDefinition):
 
     def __init__(self, header=None, bindings=None):
         # type: (Optional[dict[Qt.ItemDataRole, Any]], Optional[dict[Qt.ItemDataRole, Union[Binding, str]]]) -> NoReturn
@@ -471,7 +484,7 @@ class TreeModel(QAbstractItemModel, Generic[TTreeItem]):
 
     def __init__(self, parent=None):
         super(TreeModel, self).__init__(parent)
-        self._binder = _Binder()
+        self._binder = Binder()
         self._root = TreeItem()
         self._root._model = self
 
@@ -579,7 +592,7 @@ class TreeModel(QAbstractItemModel, Generic[TTreeItem]):
         return binding.value(item)
 
     def setData(self, index, value, role=Qt.EditRole):
-        # type: (QModelIndex, _TItem, Qt.ItemDataRole) -> bool
+        # type: (QModelIndex, TItem, Qt.ItemDataRole) -> bool
         if not index.isValid():
             return False
 
