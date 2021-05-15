@@ -56,7 +56,7 @@ class BatchImageLoader(QObject):
 
     def load_async(self):
         # type: () -> multiprocessing.pool.AsyncResult
-        error_callbacks = self.__callbacks.get(ImageLoadingCallback.ERROR, [])
+        # error_callbacks = self.__callbacks.get(ImageLoadingCallback.ERROR, [])
         loaded_callbacks = self.__callbacks.get(ImageLoadingCallback.LOADED, [])
         completed_callbacks = self.__callbacks.get(ImageLoadingCallback.COMPLETED, [])
 

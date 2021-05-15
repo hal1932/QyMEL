@@ -972,7 +972,6 @@ class Transform(DagNode):
 
     def has_shape(self):
         # type: () -> bool
-        count = 0
         mfn = self.mfn
         for i in range(mfn.childCount()):
             child = mfn.child(i)
@@ -1050,7 +1049,7 @@ class Shape(DagNode):
         return _graphs.eval_node(transform, _om2.MFnDependencyNode())
 
     def skin_cluster(self):
-        # type: () -> SkinCluster
+        # type: () -> Optional[SkinCluster]
         names = _cmds.ls(_cmds.listHistory(self.mel_object), type='skinCluster')
         if len(names) == 0:
             return None
@@ -1382,7 +1381,7 @@ class FileReference(DependNode):
         return self.replace(None, depth, return_new_nodes)
 
     def replace(self, file_path, depth=None, return_new_nodes=False):
-        # type: (str, str, bool) -> Union[None, List[DependNode]]
+        # type: (Optional[str], Optional[str], bool) -> Union[None, List[DependNode]]
         args = []
         if file_path is not None:
             args.append(file_path)

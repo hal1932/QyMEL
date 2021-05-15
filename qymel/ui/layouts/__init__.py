@@ -7,8 +7,11 @@ from six.moves import *
 from ..pyside_module import *
 
 
-class _Stretch(object): pass
+class _Stretch(object):
+    pass
 
+
+TLayoutItem = Union[QWidget, QLayout, _Stretch]
 
 _stretch_instance = _Stretch()
 
@@ -19,15 +22,17 @@ def stretch():
 
 
 def hbox(*items, **kwargs):
+    # type: (List[TLayoutItem], Any) -> QHBoxLayout
     return _box(QHBoxLayout, items, kwargs)
 
 
 def vbox(*items, **kwargs):
+    # type: (List[TLayoutItem], Any) -> QVBoxLayout
     return _box(QVBoxLayout, items, kwargs)
 
 
 def _box(cls, items, kwargs):
-    # type: (Type, List[Union[QWidget, QLayout, _Stretch]], Dict[str, Any]) -> NoReturn
+    # type: (Type, List[TLayoutItem], Dict[str, Any]) -> NoReturn
     box = cls()
     for item in items:
         if isinstance(item, QWidget):
@@ -84,7 +89,7 @@ def delete_layout_item_by_index(layout, index):
 
 
 def delete_layout_item(layout, predicate):
-    # type: (QLayout, int) -> bool
+    # type: (QLayout, Callable[[QObject], bool]) -> bool
     delete_index = -1
     for i in xrange(layout.count()):
         child = layout.itemAt(i)

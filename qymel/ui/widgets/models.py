@@ -562,7 +562,7 @@ class TreeModel(QAbstractItemModel, Generic[TTreeItem]):
         return self.createIndex(parent.parent.child_index_of(parent), 0, parent)
 
     def index(self, row, column, parent=QModelIndex()):
-        # type: (QModelIndex) -> QModelIndex
+        # type: (int, int, QModelIndex) -> QModelIndex
         if not parent.isValid():
             parent_item = self._root
         else:

@@ -116,7 +116,7 @@ class MeshVertexIter(_Iterator):
     def color_indices(self, color_set=None):
         # type: (Union[ColorSet, str]) -> _om2.MIntArray
         color_set_name = _get_color_set_name(color_set, None)
-        return self._miter.getColorIndices(None)
+        return self._miter.getColorIndices(color_set_name)
 
     def normal(self, space=_om2.MSpace.kObject):
         # type: (int) -> _om2.MVector
@@ -142,7 +142,7 @@ class MeshVertexIter(_Iterator):
         return self._miter.getUVIndices(uv_set_name)
 
     def uvs(self, uv_set=None):
-        # type: (Union[UvSet, str]) -> Dict[int, Tuple[float]]
+        # type: (Union[UvSet, str]) -> Dict[int, Tuple[float, float]]
         uv_set_name = _get_uv_set_name(uv_set, None)
         us, vs, face_ids = self._miter.getUVs(uv_set_name)
 
@@ -413,7 +413,7 @@ class MeshVertexFaceIter(_Iterator):
 
 
 def _get_color_set_name(color_set, default_value):
-    # type: (Union[ColorSet, Any], str) -> str
+    # type: (Union[ColorSet, Any], Optional[str]) -> str
     if color_set is None:
         return default_value
 
@@ -424,7 +424,7 @@ def _get_color_set_name(color_set, default_value):
 
 
 def _get_uv_set_name(uv_set, default_value):
-    # type: (Union[UvSet, Any], str) -> str
+    # type: (Union[UvSet, Any], Optional[str]) -> str
     if uv_set is None:
         return default_value
 
