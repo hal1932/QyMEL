@@ -75,6 +75,17 @@ class ObjectQuery(object):
                 children.append(selector(child) if selector else child)
         return children
 
+    def ichildren(self, predicate=None, selector=None):
+        # type: (Optional[_ObjectPredicate], Optional[_ObjectSelector]) -> Iterable[Union[QObject, Any]]
+        if not predicate:
+            for child in self.object.children():
+                yield child
+            return
+
+        for child in self.object.children():
+            if predicate(child):
+                yield selector(child) if selector else child
+
     def ancestor(self, predicate, selector=None):
         # type: (_ObjectPredicate, Optional[_ObjectSelector]) -> Optional[Union[QObject, Any]]
         parents = [self.object.parent()]
@@ -100,6 +111,17 @@ class ObjectQuery(object):
             parents.append(parent.parent())
         return ancestors
 
+    def iancestors(self, predicate=None, selector=None):
+        # type: (Optional[_ObjectPredicate], Optional[_ObjectSelector]) -> Iterable[Union[QObject, Any]]
+        parents = [self.object.parent()]
+        while parents:
+            parent = parents.pop(-1)
+            if not parent:
+                break
+            if not predicate or predicate(parent):
+                yield selector(parent) if selector else parent
+            parents.append(parent.parent())
+
     def descendent(self, predicate, selector=None):
         # type: (_ObjectPredicate, Optional[_ObjectSelector]) -> Optional[Union[QObject, Any]]
         children = self.object.children()
@@ -120,3 +142,12 @@ class ObjectQuery(object):
                 descendents.append(selector(child) if selector else child)
             children.extend(child.children())
         return descendents
+
+    def idescendents(self, predicate=None, selector=None):
+        # type: (Optional[_ObjectPredicate], Optional[_ObjectSelector]) -> Iterable[Union[QObject, Any]]
+        children = self.object.children()
+        while children:
+            child = children.pop(-1)
+            if not predicate or predicate(child):
+                yield selector(child) if selector else child
+            children.extend(child.children())

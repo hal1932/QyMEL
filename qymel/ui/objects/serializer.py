@@ -93,5 +93,5 @@ class ObjectSerializer(object):
             callback(node, paths[node])
 
         query = _query.ObjectQuery(node)
-        for child in query.descendents(predicate=_is_serializable, selector=_fetch_path):
+        for child in query.idescendents(predicate=_is_serializable, selector=_fetch_path):
             callback(child, paths[child])
