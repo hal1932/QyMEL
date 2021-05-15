@@ -1,14 +1,12 @@
 # coding: utf-8
 from __future__ import absolute_import, print_function, division
-from typing import *
-from six import *
-from six.moves import *
 
-from qymel.ui.pyside_module import *
 from qymel.ui.app import *
 from qymel.ui.layouts import *
 from qymel.ui.widgets.models import *
 from qymel.ui.widgets.expandable_splitter import *
+from qymel.ui.objects.query import *
+from qymel.ui.objects.serializer import *
 
 
 class ListItem(object):
@@ -37,6 +35,15 @@ class MyTreeItem(TreeItem):
         child = MyTreeItem(self.index + 1, '{}_{}'.format(self.name, self.name.split('_')[0]), self.color)
         self.append_child(child)
         child.append_child(None)
+
+
+class SerializableWidget(QWidget, SerializableObjectMixin):
+
+    def serialize(self, settings):
+        settings.setValue('geom', self.geometry())
+
+    def deserialize(self, settings):
+        self.setGeometry(settings.value('geom'))
 
 
 class MainWindow(MainWindowBase):
@@ -156,6 +163,28 @@ class MainWindow(MainWindowBase):
         central_widget.setLayout(hbox(
             sp1
         ))
+
+        # SerializableWidget
+        #   - QVBoxLayout
+        #     - QPushButton
+        #     - SerializableWidget
+        #     - QHBoxLayout
+        #       - SerializableWidget
+        root = SerializableWidget()
+        root_layout = QVBoxLayout()
+        root_layout.addWidget(QPushButton())
+        root_layout.addWidget(SerializableWidget())
+        child_layout = QHBoxLayout()
+        child_layout.addWidget(SerializableWidget())
+        root_layout.addLayout(child_layout)
+        root.setLayout(root_layout)
+
+        serializer = ObjectSerializer()
+        settings = QSettings('C:/tmp/test.ini', QSettings.IniFormat)
+        serializer.serialize(root, settings)
+        settings.sync()
+
+        serializer.deserialize(settings, root)
 
 
 class App(AppBase):
