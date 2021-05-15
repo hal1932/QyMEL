@@ -206,7 +206,7 @@ def get_comp_mobject(name):
 
 
 def connections(mfn):
-    # type: (_om2.MFnDependencyNode) -> Set[_om2.MObject]
+    # type: (_om2.MFnDependencyNode) -> List[_om2.MObject]
     result = []
 
     for i in range(mfn.attributeCount()):

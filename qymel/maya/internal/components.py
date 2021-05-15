@@ -12,7 +12,7 @@ import maya.api.OpenMaya as _om2
 
 class ComponentFactory(object):
 
-    _cls_dict = {}  # type: Dict[str, type]
+    _cls_dict = {}  # type: Dict[_om2.MFn, type]
     _default_cls = None  # type: type
 
     @staticmethod

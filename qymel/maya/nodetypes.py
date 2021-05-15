@@ -298,7 +298,7 @@ class SkinCluster(GeometryFilter):
         return result
 
     def set_weights(self, mesh, values, component=None, influences=None):
-        # type: (Mesh, Iterable[Iterable[float]], _general.MeshVertex, Iterable[Joint]) -> NoReturn
+        # type: (Mesh, Sequence[Sequence[float]], _general.MeshVertex, Sequence[Joint]) -> NoReturn
         mfn = self.mfn
 
         if component is None:

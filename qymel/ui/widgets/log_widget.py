@@ -100,27 +100,27 @@ class LogWidget(QWidget):
         QApplication.processEvents()
 
     def append_debug_line(self, text):
-        # type: (str) -> NoReturn
+        # type: (text_type) -> NoReturn
         self._append(u'{}\n'.format(text), self.debug_format)
 
     def append_info_line(self, text):
-        # type: (str) -> NoReturn
+        # type: (text_type) -> NoReturn
         self._append(u'{}\n'.format(text), self.info_format)
 
     def append_warning_line(self, text):
-        # type: (str) -> NoReturn
+        # type: (text_type) -> NoReturn
         self._append(u'{}\n'.format(text), self.warning_format)
 
     def append_error_line(self, text):
-        # type: (str) -> NoReturn
+        # type: (text_type) -> NoReturn
         self._append(u'{}\n'.format(text), self.error_format)
 
     def append_critical_line(self, text):
-        # type: (str) -> NoReturn
+        # type: (text_type) -> NoReturn
         self._append(u'{}\n'.format(text), self.critical_format)
 
     def _append(self, text, char_format):
-        # type: (str, str) -> NoReturn
+        # type: (text_type, text_type) -> NoReturn
         if len(text) == 0:
             return
 

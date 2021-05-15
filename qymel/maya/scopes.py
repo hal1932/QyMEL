@@ -68,4 +68,3 @@ def viewport_pause_scope(func):
         with ViewportPauseScope():
             func(*args, **kwargs)
     return _
-

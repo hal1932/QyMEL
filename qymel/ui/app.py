@@ -121,17 +121,17 @@ class ToolMainWindowBase(MainWindowBase):
 
     @property
     def execute_label(self):
-        # type: () -> str
+        # type: () -> text_type
         return u'実行'
 
     @property
     def apply_label(self):
-        # type: () -> str
+        # type: () -> text_type
         return u'適用'
 
     @property
     def close_label(self):
-        # type: () -> str
+        # type: () -> text_type
         return u'閉じる'
 
     def __init__(self):

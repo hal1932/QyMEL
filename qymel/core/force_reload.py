@@ -53,11 +53,11 @@ class _ImportSymbolItem(object):
 
 class _ImportItem(object):
 
-    def __init__(self, module, alias, symbols=[]):
-        # type: (types.ModuleType, str, List[_ImportSymbolItem]) -> NoReturn
+    def __init__(self, module, alias, symbols=None):
+        # type: (types.ModuleType, Optional[text_type], Optional[List[_ImportSymbolItem]]) -> NoReturn
         self.module = module
         self.alias = alias
-        self.symbols = [s for s in symbols if not s.name.startswith('Q')]
+        self.symbols = [s for s in symbols or [] if not s.name.startswith('Q')]
 
     def __repr__(self):
         if self.alias is not None:
@@ -79,7 +79,7 @@ def _get_import_items(root_module):
 
 
 def _get_import_items_rec(module, found_modules):
-    # type: (types.ModuleType, Set[types.ModuleType]) -> List[types.ModuleType]
+    # type: (types.ModuleType, Set[types.ModuleType]) -> List[_ModuleItem]
     if not _is_reload_target_module(module) or module in found_modules:
         return []
 
@@ -187,7 +187,7 @@ def _walk_ast_tree(tree, module):
 
 
 def _parse_module_source(module):
-    # type: (types.ModuleType) -> ast.Module
+    # type: (types.ModuleType) -> Optional[ast.Module]
     try:
         # inspect.getsource() は内部でキャッシュが効いてるから、必ず最新のソースを取得するために自前で read() する
         # source = inspect.getsource(module)

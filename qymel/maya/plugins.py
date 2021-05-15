@@ -221,7 +221,7 @@ class ArgDatabase(_om2.MArgDatabase):
         return self.flagArgumentBool(flag, index)
 
     def flag_string(self, flag, index=0, default_value=None):
-        # type: (str, int, str) -> str
+        # type: (str, int, str) -> Optional[str]
         if not self.isFlagSet(flag):
             return default_value
 
@@ -243,7 +243,7 @@ class ArgDatabase(_om2.MArgDatabase):
             return None
 
     def __get_flag_values(self, flag, args):
-        # type: (SyntaxFlag, _om2.MArgList) -> List[Any]
+        # type: (SyntaxFlag, _om2.MArgList) -> Optional[List[Any]]
         try:
             if flag.value_type == _om2.MSyntax.kBoolean:
                 return [args.asBool(i) for i in range(len(args))]

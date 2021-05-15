@@ -69,7 +69,7 @@ class Binder(Generic[TItem, TBindDef]):
         return len(self._columns)
 
     def __init__(self):
-        self._columns = []  # type: list[TBindDef]
+        self._columns = []  # type: List[TBindDef]
 
     def column(self, index):
         # type: (int) -> TBindDef
@@ -249,7 +249,7 @@ class TableDefinition(BindDefinition):
 class TableColumnDefinition(TableDefinition):
 
     def __init__(self, header=None, bindings=None):
-        # type: (Optional[dict[Qt.ItemDataRole, Any]], Optional[dict[Qt.ItemDataRole, Union[Binding, str]]]) -> NoReturn
+        # type: (Optional[Dict[Qt.ItemDataRole, Any]], Optional[Dict[Qt.ItemDataRole, Union[Binding, str]]]) -> NoReturn
         super(TableColumnDefinition, self).__init__(bindings)
         self.header = header
 
@@ -257,7 +257,7 @@ class TableColumnDefinition(TableDefinition):
 class TableHeaderColumnDefinition(TableDefinition):
 
     def __init__(self, bindings=None):
-        # type: (Optional[dict[Qt.ItemDataRole, Union[Binding, str]]]) -> NoReturn
+        # type: (Optional[Dict[Qt.ItemDataRole, Union[Binding, str]]]) -> NoReturn
         super(TableHeaderColumnDefinition, self).__init__(bindings)
 
 

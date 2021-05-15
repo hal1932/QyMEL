@@ -52,7 +52,7 @@ class ObjectQuery(object):
     def parent(self, predicate=None, selector=None):
         # type: (Optional[_ObjectPredicate], Optional[_ObjectSelector]) -> Optional[Union[QObject, Any]]
         parent = self.object.parent()
-        if not predicate or predicate(parent):
+        if not predicate or (parent and predicate(parent)):
             return selector(parent) if selector else parent
         return None
 
@@ -66,7 +66,7 @@ class ObjectQuery(object):
         return None
 
     def children(self, predicate=None, selector=None):
-        # type: (Optional[_ObjectPredicate], Optional[_ObjectSelector]) -> list[Union[QObject, Any]]
+        # type: (Optional[_ObjectPredicate], Optional[_ObjectSelector]) -> List[Union[QObject, Any]]
         if not predicate:
             return self.object.children()
         children = []
@@ -99,7 +99,7 @@ class ObjectQuery(object):
         return None
 
     def ancestors(self, predicate=None, selector=None):
-        # type: (Optional[_ObjectPredicate], Optional[_ObjectSelector]) -> list[Union[QObject, Any]]
+        # type: (Optional[_ObjectPredicate], Optional[_ObjectSelector]) -> List[Union[QObject, Any]]
         ancestors = []
         parents = [self.object.parent()]
         while parents:
@@ -133,7 +133,7 @@ class ObjectQuery(object):
         return None
 
     def descendents(self, predicate=None, selector=None):
-        # type: (Optional[_ObjectPredicate], Optional[_ObjectSelector]) -> list[Union[QObject, Any]]
+        # type: (Optional[_ObjectPredicate], Optional[_ObjectSelector]) -> List[Union[QObject, Any]]
         descendents = []
         children = self.object.children()
         while children:

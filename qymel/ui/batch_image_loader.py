@@ -70,9 +70,9 @@ class BatchImageLoader(QObject):
                 on_completed()
             self.completed.emit()
 
-        def _error_callback(e):
-            for callback in error_callbacks:
-                callback(e)
+        # def _error_callback(e):
+        #     for callback in error_callbacks:
+        #         callback(e)
 
         return self.__pool.map_async(
             _task_callback,

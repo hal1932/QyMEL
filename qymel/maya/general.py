@@ -75,7 +75,7 @@ class MayaObject(object):
     @property
     def mel_object(self):
         # type: () -> Union[str, Tuple[str]]
-        pass
+        raise NotImplementedError()
 
     @property
     def exists(self):
@@ -100,15 +100,15 @@ class MayaObject(object):
             self._mobj_handle = None
 
     def __eq__(self, other):
-        # type: (object) -> bool
-        if other is None or not other._mobj_handle.isValid():
+        # type: (Union[MayaObject, Any]) -> bool
+        if other is None or not isinstance(other, MayaObject):
             return False
-        if not isinstance(other, MayaObject):
+        if not other._mobj_handle.isValid():
             return False
         return self._mobj_handle.hashCode() == other._mobj_handle.hashCode()
 
     def __ne__(self, other):
-        # type: (object) -> bool
+        # type: (Union[MayaObject, Any]) -> bool
         return not self.__eq__(other)
 
     def __hash__(self):

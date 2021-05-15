@@ -34,7 +34,7 @@ class _DictEntry(object):
         return "{}('{}', '{}')".format(self.__class__.__name__, self.key, self.value)
 
     def _update(self, new_value):
-        # type: (str) -> NoReturn
+        # type: (Optional[str]) -> NoReturn
         self.__value = new_value
 
     def _remove(self):
@@ -195,7 +195,7 @@ class DictVariable(_DictEntry):
         super(DictVariable, self).__init__(key, value)
 
     def update(self, new_value):
-        # type: (str) -> FileRule
+        # type: (str) -> NoReturn
         _cmds.workspace(variable=(self.key, new_value))
         self._update(new_value)
 
@@ -269,7 +269,7 @@ class Workspace(object):
 
     @staticmethod
     def __entries(cls, entry):
-        # type: (type, str) -> List[cls]
+        # type: (type, str) -> List[Any]
         kwargs = {'query': True, entry: True}
         entries = _cmds.workspace(**kwargs)
         result = []  # type: List[cls]
@@ -281,7 +281,7 @@ class Workspace(object):
 
     @staticmethod
     def __entry(cls, entry, key, default_value):
-        # type: (type, str, str, str) -> cls
+        # type: (type, str, str, str) -> Any
         kwargs = {'{}Entry'.format(entry): key}
         value = _cmds.workspace(**kwargs) or default_value
         return cls(key, value)

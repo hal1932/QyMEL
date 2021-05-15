@@ -413,7 +413,7 @@ class MeshVertexFaceIter(_Iterator):
 
 
 def _get_color_set_name(color_set, default_value):
-    # type: (Union[ColorSet, Any]) -> str
+    # type: (Union[ColorSet, Any], str) -> str
     if color_set is None:
         return default_value
 
@@ -424,7 +424,7 @@ def _get_color_set_name(color_set, default_value):
 
 
 def _get_uv_set_name(uv_set, default_value):
-    # type: (Union[UvSet, Any]) -> str
+    # type: (Union[UvSet, Any], str) -> str
     if uv_set is None:
         return default_value
 

@@ -1,8 +1,6 @@
 # coding: utf-8
 from __future__ import absolute_import, print_function, division
 from typing import *
-from six import *
-from six.moves import *
 
 import enum
 
@@ -42,9 +40,9 @@ class ExpandableSplitterHandle(QSplitterHandle):
         super(ExpandableSplitterHandle, self).__init__(orientation, parent)
         self.setMouseTracking(True)
 
-        self.__expanders = []  # type: list[Expander]
+        self.__expanders = []  # type: List[Expander]
         self.__last_pos = None
-        self.__range = tuple()  # type: tuple[int, int]
+        self.__range = tuple()  # type: Tuple[int, int]
 
         self.setOrientation(orientation)
 
@@ -209,7 +207,7 @@ class Expander(object):
         return self.__enabled
 
     def __init__(self, direction):
-        # type: (ExpandDirection, QRect) -> NoReturn
+        # type: (ExpandDirection) -> NoReturn
         if not Expander.ARROW_PIXMAP:
             Expander.ARROW_PIXMAP = QApplication.style().standardIcon(QStyle.SP_MediaPlay).pixmap(Expander.ARROW_SIZE)
 
@@ -281,4 +279,3 @@ class Expander(object):
 
         if not self.__enabled:
             option.state ^= QStyle.State_Enabled
-

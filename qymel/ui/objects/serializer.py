@@ -71,10 +71,10 @@ class ObjectSerializer(object):
             settings.endGroup()
         self._walk_serializables(destination, _deserialize)
 
-    def _walk_serializables(self, node, callback):
+    def _walk_serializables(self, root, callback):
         # type: (QObject, Callable[[SerializableObjectMixin, text_type]]) -> NoReturn
-        paths = {node: node.__class__.__name__}
-        children = {}  # type: dict[QObject, list[QObject]]
+        paths = {root: root.__class__.__name__}
+        children = {}  # type: Dict[QObject, List[QObject]]
 
         def _is_serializable(node):
             # type: (QObject) -> bool
@@ -89,9 +89,9 @@ class ObjectSerializer(object):
             paths[node] = node_path
             return node
 
-        if _is_serializable(node):
-            callback(node, paths[node])
+        if _is_serializable(root):
+            callback(root, paths[root])
 
-        query = _query.ObjectQuery(node)
+        query = _query.ObjectQuery(root)
         for child in query.idescendents(predicate=_is_serializable, selector=_fetch_path):
             callback(child, paths[child])
