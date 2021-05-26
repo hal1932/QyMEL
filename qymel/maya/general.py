@@ -291,10 +291,10 @@ class Plug(object):
 _TCompFn = TypeVar('_TCompFn', bound=_om2.MFnComponent)
 _TCompElem = TypeVar('_TCompElem')
 _TCompIter = TypeVar('_TCompIter', bound=_iterators._Iterator)
-_TCompType = TypeVar('_TCompType')
+_TComp = TypeVar('_TComp')
 
 
-class _Component(MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter, _TCompType]):
+class _Component(MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter, _TComp]):
 
     _comp_mfn = None
     _comp_type = _om2.MFn.kComponent
@@ -374,7 +374,7 @@ class _Component(MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter, _TCompTyp
         return value
 
     def clone_empty(self):
-        # type: () -> _TCompType
+        # type: () -> _TComp
         comp = self._create_api_comp()
         return self.__class__(comp.object(), self.mdagpath)
 
@@ -395,7 +395,7 @@ class _Component(MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter, _TCompTyp
         self.mfn.addElements(elements)
 
     def element_component(self, index):
-        # type: (int) -> _TCompType
+        # type: (int) -> _TComp
         comp = self.clone_empty()
         comp.append(self.element(index))
         return comp
@@ -410,7 +410,7 @@ class _Component(MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter, _TCompTyp
         return comp
 
 
-class SingleIndexedComponent(_Component[_om2.MFnSingleIndexedComponent, int, _TCompIter, _TCompType]):
+class SingleIndexedComponent(_Component[_om2.MFnSingleIndexedComponent, int, _TCompIter, _TComp]):
 
     _comp_mfn = _om2.MFnSingleIndexedComponent
 
@@ -427,7 +427,7 @@ class SingleIndexedComponent(_Component[_om2.MFnSingleIndexedComponent, int, _TC
         raise NotImplementedError()
 
 
-class DoubleIndexedComponent(_Component[_om2.MFnDoubleIndexedComponent, Tuple[int, int], _TCompIter, _TCompType]):
+class DoubleIndexedComponent(_Component[_om2.MFnDoubleIndexedComponent, Tuple[int, int], _TCompIter, _TComp]):
 
     _comp_mfn = _om2.MFnDoubleIndexedComponent
 
