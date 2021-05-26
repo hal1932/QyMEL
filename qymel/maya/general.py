@@ -291,9 +291,10 @@ class Plug(object):
 _TCompFn = TypeVar('_TCompFn', bound=_om2.MFnComponent)
 _TCompElem = TypeVar('_TCompElem')
 _TCompIter = TypeVar('_TCompIter', bound=_iterators._Iterator)
+_TCompType = TypeVar('_TCompType')
 
 
-class _Component(MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter]):
+class _Component(MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter, _TCompType]):
 
     _comp_mfn = None
     _comp_type = _om2.MFn.kComponent
@@ -373,7 +374,7 @@ class _Component(MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter]):
         return value
 
     def clone_empty(self):
-        # type: () -> _Component
+        # type: () -> _TCompType
         comp = self._create_api_comp()
         return self.__class__(comp.object(), self.mdagpath)
 
@@ -394,7 +395,7 @@ class _Component(MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter]):
         self.mfn.addElements(elements)
 
     def element_component(self, index):
-        # type: (int) -> _Component
+        # type: (int) -> _TCompType
         comp = self.clone_empty()
         comp.append(self.element(index))
         return comp
@@ -409,7 +410,7 @@ class _Component(MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter]):
         return comp
 
 
-class SingleIndexedComponent(_Component[_om2.MFnSingleIndexedComponent, int, _TCompIter], Generic[_TCompIter]):
+class SingleIndexedComponent(_Component[_om2.MFnSingleIndexedComponent, int, _TCompIter, _TCompType]):
 
     _comp_mfn = _om2.MFnSingleIndexedComponent
 
@@ -426,7 +427,7 @@ class SingleIndexedComponent(_Component[_om2.MFnSingleIndexedComponent, int, _TC
         raise NotImplementedError()
 
 
-class DoubleIndexedComponent(_Component[_om2.MFnDoubleIndexedComponent, Tuple[int, int], _TCompIter], Generic[_TCompIter]):
+class DoubleIndexedComponent(_Component[_om2.MFnDoubleIndexedComponent, Tuple[int, int], _TCompIter, _TCompType]):
 
     _comp_mfn = _om2.MFnDoubleIndexedComponent
 
@@ -443,7 +444,7 @@ class DoubleIndexedComponent(_Component[_om2.MFnDoubleIndexedComponent, Tuple[in
         raise NotImplementedError()
 
 
-class MeshVertex(SingleIndexedComponent[_iterators.MeshVertexIter]):
+class MeshVertex(SingleIndexedComponent[_iterators.MeshVertexIter, 'MeshVertex']):
 
     _comp_type = _om2.MFn.kMeshVertComponent
     _comp_repr = 'vtx'
@@ -457,8 +458,10 @@ class MeshVertex(SingleIndexedComponent[_iterators.MeshVertexIter]):
         iter = _om2.MItMeshVertex(self.mdagpath, self.mobject)
         return _iterators.MeshVertexIter(iter, self, _om2.MFnMesh(self.mdagpath))
 
+    def f(self): pass
 
-class MeshFace(SingleIndexedComponent[_iterators.MeshFaceIter]):
+
+class MeshFace(SingleIndexedComponent[_iterators.MeshFaceIter, 'MeshFace']):
 
     _comp_type = _om2.MFn.kMeshPolygonComponent
     _comp_repr = 'f'
@@ -473,7 +476,7 @@ class MeshFace(SingleIndexedComponent[_iterators.MeshFaceIter]):
         return _iterators.MeshFaceIter(iter, self)
 
 
-class MeshEdge(SingleIndexedComponent[_iterators.MeshEdgeIter]):
+class MeshEdge(SingleIndexedComponent[_iterators.MeshEdgeIter, 'MeshEdge']):
 
     _comp_type = _om2.MFn.kMeshEdgeComponent
     _comp_repr = 'e'
@@ -488,7 +491,7 @@ class MeshEdge(SingleIndexedComponent[_iterators.MeshEdgeIter]):
         return _iterators.MeshEdgeIter(iter, self)
 
 
-class MeshVertexFace(DoubleIndexedComponent[_iterators.MeshVertexFaceIter]):
+class MeshVertexFace(DoubleIndexedComponent[_iterators.MeshVertexFaceIter, 'MeshVertexFace']):
 
     _comp_type = _om2.MFn.kMeshVtxFaceComponent
     _comp_repr = 'vtxface'
