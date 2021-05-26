@@ -8,7 +8,10 @@ import maya.api.OpenMaya as _om2
 import maya.OpenMaya as _om
 
 
-class _Iterator(object):
+_TComp = TypeVar('_TComp')
+
+
+class _Iterator(Generic[_TComp]):
 
     @property
     def miter(self):
@@ -29,15 +32,15 @@ class _Iterator(object):
         return getattr(self._miter, item)
 
     def __iter__(self):
-        # type: () -> _Iterator
+        # type: () -> _TComp
         return self
 
     def next(self):
-        # type: () -> _Iterator
+        # type: () -> _TComp
         return self.__next__()
 
     def __next__(self):
-        # type: () -> _Iterator
+        # type: () -> _TComp
         if self.__is_first:
             self.__is_first = False
             return self
@@ -54,7 +57,7 @@ class _Iterator(object):
         self._miter.next()
 
 
-class MeshVertexIter(_Iterator):
+class MeshVertexIter(_Iterator['MeshVertexIter']):
 
     @property
     def index(self):
@@ -163,7 +166,7 @@ class MeshVertexIter(_Iterator):
         return self._miter.position(space)
 
 
-class MeshFaceIter(_Iterator):
+class MeshFaceIter(_Iterator['MeshFaceIter']):
 
     @property
     def index(self):
@@ -283,7 +286,7 @@ class MeshFaceIter(_Iterator):
         return result
 
 
-class MeshEdgeIter(_Iterator):
+class MeshEdgeIter(_Iterator['MeshEdgeIter']):
 
     @property
     def index(self):
@@ -332,7 +335,7 @@ class MeshEdgeIter(_Iterator):
         return _om2.MPointArray([self._miter.point(0, space), self._miter.point(1, space)])
 
 
-class MeshVertexFaceIter(_Iterator):
+class MeshVertexFaceIter(_Iterator['MeshVertexFaceIter']):
 
     @property
     def index(self):
