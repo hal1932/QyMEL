@@ -5,6 +5,7 @@ from six import *
 from six.moves import *
 
 import maya.api.OpenMaya as _om2
+import maya.OpenMaya as _om
 
 
 class _Iterator(object):
@@ -229,7 +230,10 @@ class MeshFaceIter(_Iterator):
         super(MeshFaceIter, self).__init__(miter, comp)
 
     def _next(self):
-        self._miter.next(self._miter)
+        if _om.MGlobal.apiVersion() >= 20220000:
+            self._miter.next()
+        else:
+            self._miter.next(self._miter)
 
     def center(self, space=_om2.MSpace.kObject):
         # type: (int) -> _om2.MPoint

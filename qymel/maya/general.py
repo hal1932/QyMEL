@@ -11,6 +11,7 @@ import maya.api.OpenMaya as _om2
 from .internal import components as _components
 from .internal import graphs as _graphs
 from .internal import plugs as _plugs
+from . import iterators as _iterators
 
 
 def deprecated(message):
@@ -287,7 +288,12 @@ class Plug(object):
         return [Plug(mplug) for mplug in self._mplug.destinations()]
 
 
-class Component(MayaObject):
+_TCompFn = TypeVar('_TCompFn', bound=_om2.MFnComponent)
+_TCompElem = TypeVar('_TCompElem')
+_TCompIter = TypeVar('_TCompIter', bound=_iterators._Iterator)
+
+
+class Component(MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter]):
 
     _comp_mfn = None
     _comp_type = _om2.MFn.kComponent
@@ -315,14 +321,14 @@ class Component(MayaObject):
 
     @property
     def mfn(self):
-        # type: () -> _om2.MFnComponent
+        # type: () -> _TCompFn
         if self._mfn is None:
             self._mfn = self.__class__._comp_mfn(self.mobject)
         return self._mfn
 
     @property
     def elements(self):
-        # type: () -> Iterable[Any]
+        # type: () -> Iterable[_TCompElem]
         return self.mfn.getElements()
 
     def __init__(self, obj, mdagpath):
@@ -331,7 +337,7 @@ class Component(MayaObject):
             mdagpath, obj = _graphs.get_comp_mobject(obj)
         super(Component, self).__init__(obj)
         self._mdagpath = mdagpath
-        self._mfn = None  # type: _om2.MFnComponent
+        self._mfn = None  # type: _TCompFn
         self.__cursor = 0
 
     def __str__(self):
@@ -346,50 +352,94 @@ class Component(MayaObject):
         # type: () -> int
         return self.mfn.elementCount
 
+    def __getitem__(self, item):
+        # type: (int) -> _TCompElem
+        return self.element(item)
+
     def __iter__(self):
         self.__cursor = 0
         return self
 
     def next(self):
-        # type: () -> Any
+        # type: () -> _TCompElem
         return self.__next__()
 
-    def _get_element(self, index):
-        # type: (int) -> Any
-        return None
-
     def __next__(self):
-        # type: () -> Any
+        # type: () -> _TCompElem
         if self.__cursor >= len(self):
             raise StopIteration()
-        value = self._get_element(self.__cursor)
+        value = self.element(self.__cursor)
         self.__cursor += 1
         return value
 
+    def clone_empty(self):
+        # type: () -> Component
+        comp = self._create_api_comp()
+        return self.__class__(comp.object(), self.mdagpath)
 
-class _SingleIndexedComponent(Component):
+    def element(self, index):
+        # type: (int) -> _TCompElem
+        raise NotImplementedError()
+
+    def iterator(self):
+        # type: () -> _TCompIter
+        raise NotImplementedError()
+
+    def append(self, element):
+        # type: (_TCompElem) -> NoReturn
+        self.mfn.addElement(element)
+
+    def extend(self, elements):
+        # type: (Sequence[_TCompElem]) -> NoReturn
+        self.mfn.addElements(elements)
+
+    def element_component(self, index):
+        # type: (int) -> Component
+        comp = self.clone_empty()
+        comp.append(self.element(index))
+        return comp
+
+    @classmethod
+    def _create_api_comp(cls, elements=None):
+        # type: (type, Sequence[_TCompElem]) -> _TCompFn
+        comp = cls._comp_mfn()
+        comp.create(cls._comp_type)
+        if elements:
+            comp.addElements(elements)
+        return comp
+
+
+class _SingleIndexedComponent(Component[_om2.MFnSingleIndexedComponent, int, _TCompIter], Generic[_TCompIter]):
 
     def __init__(self, obj, mdagpath):
         # type: (Union[_om2.MObject, str], _om2.MDagPath) -> NoReturn
         super(_SingleIndexedComponent, self).__init__(obj, mdagpath)
 
-    def _get_element(self, index):
-        # type: (int) -> Any
+    def element(self, index):
+        # type: (int) -> int
         return self.mfn.element(index)
 
+    def iterator(self):
+        # type: () -> _TCompIter
+        raise NotImplementedError()
 
-class _DoubleIndexedComponent(Component):
+
+class _DoubleIndexedComponent(Component[_om2.MFnDoubleIndexedComponent, Tuple[int, int], _TCompIter], Generic[_TCompIter]):
 
     def __init__(self, obj, mdagpath):
         # type: (Union[_om2.MObject, str], _om2.MDagPath) -> NoReturn
         super(_DoubleIndexedComponent, self).__init__(obj, mdagpath)
 
-    def _get_element(self, index):
-        # type: (int) -> Any
+    def element(self, index):
+        # type: (int) -> Tuple[int, int]
         return self.mfn.getElement(index)
 
+    def iterator(self):
+        # type: () -> _TCompIter
+        raise NotImplementedError()
 
-class MeshVertex(_SingleIndexedComponent):
+
+class MeshVertex(_SingleIndexedComponent[_iterators.MeshVertexIter]):
 
     _comp_mfn = _om2.MFnSingleIndexedComponent
     _comp_type = _om2.MFn.kMeshVertComponent
@@ -399,38 +449,61 @@ class MeshVertex(_SingleIndexedComponent):
         # type: (Union[_om2.MObject, str], _om2.MDagPath) -> NoReturn
         super(MeshVertex, self).__init__(obj, mdagpath)
 
+    def iterator(self):
+        # type: () -> _iterators.MeshVertexIter
+        iter = _om2.MItMeshVertex(self.mdagpath, self.mobject)
+        return _iterators.MeshVertexIter(iter, self, _om2.MFnMesh(self.mdagpath))
 
-class MeshFace(_SingleIndexedComponent):
+
+class MeshFace(_SingleIndexedComponent[_iterators.MeshFaceIter]):
 
     _comp_mfn = _om2.MFnSingleIndexedComponent
     _comp_type = _om2.MFn.kMeshPolygonComponent
     _comp_repr = 'f'
+    _comp_iter = _iterators.MeshFaceIter
 
     def __init__(self, obj, mdagpath=None):
         # type: (Union[_om2.MObject, str], _om2.MDagPath) -> NoReturn
         super(MeshFace, self).__init__(obj, mdagpath)
 
+    def iterator(self):
+        # type: () -> _iterators.MeshFaceIter
+        iter = _om2.MItMeshPolygon(self.mdagpath, self.mobject)
+        return _iterators.MeshFaceIter(iter, self)
 
-class MeshEdge(_SingleIndexedComponent):
+
+class MeshEdge(_SingleIndexedComponent[_iterators.MeshEdgeIter]):
 
     _comp_mfn = _om2.MFnSingleIndexedComponent
     _comp_type = _om2.MFn.kMeshEdgeComponent
     _comp_repr = 'e'
+    _comp_iter = _iterators.MeshEdgeIter
 
     def __init__(self, obj, mdagpath=None):
         # type: (Union[_om2.MObject, str], _om2.MDagPath) -> NoReturn
         super(MeshEdge, self).__init__(obj, mdagpath)
 
+    def iterator(self):
+        # type: () -> _iterators.MeshEdgeIter
+        iter = _om2.MItMeshEdge(self.mdagpath, self.mobject)
+        return _iterators.MeshEdgeIter(iter, self)
 
-class MeshVertexFace(_DoubleIndexedComponent):
+
+class MeshVertexFace(_DoubleIndexedComponent[_iterators.MeshVertexFaceIter]):
 
     _comp_mfn = _om2.MFnDoubleIndexedComponent
     _comp_type = _om2.MFn.kMeshVtxFaceComponent
     _comp_repr = 'vtxface'
+    _comp_iter = _iterators.MeshVertexFaceIter
 
     def __init__(self, obj, mdagpath=None):
         # type: (Union[_om2.MObject, str], _om2.MDagPath) -> NoReturn
         super(MeshVertexFace, self).__init__(obj, mdagpath)
+
+    def iterator(self):
+        # type: () -> _iterators.MeshVertexFaceIter
+        iter = _om2.MItMeshFaceVertex(self.mdagpath, self.mobject)
+        return _iterators.MeshVertexFaceIter(iter, self)
 
 
 _plugs.PlugFactory.register(Plug)
