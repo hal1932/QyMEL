@@ -17,7 +17,24 @@ from .internal import nodes as _nodes
 from .internal import graphs as _graphs
 
 
-class DependNode(_general.MayaObject):
+_TFn = TypeVar('_TFn', bound=_om2.MFnDependencyNode)
+_TNode = TypeVar('_TNode', bound='DependNode')
+
+
+# ジェネリック型定義を継承ツリーから分離するためのミックスインインターフェイス
+class _NodeTypeDef(Generic[_TFn, _TNode]):
+
+    @property
+    def mfn(self):
+        # type: () -> _TFn
+        raise NotImplementedError()
+
+    def duplicate(self, **kwargs):
+        # type: (Any) -> _TNode
+        raise NotImplementedError
+
+
+class DependNode(_general.MayaObject, _NodeTypeDef[_om2.MFnDependencyNode, 'DependNode']):
 
     _mfn_type = _om2.MFn.kDependencyNode
     _mfn_set = _om2.MFnDependencyNode
@@ -43,6 +60,7 @@ class DependNode(_general.MayaObject):
 
     @property
     def mfn(self):
+        # type: () -> _TFn
         mfn_set = self.__class__._mfn_set
 
         if mfn_set is None:
@@ -112,7 +130,7 @@ class DependNode(_general.MayaObject):
         return "{}('{}')".format(self.__class__.__name__, self.full_name)
 
     def __getattr__(self, item):
-        # type: (str) -> Any
+        # type: (str) -> _general.Plug
         plug = self._plugs.get(item, None)
         if plug is not None:
             return plug
@@ -251,7 +269,7 @@ class GeometryFilter(DependNode):
         return _graphs.create_node(GeometryFilter._mel_type, **kwargs)
 
 
-class SkinCluster(GeometryFilter):
+class SkinCluster(GeometryFilter, _NodeTypeDef[_om2anim.MFnSkinCluster, 'SkinCluster']):
 
     _mfn_type = _om2.MFn.kSkinClusterFilter
     _mfn_set = _om2anim.MFnSkinCluster
@@ -328,7 +346,7 @@ class Entity(ContainerBase):
     pass
 
 
-class ObjectSet(Entity):
+class ObjectSet(Entity, _NodeTypeDef[_om2.MFnSet, 'ObjectSet']):
 
     _mfn_type = _om2.MFn.kSet
     _mfn_set = _om2.MFnSet
@@ -422,7 +440,7 @@ class ShadingEngine(ObjectSet):
         return [_graphs.eval_node(name, tmp_mfn) for name in names]
 
 
-class AnimCurve(DependNode):
+class AnimCurve(DependNode, _NodeTypeDef[_om2anim.MFnAnimCurve, 'AnimCurve']):
 
     _mfn_type = _om2.MFn.kAnimCurve
     _mfn_set = _om2anim.MFnAnimCurve
@@ -634,7 +652,7 @@ class AnimCurveUU(AnimCurve):
         return _graphs.create_node(AnimCurveUU._mel_type, **kwargs)
 
 
-class DagNode(Entity):
+class DagNode(Entity, _NodeTypeDef[_om2.MFnDagNode, 'DagNode']):
 
     _mfn_type = _om2.MFn.kDagNode
     _mfn_set = _om2.MFnDagNode
@@ -955,7 +973,7 @@ class DagNode(Entity):
 world = DagNode(None)
 
 
-class Transform(DagNode):
+class Transform(DagNode, _NodeTypeDef[_om2.MFnTransform, 'Transform']):
 
     _mfn_type = _om2.MFn.kTransform
     _mfn_set = _om2.MFnTransform
@@ -1062,7 +1080,7 @@ class Locator(Shape):
     _mel_type = 'locator'
 
 
-class Camera(Shape):
+class Camera(Shape, _NodeTypeDef[_om2.MFnCamera, 'Camera']):
 
     _mfn_type = _om2.MFn.kCamera
     _mfn_set = _om2.MFnCamera
@@ -1102,7 +1120,7 @@ class CurveShape(ControlPoint):
     _mel_type = 'curveShape'
 
 
-class NurbsCurve(CurveShape):
+class NurbsCurve(CurveShape, _NodeTypeDef[_om2.MFnNurbsCurve, 'NurbsCurve']):
 
     _mfn_type = _om2.MFn.kNurbsCurveGeom
     _mfn_set = _om2.MFnNurbsCurve
@@ -1195,7 +1213,7 @@ class UvSet(object):
         self.__mfn = mesh.mfn
 
 
-class Mesh(SurfaceShape):
+class Mesh(SurfaceShape, _NodeTypeDef[_om2.MFnMesh, 'Mesh']):
 
     _mfn_type = _om2.MFn.kMesh
     _mfn_set = _om2.MFnMesh
@@ -1340,7 +1358,7 @@ class Mesh(SurfaceShape):
         return cls(mobj, self.mdagpath)
 
 
-class FileReference(DependNode):
+class FileReference(DependNode, _NodeTypeDef[_om2.MFnReference, 'FileReference']):
 
     _mfn_type = _om2.MFn.kReference
     _mfn_set = _om2.MFnReference
