@@ -49,7 +49,7 @@ def eval_plug(plug_name):
 
 
 def eval_component(comp_name):
-    # type: (str) -> _Component
+    # type: (str) -> 'Component'
     tmp_mfn = _om2.MFnComponent()
     return _graphs.eval_component(comp_name, tmp_mfn)
 
