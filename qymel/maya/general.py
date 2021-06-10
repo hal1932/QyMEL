@@ -8,10 +8,8 @@ import functools
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 
-from .internal import components as _components
 from .internal import graphs as _graphs
 from .internal import plugs as _plugs
-from . import iterators as _iterators
 
 
 def deprecated(message):
@@ -54,75 +52,6 @@ def eval_component(comp_name):
     # type: (str) -> _Component
     tmp_mfn = _om2.MFnComponent()
     return _graphs.eval_component(comp_name, tmp_mfn)
-
-
-class MayaObject(object):
-
-    @property
-    def mobject(self):
-        # type: () -> _om2.MObject
-        return self._mobj_handle.object()
-
-    @property
-    def mobject_handle(self):
-        # type: () -> _om2.MObjectHandle
-        return self._mobj_handle
-
-    @property
-    def is_null(self):
-        # type: () -> bool
-        return self.mobject.isNull()
-
-    @property
-    def mel_object(self):
-        # type: () -> Union[str, Tuple[str]]
-        raise NotImplementedError()
-
-    @property
-    def exists(self):
-        # type: () -> bool
-        return not self.is_null
-
-    @property
-    def api_type(self):
-        # type: () -> int
-        return self.mobject.apiType()
-
-    @property
-    def api_type_str(self):
-        # type: () -> str
-        return self.mobject.apiTypeStr
-
-    def __init__(self, mobj):
-        # type: (_om2.MObject) -> NoReturn
-        if mobj is not None:
-            self._mobj_handle = _om2.MObjectHandle(mobj)
-        else:
-            self._mobj_handle = None
-
-    def __eq__(self, other):
-        # type: (Union[MayaObject, Any]) -> bool
-        if other is None or not isinstance(other, MayaObject):
-            return False
-        if not other._mobj_handle.isValid():
-            return False
-        return self._mobj_handle.hashCode() == other._mobj_handle.hashCode()
-
-    def __ne__(self, other):
-        # type: (Union[MayaObject, Any]) -> bool
-        return not self.__eq__(other)
-
-    def __hash__(self):
-        # type: () -> long
-        return self._mobj_handle.hashCode()
-
-    def __str__(self):
-        # type: () -> str
-        return '{} {}'.format(self.__class__, self.mobject)
-
-    def has_fn(self, mfn_type):
-        # type: (int) -> bool
-        return self.mobject.hasFn(mfn_type)
 
 
 class Plug(object):
@@ -213,7 +142,7 @@ class Plug(object):
             plug = _graphs.get_mplug(plug)
         self._mplug = _graphs.keep_mplug(plug)
         self._mfn_node = None
-        self._node = None  # type: DependNode
+        self._node = None  # type: 'DependNode'
 
     def __str__(self):
         # type: () -> str
@@ -244,7 +173,7 @@ class Plug(object):
         return Plug(child_mplug)
 
     def node(self):
-        # type: () -> DependNode
+        # type: () -> 'DependNode'
         if self._node is None:
             mfn_node = self.mfn_node
             if isinstance(mfn_node, _om2.MFnDagNode):
@@ -288,223 +217,90 @@ class Plug(object):
         return [Plug(mplug) for mplug in self._mplug.destinations()]
 
 
-_TCompFn = TypeVar('_TCompFn', bound=_om2.MFnComponent)
-_TCompElem = TypeVar('_TCompElem')
-_TCompIter = TypeVar('_TCompIter', bound=_iterators._Iterator)
-_TComp = TypeVar('_TComp')
+_plugs.PlugFactory.register(Plug)
 
 
-class _Component(MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter, _TComp]):
+class ColorSet(object):
 
-    _comp_mfn = None
-    _comp_type = _om2.MFn.kComponent
-    _comp_repr = ''
+    @property
+    def name(self):
+        # type: () -> str
+        return self.__name
 
     @property
     def mel_object(self):
-        # type: () -> Tuple[str]
-        sel_list = _om2.MSelectionList()
-        sel_list.add((self.mdagpath, self.mobject), False)
-        return _cmds.ls(sel_list.getSelectionStrings(0), long=True)
-
-    @property
-    def exists(self):
-        # type: () -> bool
-        for mel_obj in self.mel_object:
-            if not _cmds.objExists(mel_obj):
-                return False
-        return True
-
-    @property
-    def mdagpath(self):
-        # type: () -> _om2.MDagPath
-        return self._mdagpath
-
-    @property
-    def mfn(self):
-        # type: () -> _TCompFn
-        if self._mfn is None:
-            self._mfn = self.__class__._comp_mfn(self.mobject)
-        return self._mfn
-
-    @property
-    def elements(self):
-        # type: () -> Iterable[_TCompElem]
-        return self.mfn.getElements()
-
-    def __init__(self, obj, mdagpath):
-        # type: (Union[_om2.MObject, str], _om2.MDagPath) -> NoReturn
-        if isinstance(obj, (str, text_type)):
-            mdagpath, obj = _graphs.get_comp_mobject(obj)
-        super(_Component, self).__init__(obj)
-        self._mdagpath = mdagpath
-        self._mfn = None  # type: _TCompFn
-        self.__cursor = 0
-
-    def __str__(self):
         # type: () -> str
-        return repr(self)
+        return self.__name
+
+    @property
+    def mesh(self):
+        # type: () -> 'Mesh'
+        return self.__mesh
+
+    @property
+    def channels(self):
+        # type: () -> int
+        return self.__mfn.getColorRepresentation(self.mel_object)
+
+    @property
+    def is_clamped(self):
+        # type: () -> bool
+        return self.__mfn.isColorClamped(self.mel_object)
+
+    @property
+    def is_per_instance(self):
+        # type: () -> bool
+        return self.__mfn.isColorSetPerInstance(self.mel_object)
+
+    def __init__(self, name, mesh):
+        # type: (str, 'Mesh') -> None
+        self.__name = name
+        self.__mfn = mesh.mfn
+        self.__mesh = mesh
 
     def __repr__(self):
+        return "{}('{}', {})".format(self.__class__.__name__, self.mel_object, repr(self.mesh))
+
+    def color(self, index):
+        # type: (int) -> _om2.MColor
+        return self.__mfn.getColor(index, self.mel_object)
+
+    def colors(self):
+        # type: () -> _om2.MColorArray
+        return self.__mfn.getColors(self.mel_object)
+
+    def color_index(self, face_id, local_vertex_id):
+        # type: (int, int) -> int
+        return self.__mfn.getColorIndex(face_id, local_vertex_id, self.mel_object)
+
+    def face_vertex_colors(self):
+        # type: () -> _om2.MColorArray
+        return self.__mfn.getFaceVertexColors(self.mel_object)
+
+    def vertex_colors(self):
+        # type: () -> _om2.MColorArray
+        return self.__mfn.getVertexColors(self.mel_object)
+
+
+class UvSet(object):
+
+    @property
+    def name(self):
         # type: () -> str
-        return ', '.join(["{}('{}')".format(self.__class__.__name__, name) for name in self.mel_object])
+        return self.__name
 
-    def __len__(self):
-        # type: () -> int
-        return self.mfn.elementCount
+    @property
+    def mel_object(self):
+        # type: () -> str
+        return self.__name
 
-    def __getitem__(self, item):
-        # type: (int) -> _TCompElem
-        return self.element(item)
+    @property
+    def mesh(self):
+        # type: () -> 'Mesh'
+        return self.__mesh
 
-    def __iter__(self):
-        self.__cursor = 0
-        return self
-
-    def next(self):
-        # type: () -> _TCompElem
-        return self.__next__()
-
-    def __next__(self):
-        # type: () -> _TCompElem
-        if self.__cursor >= len(self):
-            raise StopIteration()
-        value = self.element(self.__cursor)
-        self.__cursor += 1
-        return value
-
-    def clone_empty(self):
-        # type: () -> _TComp
-        comp = self._create_api_comp()
-        return self.__class__(comp.object(), self.mdagpath)
-
-    def element(self, index):
-        # type: (int) -> _TCompElem
-        raise NotImplementedError()
-
-    def iterator(self):
-        # type: () -> _TCompIter
-        raise NotImplementedError()
-
-    def append(self, element):
-        # type: (_TCompElem) -> NoReturn
-        self.mfn.addElement(element)
-
-    def extend(self, elements):
-        # type: (Sequence[_TCompElem]) -> NoReturn
-        self.mfn.addElements(elements)
-
-    def element_component(self, index):
-        # type: (int) -> _TComp
-        comp = self.clone_empty()
-        comp.append(self.element(index))
-        return comp
-
-    @classmethod
-    def _create_api_comp(cls, elements=None):
-        # type: (type, Sequence[_TCompElem]) -> _TCompFn
-        comp = cls._comp_mfn()
-        comp.create(cls._comp_type)
-        if elements:
-            comp.addElements(elements)
-        return comp
-
-
-class SingleIndexedComponent(_Component[_om2.MFnSingleIndexedComponent, int, _TCompIter, _TComp]):
-
-    _comp_mfn = _om2.MFnSingleIndexedComponent
-
-    def __init__(self, obj, mdagpath):
-        # type: (Union[_om2.MObject, str], _om2.MDagPath) -> NoReturn
-        super(SingleIndexedComponent, self).__init__(obj, mdagpath)
-
-    def element(self, index):
-        # type: (int) -> int
-        return self.mfn.element(index)
-
-    def iterator(self):
-        # type: () -> _TCompIter
-        raise NotImplementedError()
-
-
-class DoubleIndexedComponent(_Component[_om2.MFnDoubleIndexedComponent, Tuple[int, int], _TCompIter, _TComp]):
-
-    _comp_mfn = _om2.MFnDoubleIndexedComponent
-
-    def __init__(self, obj, mdagpath):
-        # type: (Union[_om2.MObject, str], _om2.MDagPath) -> NoReturn
-        super(DoubleIndexedComponent, self).__init__(obj, mdagpath)
-
-    def element(self, index):
-        # type: (int) -> Tuple[int, int]
-        return self.mfn.getElement(index)
-
-    def iterator(self):
-        # type: () -> _TCompIter
-        raise NotImplementedError()
-
-
-class MeshVertex(SingleIndexedComponent[_iterators.MeshVertexIter, 'MeshVertex']):
-
-    _comp_type = _om2.MFn.kMeshVertComponent
-    _comp_repr = 'vtx'
-
-    def __init__(self, obj, mdagpath=None):
-        # type: (Union[_om2.MObject, str], _om2.MDagPath) -> NoReturn
-        super(MeshVertex, self).__init__(obj, mdagpath)
-
-    def iterator(self):
-        # type: () -> _iterators.MeshVertexIter
-        iter = _om2.MItMeshVertex(self.mdagpath, self.mobject)
-        return _iterators.MeshVertexIter(iter, self, _om2.MFnMesh(self.mdagpath))
-
-    def f(self): pass
-
-
-class MeshFace(SingleIndexedComponent[_iterators.MeshFaceIter, 'MeshFace']):
-
-    _comp_type = _om2.MFn.kMeshPolygonComponent
-    _comp_repr = 'f'
-
-    def __init__(self, obj, mdagpath=None):
-        # type: (Union[_om2.MObject, str], _om2.MDagPath) -> NoReturn
-        super(MeshFace, self).__init__(obj, mdagpath)
-
-    def iterator(self):
-        # type: () -> _iterators.MeshFaceIter
-        iter = _om2.MItMeshPolygon(self.mdagpath, self.mobject)
-        return _iterators.MeshFaceIter(iter, self)
-
-
-class MeshEdge(SingleIndexedComponent[_iterators.MeshEdgeIter, 'MeshEdge']):
-
-    _comp_type = _om2.MFn.kMeshEdgeComponent
-    _comp_repr = 'e'
-
-    def __init__(self, obj, mdagpath=None):
-        # type: (Union[_om2.MObject, str], _om2.MDagPath) -> NoReturn
-        super(MeshEdge, self).__init__(obj, mdagpath)
-
-    def iterator(self):
-        # type: () -> _iterators.MeshEdgeIter
-        iter = _om2.MItMeshEdge(self.mdagpath, self.mobject)
-        return _iterators.MeshEdgeIter(iter, self)
-
-
-class MeshVertexFace(DoubleIndexedComponent[_iterators.MeshVertexFaceIter, 'MeshVertexFace']):
-
-    _comp_type = _om2.MFn.kMeshVtxFaceComponent
-    _comp_repr = 'vtxface'
-
-    def __init__(self, obj, mdagpath=None):
-        # type: (Union[_om2.MObject, str], _om2.MDagPath) -> NoReturn
-        super(MeshVertexFace, self).__init__(obj, mdagpath)
-
-    def iterator(self):
-        # type: () -> _iterators.MeshVertexFaceIter
-        iter = _om2.MItMeshFaceVertex(self.mdagpath, self.mobject)
-        return _iterators.MeshVertexFaceIter(iter, self)
-
-
-_plugs.PlugFactory.register(Plug)
-_components.ComponentFactory.register(__name__)
+    def __init__(self, name, mesh):
+        # type: (str, 'Mesh') -> NoReturn
+        self.__name = name
+        self.__mesh = mesh
+        self.__mfn = mesh.mfn

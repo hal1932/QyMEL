@@ -10,8 +10,9 @@ import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 import maya.api.OpenMayaAnim as _om2anim
 
+from . import objects as _objects
 from . import general as _general
-from . import iterators as _iterators
+from . import components as _components
 from . import plugins as _plugins
 from .internal import nodes as _nodes
 from .internal import graphs as _graphs
@@ -34,7 +35,7 @@ class _NodeTypeDef(Generic[_TFn, _TNode]):
         raise NotImplementedError
 
 
-class DependNode(_general.MayaObject, _NodeTypeDef[_om2.MFnDependencyNode, 'DependNode']):
+class DependNode(_objects.MayaObject, _NodeTypeDef[_om2.MFnDependencyNode, 'DependNode']):
 
     _mfn_type = _om2.MFn.kDependencyNode
     _mfn_set = _om2.MFnDependencyNode
@@ -193,7 +194,7 @@ class DependNode(_general.MayaObject, _NodeTypeDef[_om2.MFnDependencyNode, 'Depe
     def duplicate(self, **kwargs):
         # type: (Any) -> DependNode
         duplicated_node_name = _cmds.duplicate(self.mel_object, **kwargs)
-        return _graphs.eval_node(duplicated_node_name, _om2.MFnDependencyNode())
+        return _graphs.eval_node(duplicated_node_name, _om2.MFnDepend.encyNode())
 
     def delete(self):
         # type: () -> NoReturn
@@ -288,7 +289,7 @@ class SkinCluster(GeometryFilter, _NodeTypeDef[_om2anim.MFnSkinCluster, 'SkinClu
         return self.mfn.indexForInfluenceObject(joint.mdagpath)
 
     def weights(self, mesh, component=None, influences=None):
-        # type: (Mesh, _general.MeshVertex, Iterable[Joint]) -> List[List[float]]
+        # type: (Mesh, _components.MeshVertex, Iterable[Joint]) -> List[List[float]]
         mfn = self.mfn
 
         if component is None:
@@ -316,7 +317,7 @@ class SkinCluster(GeometryFilter, _NodeTypeDef[_om2anim.MFnSkinCluster, 'SkinClu
         return result
 
     def set_weights(self, mesh, values, component=None, influences=None):
-        # type: (Mesh, Sequence[Sequence[float]], _general.MeshVertex, Sequence[Joint]) -> NoReturn
+        # type: (Mesh, Sequence[Sequence[float]], _components.MeshVertex, Sequence[Joint]) -> NoReturn
         mfn = self.mfn
 
         if component is None:
@@ -1127,92 +1128,6 @@ class NurbsCurve(CurveShape, _NodeTypeDef[_om2.MFnNurbsCurve, 'NurbsCurve']):
     _mel_type = 'nurbsCurve'
 
 
-class ColorSet(object):
-
-    @property
-    def name(self):
-        # type: () -> str
-        return self.__name
-
-    @property
-    def mel_object(self):
-        # type: () -> str
-        return self.__name
-
-    @property
-    def mesh(self):
-        # type: () -> Mesh
-        return self.__mesh
-
-    @property
-    def channels(self):
-        # type: () -> int
-        return self.__mfn.getColorRepresentation(self.mel_object)
-
-    @property
-    def is_clamped(self):
-        # type: () -> bool
-        return self.__mfn.isColorClamped(self.mel_object)
-
-    @property
-    def is_per_instance(self):
-        # type: () -> bool
-        return self.__mfn.isColorSetPerInstance(self.mel_object)
-
-    def __init__(self, name, mesh):
-        # type: (str, Mesh) -> None
-        self.__name = name
-        self.__mfn = mesh.mfn
-        self.__mesh = mesh
-
-    def __repr__(self):
-        return "{}('{}', {})".format(self.__class__.__name__, self.mel_object, repr(self.mesh))
-
-    def color(self, index):
-        # type: (int) -> _om2.MColor
-        return self.__mfn.getColor(index, self.mel_object)
-
-    def colors(self):
-        # type: () -> _om2.MColorArray
-        return self.__mfn.getColors(self.mel_object)
-
-    def color_index(self, face_id, local_vertex_id):
-        # type: (int, int) -> int
-        return self.__mfn.getColorIndex(face_id, local_vertex_id, self.mel_object)
-
-    def face_vertex_colors(self):
-        # type: () -> _om2.MColorArray
-        return self.__mfn.getFaceVertexColors(self.mel_object)
-
-    def vertex_colors(self):
-        # type: () -> _om2.MColorArray
-        return self.__mfn.getVertexColors(self.mel_object)
-
-
-class UvSet(object):
-
-    @property
-    def name(self):
-        # type: () -> str
-        return self.__name
-
-    @property
-    def mel_object(self):
-        # type: () -> str
-        return self.__name
-
-    @property
-    def mesh(self):
-        # type: () -> Mesh
-        return self.__mesh
-
-    def __init__(self, name, mesh):
-        # type: (str, Mesh) -> NoReturn
-        self.__name = name
-        self.__mesh = mesh
-        self.__mfn = mesh.mfn
-
-
 class Mesh(SurfaceShape, _NodeTypeDef[_om2.MFnMesh, 'Mesh']):
 
     _mfn_type = _om2.MFn.kMesh
@@ -1301,48 +1216,48 @@ class Mesh(SurfaceShape, _NodeTypeDef[_om2.MFnMesh, 'Mesh']):
         return ColorSet(name, self)
 
     def face_comp(self, indices=None):
-        # type: (Iterable[int]) -> _general.MeshFace
-        return self.__create_component(_general.MeshFace, indices, self.face_count)
+        # type: (Iterable[int]) -> _components.MeshFace
+        return self.__create_component(_components.MeshFace, indices, self.face_count)
 
     def vertex_comp(self, indices=None):
-        # type: (Iterable[int]) -> _general.MeshVertex
-        return self.__create_component(_general.MeshVertex, indices, self.vertex_count)
+        # type: (Iterable[int]) -> _components.MeshVertex
+        return self.__create_component(_components.MeshVertex, indices, self.vertex_count)
 
     def edge_comp(self, indices=None):
-        # type: (Iterable[int]) -> _general.MeshEdge
-        return self.__create_component(_general.MeshEdge, indices, self.edge_count)
+        # type: (Iterable[int]) -> _components.MeshEdge
+        return self.__create_component(_components.MeshEdge, indices, self.edge_count)
 
     def vertex_face_comp(self, indices=None):
-        # type: (Iterable[Iterable[int, int]]) -> _general.MeshVertexFace
-        return self.__create_component(_general.MeshVertexFace, indices, [self.vertex_count, self.face_count])
+        # type: (Iterable[Iterable[int, int]]) -> _components.MeshVertexFace
+        return self.__create_component(_components.MeshVertexFace, indices, [self.vertex_count, self.face_count])
 
     def faces(self, comp=None):
-        # type: (_general.MeshFace) -> _iterators.MeshFaceIter
+        # type: (_components.MeshFace) -> _components.MeshFaceIter
         if comp is None:
             comp = self.face_comp()
         miter = _om2.MItMeshPolygon(self.mdagpath, comp.mobject)
-        return _iterators.MeshFaceIter(miter, comp)
+        return _components.MeshFaceIter(miter, comp)
 
     def vertices(self, comp=None):
-        # type: (_general.MeshVertex) -> _iterators.MeshVertexIter
+        # type: (_components.MeshVertex) -> _components.MeshVertexIter
         if comp is None:
             comp = self.vertex_comp()
         miter = _om2.MItMeshVertex(self.mdagpath, comp.mobject)
-        return _iterators.MeshVertexIter(miter, comp, self.mfn)
+        return _components.MeshVertexIter(miter, comp, self.mfn)
 
     def edges(self, comp=None):
-        # type: (_general.MeshEdge) -> _iterators.MeshEdgeIter
+        # type: (_components.MeshEdge) -> _components.MeshEdgeIter
         if comp is None:
             comp = self.edge_comp()
         miter = _om2.MItMeshEdge(self.mdagpath, comp.mobject)
-        return _iterators.MeshEdgeIter(miter, comp)
+        return _components.MeshEdgeIter(miter, comp)
 
     def vertex_faces(self, comp=None):
-        # type: (_general.MeshVertexFace) -> _iterators.MeshVertexFaceIter
+        # type: (_components.MeshVertexFace) -> _components.MeshVertexFaceIter
         if comp is None:
             comp = self.vertex_face_comp()
         miter = _om2.MItMeshFaceVertex(self.mdagpath, comp.mobject)
-        return _iterators.MeshVertexFaceIter(miter, comp)
+        return _components.MeshVertexFaceIter(miter, comp)
 
     def __create_component(self, cls, indices=None, complete_length=None):
         # type: (type, Iterable[Any], Any) -> Any
