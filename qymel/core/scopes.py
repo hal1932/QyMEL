@@ -31,6 +31,7 @@ class ProfileScope(Scope):
 
     def __init__(self, callback=None):
         # type: (Callable[[pstats.Stats], None]) -> NoReturn
+        super(ProfileScope, self).__init__()
         self.profile = cProfile.Profile()
         self.callback = callback
 

@@ -30,6 +30,7 @@ def undo_scope(func):
 class KeepSelectionScope(_scopes.Scope):
 
     def __init__(self):
+        super(KeepSelectionScope, self).__init__()
         self.selection = []  # type: List[str]
 
     def _on_enter(self):
@@ -50,6 +51,7 @@ def keep_selection_scope(func):
 class ViewportPauseScope(_scopes.Scope):
 
     def __init__(self):
+        super(ViewportPauseScope, self).__init__()
         self.paused = False
 
     def _on_enter(self):

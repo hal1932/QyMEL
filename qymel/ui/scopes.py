@@ -31,6 +31,7 @@ class KeepRowSelectionScope(_scopes.Scope):
 
     def __init__(self, view):
         # type: (Union[QAbstractItemView]) -> NoReturn
+        super(KeepRowSelectionScope, self).__init__()
         self.__view = view
         self.__selection = None  # type: List[QModelIndex]
 

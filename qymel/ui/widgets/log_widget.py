@@ -36,6 +36,7 @@ class LogAutoFlushScope(_scopes.Scope):
 
     def __init__(self, enable_auto_flush=True):
         # type: (bool) -> NoReturn
+        super(LogAutoFlushScope, self).__init__()
         self.__scoped_value = enable_auto_flush
         self.__current_value = LoggingContext.auto_flush
 
