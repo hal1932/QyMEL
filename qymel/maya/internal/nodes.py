@@ -13,9 +13,9 @@ import maya.api.OpenMaya as _om2
 
 class NodeFactory(object):
 
-    _cls_dict = {}  # Dict[str, type]
-    _default_cls_dict = {}  # Dict[str, type]
-    _dynamic_cls_cache = {}  # Dict[str, type]
+    _cls_dict = {}  # type: Dict[str, type]
+    _default_cls_dict = {}  # type: Dict[str, type]
+    _dynamic_cls_cache = {}  # type: Dict[str, type]
 
     @staticmethod
     def register(module_name):
