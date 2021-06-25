@@ -4,6 +4,7 @@ from typing import *
 from six import *
 from six.moves import *
 
+import time
 import functools
 import types
 import pstats
@@ -55,3 +56,31 @@ def profile_scope(callback=None):
                 func(*args, **kwargs)
         return _
     return _profile_scope
+
+
+class TimeScope(Scope):
+
+    def __init__(self, callback=None):
+        # type: (Callable[[float], None]) -> NoReturn
+        self.callback = callback
+        self.begin = 0
+
+    def _on_enter(self):
+        self.begin = time.time()
+
+    def _on_exit(self):
+        elapsed = time.time() - self.begin
+        if self.callback is not None:
+            callable(elapsed)
+        else:
+            print(elapsed)
+
+
+def time_scope(callback=None):
+    def _time_scope(func):
+        @functools.wraps(func)
+        def _(*args, **kwargs):
+            with TimeScope(callback):
+                func(*args, **kwargs)
+        return _
+    return _time_scope
