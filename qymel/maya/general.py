@@ -143,6 +143,11 @@ class Plug(object):
         return self._mplug.isCompound
 
     @property
+    def is_networked(self):
+        # type: () -> bool
+        return self._mplug.isNetworked
+
+    @property
     def is_locked(self):
         # type: () -> bool
         return self._mplug.isLocked
