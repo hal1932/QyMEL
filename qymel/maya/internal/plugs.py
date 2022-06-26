@@ -48,10 +48,14 @@ def plug_get_impl(mplug):
             numeric_type = _om2.MFnNumericAttribute(mobj).numericType()
             return _numeric_attr_table[numeric_type](mplug)
 
+        # # generic
+        # if api_type == _om2.MFn.kGenericAttribute:
+        #     pass
+
         return _api_type_table[api_type](mplug)
 
-    except KeyError:
-        print('not-supported plug data: {}'.format(mplug))
+    except:
+        # print('not-supported plug data: {}, {}'.format(mplug, mobj.apiTypeStr))
         return _cmds.getAttr(mplug.name())
 
 
@@ -67,12 +71,20 @@ _api_type_table = {
     _om2.MFn.kDoubleAngleAttribute: lambda plug: plug.asMAngle().asUnits(_om2.MAngle.uiUnit()),
     _om2.MFn.kFloatAngleAttribute: lambda plug: plug.asMAngle().asUnits(_om2.MAngle.uiUnit()),
     _om2.MFn.kEnumAttribute: lambda plug: plug.asInt(),
-    _om2.MFn.kMatrixAttribute: lambda plug: _om2.MFnMatrixAttribute(plug.asMObject()).matrix(),
+    _om2.MFn.kMatrixAttribute: lambda plug: _om2.MFnMatrixData(plug.asMObject()).matrix(),
+    _om2.MFn.kFloatMatrixAttribute: lambda plug: _om2.MFnMatrixData(plug.asMObject()).matrix(),
+    _om2.MFn.kTimeAttribute: lambda plug: plug.asMTime().asUnits(_om2.MTime.uiUnit()),
 }
 
 
 _typed_attr_table = {
+    _om2.MFnData.kInvalid: lambda _: None,
     _om2.MFnData.kString: lambda plug: plug.asString(),
+    _om2.MFnData.kStringArray: lambda plug: _om2.MFnStringArrayData(plug.asMObject()).array(),
+    _om2.MFnData.kIntArray: lambda plug: _om2.MFnIntArrayData(plug.asMObject()).array(),
+    _om2.MFnData.kFloatArray: lambda plug: _om2.MFnDoubleArrayData(plug.asMObject()).array(),
+    _om2.MFnData.kDoubleArray: lambda plug: _om2.MFnDoubleArrayData(plug.asMObject()).array(),
+    _om2.MFnData.kVectorArray: lambda plug: _om2.MFnVectorArrayData(plug.asMObject()).array(),
     _om2.MFnData.kMatrix: lambda plug: _om2.MFnMatrixData(plug.asMObject()).matrix(),
     _om2.MFnData.kComponentList: _get_component_list_data,
 }
