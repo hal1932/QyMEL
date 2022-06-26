@@ -21,6 +21,10 @@ __all__ = [
 ]
 
 
+#
+# data binding
+#
+
 class Binding(object):
 
     def __init__(self, path):
@@ -89,6 +93,10 @@ class Binder(Generic[TItem, TBindDef]):
         # type: (QModelIndex, Qt.ItemDataRole) -> bool
         return self.binding(index, role) is not None
 
+
+#
+# common items model
+#
 
 class ItemsModel(QAbstractItemModel, Generic[TItem, TBindDef]):
 
