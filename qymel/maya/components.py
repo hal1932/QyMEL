@@ -14,6 +14,10 @@ from . import objects as _objects
 from . import general as _general
 
 
+# 呼び出し回数が極端に多くなる可能性のある静的メソッドをキャッシュ化しておく
+_graphs_get_comp_mobject = _graphs.get_comp_mobject
+
+
 _TCompFn = TypeVar('_TCompFn', bound=_om2.MFnComponent)
 _TCompElem = TypeVar('_TCompElem')
 _TCompIter = TypeVar('_TCompIter', bound='ComponentIter')
@@ -61,7 +65,7 @@ class Component(_objects.MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter, _
     def __init__(self, obj, mdagpath):
         # type: (Union[_om2.MObject, str], _om2.MDagPath) -> NoReturn
         if isinstance(obj, (str, text_type)):
-            mdagpath, obj = _graphs.get_comp_mobject(obj)
+            mdagpath, obj = _graphs_get_comp_mobject(obj)
         super(Component, self).__init__(obj)
         self._mdagpath = mdagpath
         self._mfn = None  # type: _TCompFn
@@ -553,8 +557,6 @@ class MeshVertex(SingleIndexedComponent[MeshVertexIter, 'MeshVertex']):
         # type: () -> MeshVertexIter
         ite = _om2.MItMeshVertex(self.mdagpath, self.mobject)
         return MeshVertexIter(ite, self, _om2.MFnMesh(self.mdagpath))
-
-    def f(self): pass
 
 
 class MeshFace(SingleIndexedComponent[MeshFaceIter, 'MeshFace']):

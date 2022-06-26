@@ -12,6 +12,22 @@ from .internal import graphs as _graphs
 from .internal import plugs as _plugs
 
 
+# 呼び出し回数が極端に多くなる可能性のある静的メソッドをキャッシュ化しておく
+_om2_MFnComponent = _om2.MFnComponent
+_om2_MFnDependencyNode = _om2.MFnDependencyNode
+_om2_MFnDagNode = _om2.MFnDagNode
+_om2_MDagPath_getAPathTo = _om2.MDagPath.getAPathTo
+_om2_MFn_kDagNode = _om2.MFn.kDagNode
+_cmds_getAttr = _cmds.getAttr
+_cmds_setAttr = _cmds.setAttr
+_cmds_connectAttr = _cmds.connectAttr
+_cmds_disconnectAttr = _cmds.disconnectAttr
+_graphs_eval = _graphs.eval
+_graphs_eval_node = _graphs.eval_node
+_graphs_eval_plug = _graphs.eval_plug
+_graphs_eval_component = _graphs.eval_component
+
+
 def deprecated(message):
     def _deprecated(func):
         @functools.wraps(func)
@@ -29,29 +45,29 @@ def ls(*args, **kwargs):
 
 def eval(obj_name):
     # type: (Union[str, Iterable[str]]) -> Any
-    tmp_mfn_comp = _om2.MFnComponent()
-    tmp_mfn_node = _om2.MFnDependencyNode()
+    tmp_mfn_comp = _om2_MFnComponent()
+    tmp_mfn_node = _om2_MFnDependencyNode()
     if isinstance(obj_name, (str, text_type)):
-        return _graphs.eval(obj_name, tmp_mfn_comp, tmp_mfn_node)
+        return _graphs_eval(obj_name, tmp_mfn_comp, tmp_mfn_node)
     else:
-        return [_graphs.eval(name, tmp_mfn_comp, tmp_mfn_node) for name in obj_name]
+        return [_graphs_eval(name, tmp_mfn_comp, tmp_mfn_node) for name in obj_name]
 
 
 def eval_node(node_name):
     # type: (str) -> Any
-    tmp_mfn = _om2.MFnDependencyNode()
-    return _graphs.eval_node(node_name, tmp_mfn)
+    tmp_mfn = _om2_MFnDependencyNode()
+    return _graphs_eval_node(node_name, tmp_mfn)
 
 
 def eval_plug(plug_name):
     # type: (str) -> Plug
-    return _graphs.eval_plug(plug_name)
+    return _graphs_eval_plug(plug_name)
 
 
 def eval_component(comp_name):
     # type: (str) -> 'Component'
-    tmp_mfn = _om2.MFnComponent()
-    return _graphs.eval_component(comp_name, tmp_mfn)
+    tmp_mfn = _om2_MFnComponent()
+    return _graphs_eval_component(comp_name, tmp_mfn)
 
 
 class Plug(object):
@@ -60,7 +76,7 @@ class Plug(object):
     def mel_object(self):
         # type: () -> str
         mfn_node = self.mfn_node
-        if isinstance(mfn_node, _om2.MFnDagNode):
+        if isinstance(mfn_node, _om2_MFnDagNode):
             return '{}.{}'.format(mfn_node.fullPathName(), self._mplug.partialName())
         return self._mplug.name()
 
@@ -79,11 +95,11 @@ class Plug(object):
         # type: () -> Union[_om2.MFnDependencyNode, _om2.MFnDagNode]
         if self._mfn_node is None:
             node = self._mplug.node()
-            if node.hasFn(_om2.MFn.kDagNode):
-                mdagpath = _om2.MDagPath.getAPathTo(node)
-                self._mfn_node = _om2.MFnDagNode(mdagpath)
+            if node.hasFn(_om2_MFn_kDagNode):
+                mdagpath = _om2_MDagPath_getAPathTo(node)
+                self._mfn_node = _om2_MFnDagNode(mdagpath)
             else:
-                self._mfn_node = _om2.MFnDependencyNode(node)
+                self._mfn_node = _om2_MFnDependencyNode(node)
         return self._mfn_node
 
     @property
@@ -168,7 +184,7 @@ class Plug(object):
         if not mplug.isCompound:
             raise RuntimeError('{} is not compound'.format(self.name))
 
-        attr_mobj = _om2.MFnDependencyNode(mplug.node()).attribute(item)
+        attr_mobj = _om2_MFnDependencyNode(mplug.node()).attribute(item)
         child_mplug = mplug.child(attr_mobj)
         return Plug(child_mplug)
 
@@ -176,7 +192,7 @@ class Plug(object):
         # type: () -> 'DependNode'
         if self._node is None:
             mfn_node = self.mfn_node
-            if isinstance(mfn_node, _om2.MFnDagNode):
+            if isinstance(mfn_node, _om2_MFnDagNode):
                 mdagpath = mfn_node.getPath()
                 self._node = _graphs.to_node_instance(mfn_node, mdagpath)
             else:
@@ -194,19 +210,19 @@ class Plug(object):
 
     def get_attr(self, **kwargs):
         # type: (Any, Any) -> Any
-        return _cmds.getAttr(self.mel_object, **kwargs)
+        return _cmds_getAttr(self.mel_object, **kwargs)
 
     def set_attr(self, *args, **kwargs):
         # type: (Any, Any) -> Any
-        return _cmds.setAttr(self.mel_object, *args, **kwargs)
+        return _cmds_setAttr(self.mel_object, *args, **kwargs)
 
     def connect(self, dest_plug, **kwargs):
         # type: (Plug, Any) -> NoReturn
-        _cmds.connectAttr(self.mel_object, dest_plug.mel_object, **kwargs)
+        _cmds_connectAttr(self.mel_object, dest_plug.mel_object, **kwargs)
 
     def disconnect(self, dest_plug, **kwargs):
         # type: (Plug, Any) -> NoReturn
-        _cmds.disconnectAttr(self.mel_object, dest_plug.mel_object, **kwargs)
+        _cmds_disconnectAttr(self.mel_object, dest_plug.mel_object, **kwargs)
 
     def source(self):
         # type: () -> Plug

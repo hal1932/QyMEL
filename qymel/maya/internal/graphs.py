@@ -12,19 +12,24 @@ from . import plugs as _plugs
 from . import components as _components
 
 
+# 呼び出し回数が極端に多くなる可能性のある静的メソッドをキャッシュ化しておく
+_om2_MGlobal_getSelectionListByName = _om2.MGlobal.getSelectionListByName
+_plugs_PlugFactory_create = _plugs.PlugFactory.create
+_nodes_NodeFactory_create = _nodes.NodeFactory.create
+_nodes_NodeFactory_create_default = _nodes.NodeFactory.create_default
+_components_ComponentFactory_create = _components.ComponentFactory.create
+_components_ComponentFactory_create_default = _components.ComponentFactory.create_default
+
+
 def ls(*args, **kwargs):
     # type: (Any, Any) -> Any
-    result = []
+    if kwargs.get('objectsOnly', False):
+        return ls_nodes(*args, **kwargs)
 
     kwargs['long'] = True
     tmp_mfn_node = _om2.MFnDependencyNode()
     tmp_mfn_comp = _om2.MFnComponent()
-
-    for obj_name in _cmds.ls(*args, **kwargs):
-        obj = eval(obj_name, tmp_mfn_comp, tmp_mfn_node)
-        result.append(obj)
-
-    return result
+    return [eval(name, tmp_mfn_comp, tmp_mfn_node) for name in _cmds.ls(*args, **kwargs)]
 
 
 def ls_nodes(*args, **kwargs):
@@ -70,7 +75,7 @@ def eval_plug(plug_name):
         pass
 
     if mplug is not None:
-        plug = _plugs.PlugFactory.create(mplug)
+        plug = _plugs_PlugFactory_create(mplug)
         return plug
 
     return None
@@ -116,17 +121,16 @@ def to_node_instance(mfn, mdagpath=None):
     type_name = mfn.typeName
     mobj = mfn.object()
 
-    node = _nodes.NodeFactory.create(type_name, mobj, mdagpath)
+    node = _nodes_NodeFactory_create(type_name, mobj, mdagpath)
     if node is not None:
         return node
 
-    return _nodes.NodeFactory.create_default(mfn, mdagpath)
+    return _nodes_NodeFactory_create_default(mfn, mdagpath)
 
 
 def get_mobject(node_name):
     # type: (str) -> (_om2.MObject, _om2.MDagPath)
-    sel = _om2.MSelectionList()
-    sel.add(node_name)
+    sel = _om2_MGlobal_getSelectionListByName(node_name)
     mobj = sel.getDependNode(0)
 
     if mobj.hasFn(_om2.MFn.kDagNode):
@@ -147,31 +151,35 @@ def get_world_mobject():
 
 def _to_plug_instance(mplug):
     # type: (_om2.MPlug) -> object
-    return _plugs.PlugFactory.create(mplug)
+    return _plugs_PlugFactory_create(mplug)
 
 
 def to_comp_instance(mfn, mdagpath, mobject):
     # type: (_om2.MFnComponent, _om2.MDagPath, _om2.MObject) -> object
     comp_type = mfn.componentType
 
-    comp = _components.ComponentFactory.create(comp_type, mdagpath, mobject)
+    comp = _components_ComponentFactory_create(comp_type, mdagpath, mobject)
     if comp is not None:
         return comp
 
-    return _components.ComponentFactory.create_default(mdagpath, mobject)
+    return _components_ComponentFactory_create_default(mdagpath, mobject)
 
 
 def get_mplug(name):
     # type: (str) -> _om2.MPlug
-    sel = _om2.MSelectionList()
-    sel.add(name)
+    sel = _om2_MGlobal_getSelectionListByName(name)
     return sel.getPlug(0)
 
 
 def keep_mplug(mplug):
     # type: (_om2.MPlug) -> _om2.MPlug
-    # ネットワークプラグはメモリ管理がMaya内部で行われるので
-    # 内部でdeleteされないようにノンネットワークプラグに変換しておく
+    u"""
+    ネットワークプラグをGC管理下から外すためのメソッド
+      ネットワークプラグはメモリ管理がMaya内部で行われるので
+      内部でdeleteされないようにノンネットワークプラグに変換しておく
+    :param mplug:
+    :return:
+    """
     if not mplug.isNetworked:
         return mplug
 
@@ -200,8 +208,7 @@ def keep_mplug(mplug):
 
 def get_comp_mobject(name):
     # type: (str) -> (_om2.MDagPath, _om2.MObject)
-    sel = _om2.MSelectionList()
-    sel.add(name)
+    sel = _om2_MGlobal_getSelectionListByName(name)
     return sel.getComponent(0)
 
 

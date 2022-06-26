@@ -6,6 +6,10 @@ from six import *
 import maya.api.OpenMaya as _om2
 
 
+# 呼び出し回数が極端に多くなる可能性のある静的メソッドをキャッシュ化しておく
+_om2_MObjectHandle = _om2.MObjectHandle
+
+
 _TObj = TypeVar('_TObj', bound='MayaObject')
 
 
@@ -49,7 +53,7 @@ class MayaObject(object):
     def __init__(self, mobj):
         # type: (_om2.MObject) -> NoReturn
         if mobj is not None:
-            self._mobj_handle = _om2.MObjectHandle(mobj)
+            self._mobj_handle = _om2_MObjectHandle(mobj)
         else:
             self._mobj_handle = None
 

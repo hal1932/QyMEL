@@ -18,11 +18,20 @@ from .internal import nodes as _nodes
 from .internal import graphs as _graphs
 
 
+# 呼び出し回数が極端に多くなる可能性のある静的メソッドをキャッシュ化しておく
+_graphs_get_mobject = _graphs.get_mobject
+_graphs_eval_node = _graphs.eval_node
+_graphs_eval_plug = _graphs.eval_plug
+_graphs_to_node_instance = _graphs.to_node_instance
+_graphs_to_comp_instance = _graphs.to_comp_instance
+
+
 _TFn = TypeVar('_TFn', bound=_om2.MFnDependencyNode)
 _TNode = TypeVar('_TNode', bound='DependNode')
 
 
 # ジェネリック型定義を継承ツリーから分離するためのミックスインインターフェイス
+# 継承先によって返り値の方が異なるメソッド（mfn()など）の型推論が効くようにする
 class _NodeTypeDef(Generic[_TFn, _TNode]):
 
     @property
@@ -116,7 +125,7 @@ class DependNode(_objects.MayaObject, _NodeTypeDef[_om2.MFnDependencyNode, 'Depe
 
     def __init__(self, obj):
         if isinstance(obj, (str, text_type)):
-            obj, _ = _graphs.get_mobject(obj)
+            obj, _ = _graphs_get_mobject(obj)
 
         super(DependNode, self).__init__(obj)
         self._mfn = None
@@ -152,10 +161,10 @@ class DependNode(_objects.MayaObject, _NodeTypeDef[_om2.MFnDependencyNode, 'Depe
         others = _cmds.listConnections(self.mel_object, **kwargs) or []
 
         if 'plugs' in kwargs or 'p' in kwargs:
-            return [_graphs.eval_plug(name) for name in others]
+            return [_graphs_eval_plug(name) for name in others]
 
         tmp_mfn = _om2.MFnDependencyNode()
-        return [_graphs.eval_node(name, tmp_mfn) for name in others]
+        return [_graphs_eval_node(name, tmp_mfn) for name in others]
 
     def sources(self, **kwargs):
         # type: (Any) -> Union[List[DependNode, _general.Plug]]
@@ -177,7 +186,7 @@ class DependNode(_objects.MayaObject, _NodeTypeDef[_om2.MFnDependencyNode, 'Depe
         # type: (Any) -> List[DependNode]
         nodes = _cmds.listHistory(self.mel_object, **kwargs)
         tmp_mfn = _om2.MFnDependencyNode()
-        return [_graphs.eval_node(name, tmp_mfn) for name in nodes]
+        return [_graphs_eval_node(name, tmp_mfn) for name in nodes]
 
     def rename(self, new_name):
         # type: (str) -> NoReturn
@@ -194,7 +203,7 @@ class DependNode(_objects.MayaObject, _NodeTypeDef[_om2.MFnDependencyNode, 'Depe
     def duplicate(self, **kwargs):
         # type: (Any) -> DependNode
         duplicated_node_name = _cmds.duplicate(self.mel_object, **kwargs)
-        return _graphs.eval_node(duplicated_node_name, _om2.MFnDepend.encyNode())
+        return _graphs_eval_node(duplicated_node_name, _om2.MFnDepend.encyNode())
 
     def delete(self):
         # type: () -> NoReturn
@@ -234,7 +243,7 @@ class DisplayLayer(DependNode):
         # type: () -> List[DagNode]
         tmp_mfn = _om2.MFnDependencyNode()
         members = _cmds.editDisplayLayerMembers(self.mel_object, query=True, fullNames=True)
-        return [_graphs.eval_node(node, tmp_mfn) for node in members or []]
+        return [_graphs_eval_node(node, tmp_mfn) for node in members or []]
 
     def make_current(self):
         # type: () -> NoReturn
@@ -370,7 +379,7 @@ class ObjectSet(Entity, _NodeTypeDef[_om2.MFnSet, 'ObjectSet']):
                 # component
                 mdagpath, mobj = selection.getComponent(i)
                 tmp_mfn_comp.setObject(mobj)
-                comp = _graphs.to_comp_instance(tmp_mfn_comp, mdagpath, mobj)
+                comp = _graphs_to_comp_instance(tmp_mfn_comp, mdagpath, mobj)
                 result.append(comp)
 
             except RuntimeError:
@@ -382,7 +391,7 @@ class ObjectSet(Entity, _NodeTypeDef[_om2.MFnSet, 'ObjectSet']):
                 if mobj.hasFn(_om2.MFn.kDagNode):
                     mdagpath = selection.getDagPath(i)
 
-                node = _graphs.to_node_instance(tmp_mfn, mdagpath)
+                node = _graphs_to_node_instance(tmp_mfn, mdagpath)
                 result.append(node)
 
         return result
@@ -438,7 +447,7 @@ class ShadingEngine(ObjectSet):
         # type: () -> [DependNode]
         names = _cmds.ls(_cmds.listHistory(self.mel_object), materials=True)
         tmp_mfn = _om2.MFnDependencyNode()
-        return [_graphs.eval_node(name, tmp_mfn) for name in names]
+        return [_graphs_eval_node(name, tmp_mfn) for name in names]
 
 
 class AnimCurve(DependNode, _NodeTypeDef[_om2anim.MFnAnimCurve, 'AnimCurve']):
@@ -680,7 +689,7 @@ class DagNode(Entity, _NodeTypeDef[_om2.MFnDagNode, 'DagNode']):
         # type: () -> DagNode
         mdagpath = _om2.MDagPath(self.mdagpath)
         root_path = mdagpath.pop(mdagpath.length() - 1)
-        return _graphs.to_node_instance(_om2.MFnDagNode(root_path), root_path)
+        return _graphs_to_node_instance(_om2.MFnDagNode(root_path), root_path)
 
     @property
     def is_world(self):
@@ -733,7 +742,7 @@ class DagNode(Entity, _NodeTypeDef[_om2.MFnDagNode, 'DagNode']):
 
     def __init__(self, obj):
         if isinstance(obj, (str, text_type)):
-            _, obj = _graphs.get_mobject(obj)
+            _, obj = _graphs_get_mobject(obj)
 
         if obj is None:
             # self is World
@@ -756,7 +765,7 @@ class DagNode(Entity, _NodeTypeDef[_om2.MFnDagNode, 'DagNode']):
             return []
 
         tmp_mfn = _om2.MFnDependencyNode()
-        return [_graphs.eval_node(name, tmp_mfn) for name in others]
+        return [_graphs_eval_node(name, tmp_mfn) for name in others]
 
     def parent(self, index=0):
         # type: (int) -> DagNode
@@ -767,7 +776,7 @@ class DagNode(Entity, _NodeTypeDef[_om2.MFnDagNode, 'DagNode']):
         parent_mfn = _om2.MFnDependencyNode(parent_mobj)
         parent_mfn_dag = _om2.MFnDagNode(parent_mobj)
 
-        return _graphs.to_node_instance(parent_mfn, parent_mfn_dag.getPath())
+        return _graphs_to_node_instance(parent_mfn, parent_mfn_dag.getPath())
 
     def parents(self, **kwargs):
         # type: (Any) -> List[DagNode]
@@ -783,7 +792,7 @@ class DagNode(Entity, _NodeTypeDef[_om2.MFnDagNode, 'DagNode']):
             return None
 
         child_mobj = mfn.child(index)
-        return _graphs.to_node_instance(child_mobj, _om2.MFnDagNode(child_mobj).getPath())
+        return _graphs_to_node_instance(child_mobj, _om2.MFnDagNode(child_mobj).getPath())
 
     def children(self, **kwargs):
         # type: (Any) -> List[DagNode]
@@ -824,7 +833,7 @@ class DagNode(Entity, _NodeTypeDef[_om2.MFnDagNode, 'DagNode']):
                 if not is_ignored:
                     if tmp_mfn_dag.parent(0).hasFn(_om2.MFn.kWorld):
                         tmp_mfn.setObject(ite.thisNode())
-                        node = _graphs.to_node_instance(tmp_mfn, tmp_mfn_dag.getPath())
+                        node = _graphs_to_node_instance(tmp_mfn, tmp_mfn_dag.getPath())
                         result.append(node)
             else:
                 tmp_mfn.setObject(ite.thisNode())
@@ -832,7 +841,7 @@ class DagNode(Entity, _NodeTypeDef[_om2.MFnDagNode, 'DagNode']):
                 is_ignored = type_name is not None and tmp_mfn.typeName != type_name
 
                 if not is_ignored:
-                    node = _graphs.to_node_instance(tmp_mfn)
+                    node = _graphs_to_node_instance(tmp_mfn)
                     result.append(node)
 
             ite.next()
@@ -866,7 +875,7 @@ class DagNode(Entity, _NodeTypeDef[_om2.MFnDagNode, 'DagNode']):
                 continue
 
             tmp_mfn.setObject(parent_mobj)
-            node = _graphs.to_node_instance(tmp_mfn, tmp_mfn_dag.getPath())
+            node = _graphs_to_node_instance(tmp_mfn, tmp_mfn_dag.getPath())
             result.append(node)
 
             mfn = tmp_mfn_dag
@@ -919,7 +928,7 @@ class DagNode(Entity, _NodeTypeDef[_om2.MFnDagNode, 'DagNode']):
                     continue
 
                 tmp_mfn.setObject(mobj)
-                node = _graphs.to_node_instance(tmp_mfn, tmp_mfn_dag.getPath())
+                node = _graphs_to_node_instance(tmp_mfn, tmp_mfn_dag.getPath())
                 result.append(node)
 
         return result
@@ -933,7 +942,7 @@ class DagNode(Entity, _NodeTypeDef[_om2.MFnDagNode, 'DagNode']):
             new_child_name = _cmds.parent(child.mel_object, self.mel_object, **kwargs)[0]
 
         if 'addObject' in kwargs or 'add' in kwargs:
-            return _graphs.eval_node(new_child_name, _om2.MFnDependencyNode())
+            return _graphs_eval_node(new_child_name, _om2.MFnDependencyNode())
         return child
 
     def is_parent_of(self, node):
@@ -965,7 +974,7 @@ class DagNode(Entity, _NodeTypeDef[_om2.MFnDagNode, 'DagNode']):
             if other_mdagpath == mdagpath:
                 continue
             tmp_mfn.setObject(other_mdagpath.node())
-            node = _graphs.to_node_instance(tmp_mfn, _om2.MDagPath(other_mdagpath))
+            node = _graphs_to_node_instance(tmp_mfn, _om2.MDagPath(other_mdagpath))
             instances.append(node)
 
         return instances
@@ -1016,7 +1025,7 @@ class Transform(DagNode, _NodeTypeDef[_om2.MFnTransform, 'Transform']):
         except RuntimeError:
             return None
 
-        return _graphs.to_node_instance(_om2.MFnDependencyNode(mdagpath.node()), mdagpath)
+        return _graphs_to_node_instance(_om2.MFnDependencyNode(mdagpath.node()), mdagpath)
 
     def shapes(self):
         # type: () -> List[Shape]
@@ -1030,7 +1039,7 @@ class Transform(DagNode, _NodeTypeDef[_om2.MFnTransform, 'Transform']):
     def instantiate(self, **kwargs):
         # type: (Any) -> Transform
         transform = _cmds.instance(self.mel_object, **kwargs)[0]
-        return _graphs.eval_node(transform, _om2.MFnDependencyNode())
+        return _graphs_eval_node(transform, _om2.MFnDependencyNode())
 
     def world_bounding_box(self):
         # type: () -> _om2.MBoundingBox
@@ -1060,12 +1069,12 @@ class Shape(DagNode):
         # type: () -> [ShadingEngine]
         names = _cmds.ls(_cmds.listHistory(self.mel_object, future=True), type='shadingEngine')
         tmp_mfn = _om2.MFnDependencyNode()
-        return [_graphs.eval_node(name, tmp_mfn) for name in names]
+        return [_graphs_eval_node(name, tmp_mfn) for name in names]
 
     def instantiate(self, **kwargs):
         # type: (Any) -> Transform
         transform = _cmds.instance(self.mel_object, **kwargs)
-        return _graphs.eval_node(transform, _om2.MFnDependencyNode())
+        return _graphs_eval_node(transform, _om2.MFnDependencyNode())
 
     def skin_cluster(self):
         # type: () -> Optional[SkinCluster]
@@ -1330,7 +1339,7 @@ class FileReference(DependNode, _NodeTypeDef[_om2.MFnReference, 'FileReference']
 
         if return_new_nodes:
             tmp_mfn = _om2.MFnDependencyNode()
-            return [_graphs.eval_node(name, tmp_mfn) for name in result]
+            return [_graphs_eval_node(name, tmp_mfn) for name in result]
 
         return None
 
@@ -1362,7 +1371,7 @@ class FileReference(DependNode, _NodeTypeDef[_om2.MFnReference, 'FileReference']
             if node.hasFn(_om2.MFn.kDagNode):
                 mfn_dag.setObject(node)
                 mdagpath = mfn_dag.getPath()
-            result.append(_graphs.to_node_instance(mfn, mdagpath))
+            result.append(_graphs_to_node_instance(mfn, mdagpath))
 
         return result
 
