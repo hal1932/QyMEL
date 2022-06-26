@@ -48,14 +48,12 @@ class ProfileScope(Scope):
             stats.print_stats()
 
 
-def profile_scope(callback=None):
-    def _profile_scope(func):
-        @functools.wraps(func)
-        def _(*args, **kwargs):
-            with ProfileScope(callback):
-                func(*args, **kwargs)
-        return _
-    return _profile_scope
+def profile_scope(func):
+    @functools.wraps(func)
+    def _(*args, **kwargs):
+        with ProfileScope():
+            func(*args, **kwargs)
+    return _
 
 
 class TimeScope(Scope):
@@ -76,11 +74,35 @@ class TimeScope(Scope):
             print(elapsed)
 
 
-def time_scope(callback=None):
-    def _time_scope(func):
-        @functools.wraps(func)
-        def _(*args, **kwargs):
-            with TimeScope(callback):
-                func(*args, **kwargs)
-        return _
-    return _time_scope
+def time_scope(func):
+    @functools.wraps(func)
+    def _(*args, **kwargs):
+        with TimeScope():
+            func(*args, **kwargs)
+    return _
+
+
+class ProcessTimeScope(Scope):
+
+    def __init__(self, callback=None):
+        # type: (Callable[[float], None]) -> NoReturn
+        self.callback = callback
+        self.begin = 0
+
+    def _on_enter(self):
+        self.begin = time.process_time()
+
+    def _on_exit(self):
+        elapsed = time.process_time() - self.begin
+        if self.callback is not None:
+            callable(elapsed)
+        else:
+            print(elapsed)
+
+
+def process_time_scope(func):
+    @functools.wraps(func)
+    def _(*args, **kwargs):
+        with TimeScope(callback):
+            func(*args, **kwargs)
+    return _
