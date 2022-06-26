@@ -177,12 +177,11 @@ def keep_mplug(mplug):
     ネットワークプラグをGC管理下から外すためのメソッド
       ネットワークプラグはメモリ管理がMaya内部で行われるので
       内部でdeleteされないようにノンネットワークプラグに変換しておく
-    :param mplug:
-    :return:
     """
     if not mplug.isNetworked:
         return mplug
 
+    # 新規ノンネットワークプラグをつくって中身を全部移植する
     # https://github.com/ryusas/cymel/blob/05089ea6e34c79723590e9350dc45d5c970fd8f4/python/cymel/core/cyobjects/python/_api2mplug.py#L149
     mattr = mplug.attribute()
 
