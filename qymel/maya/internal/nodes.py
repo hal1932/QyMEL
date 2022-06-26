@@ -76,9 +76,9 @@ class NodeFactory(object):
         base_cls_name_candidates = _cmds.nodeType(node_path, inherited=True)
         for base_cls_name in reversed(base_cls_name_candidates):
             base_cls = NodeFactory._dynamic_cls_cache.get(base_cls_name, None)
-            if not base_cls:
+            if base_cls is None:
                 base_cls = NodeFactory._cls_dict.get(base_cls_name, None)
-            if base_cls:
+            if base_cls is not None:
                 break
 
         if not base_cls:
