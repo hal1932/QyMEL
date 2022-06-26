@@ -14,7 +14,7 @@ except ImportError:
     _MAYA = False
 
 from .pyside_module import *
-from .layouts import *
+from . import layouts as _layouts
 
 
 class AppBase(object):
@@ -158,9 +158,9 @@ class ToolMainWindowBase(MainWindowBase):
         close_button = QPushButton(self.close_label)
         close_button.clicked.connect(self._close)
 
-        widget.setLayout(vbox(
+        widget.setLayout(_layouts.vbox(
             user_widget,
-            hbox(
+            _layouts.hbox(
                 execute_button,
                 apply_button,
                 close_button,
