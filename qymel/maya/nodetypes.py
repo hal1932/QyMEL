@@ -1195,34 +1195,34 @@ class Mesh(SurfaceShape, _NodeTypeDef[_om2.MFnMesh, 'Mesh']):
         return result
 
     def current_color_set(self):
-        # type: () -> ColorSet
+        # type: () -> _general.ColorSet
         mfn = self.mfn
         name = mfn.currentColorSetName(self.instance_number)
-        return ColorSet(name, self)
+        return _general.ColorSet(name, self)
 
     def color_sets(self):
         # type: () -> List[ColorSet]
         mfn = self.mfn
         names = mfn.getColorSetNames()
-        return [ColorSet(name, self) for name in names]
+        return [_general.ColorSet(name, self) for name in names]
 
     def current_uv_set(self):
         # type: () -> UvSet
         mfn = self.mfn
         name = mfn.currentUVSetName()
-        return UvSet(name, self)
+        return _general.UvSet(name, self)
 
     def uv_sets(self):
         # type: () -> List[UvSet]
         mfn = self.mfn
         names = mfn.getUVSetNames()
-        return [UvSet(name, self) for name in names]
+        return [_general.UvSet(name, self) for name in names]
 
     def add_color_set(self, name=''):
         # type: (str) -> ColorSet
         _cmds.select(self.mel_object, replace=True)
         name = _cmds.polyColorSet(create=True, colorSet=name)
-        return ColorSet(name, self)
+        return _general.ColorSet(name, self)
 
     def face_comp(self, indices=None):
         # type: (Iterable[int]) -> _components.MeshFace
