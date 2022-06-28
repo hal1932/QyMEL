@@ -11,55 +11,6 @@ import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 
 
-_TComp = TypeVar('_TComp')
-
-
-class ComponentIter(Generic[_TComp]):
-
-    @property
-    def miter(self):
-        return self._miter
-
-    @property
-    def mobject(self):
-        # type: () -> _om2.MObject
-        return self._miter.currentItem()
-
-    def __init__(self, miter, comp):
-        self._miter = miter
-        self._comp = comp  # 使う機会はないけど、ループの最中にcompのスコープが切れないように手許で抱えておく
-        self.__is_first = True
-
-    def __getattr__(self, item):
-        # type: (str) -> Any
-        return getattr(self._miter, item)
-
-    def __iter__(self):
-        # type: () -> _TComp
-        return self
-
-    def next(self):
-        # type: () -> _TComp
-        return self.__next__()
-
-    def __next__(self):
-        # type: () -> _TComp
-        if self.__is_first:
-            self.__is_first = False
-            return self
-
-        self._next()
-
-        if self._miter.isDone():
-            raise StopIteration()
-
-        return self
-
-    def _next(self):
-        # type: () -> NoReturn
-        self._miter.next()
-
-
 class ComponentFactory(object):
 
     _cls_dict = {}  # type: Dict[_om2.MFn, type]
