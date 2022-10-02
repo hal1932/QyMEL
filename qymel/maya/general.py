@@ -118,6 +118,11 @@ class Plug(object):
         return self._mplug.partialName()
 
     @property
+    def full_name(self):
+        # type: () -> str
+        return _cmds.ls(self.name, long=True)[0]
+
+    @property
     def api_type(self):
         # type: () -> int
         return self._mplug.attribute().apiType()
@@ -181,17 +186,6 @@ class Plug(object):
             raise RuntimeError('{} is not array'.format(self.name))
 
         return Plug(mplug.elementByLogicalIndex(item))
-
-    def __getattr__(self, item):
-        # type: (str) -> Plug
-        mplug = self._mplug
-
-        if not mplug.isCompound:
-            raise RuntimeError('{} is not compound'.format(self.name))
-
-        attr_mobj = _om2_MFnDependencyNode(mplug.node()).attribute(item)
-        child_mplug = mplug.child(attr_mobj)
-        return Plug(child_mplug)
 
     def node(self):
         # type: () -> 'DependNode'

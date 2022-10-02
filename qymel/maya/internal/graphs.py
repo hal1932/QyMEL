@@ -100,6 +100,9 @@ def eval_component(comp_name, tmp_mfn_comp):
 
 def eval_node(node_name, tmp_mfn_node):
     # type: (str, _om2.MFnDependencyNode) -> Any
+    if '.' in node_name:
+        raise TypeError('invalid node: {}'.format(node_name))
+
     mobj, mdagpath = get_mobject(node_name)
 
     if mobj.hasFn(_om2.MFn.kDependencyNode):
