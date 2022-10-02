@@ -103,6 +103,12 @@ class Component(_objects.MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter, _
         self.__cursor += 1
         return value
 
+    def clone(self):
+        # type: () -> _TComp
+        clone = self.clone_empty()
+        clone.extend(self.elements)
+        return clone
+
     def clone_empty(self):
         # type: () -> _TComp
         comp = self._create_api_comp()
@@ -124,11 +130,9 @@ class Component(_objects.MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter, _
         # type: (Sequence[_TCompElem]) -> NoReturn
         self.mfn.addElements(elements)
 
-    def element_component(self, index):
-        # type: (int) -> _TComp
-        comp = self.clone_empty()
-        comp.append(self.element(index))
-        return comp
+    def set_complete(self, count):
+        # type: (int) -> NoReturn
+        self.mfn.setCompleteData(count)
 
     @classmethod
     def _create_api_comp(cls, elements=None):

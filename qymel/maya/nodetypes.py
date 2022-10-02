@@ -1225,19 +1225,19 @@ class Mesh(SurfaceShape, _NodeTypeDef[_om2.MFnMesh, 'Mesh']):
         return _general.ColorSet(name, self)
 
     def face_comp(self, indices=None):
-        # type: (Iterable[int]) -> _components.MeshFace
+        # type: (Sequence[int]) -> _components.MeshFace
         return self.__create_component(_components.MeshFace, indices, self.face_count)
 
     def vertex_comp(self, indices=None):
-        # type: (Iterable[int]) -> _components.MeshVertex
+        # type: (Sequence[int]) -> _components.MeshVertex
         return self.__create_component(_components.MeshVertex, indices, self.vertex_count)
 
     def edge_comp(self, indices=None):
-        # type: (Iterable[int]) -> _components.MeshEdge
+        # type: (Sequence[int]) -> _components.MeshEdge
         return self.__create_component(_components.MeshEdge, indices, self.edge_count)
 
     def vertex_face_comp(self, indices=None):
-        # type: (Iterable[Iterable[int, int]]) -> _components.MeshVertexFace
+        # type: (Sequence[Iterable[int, int]]) -> _components.MeshVertexFace
         return self.__create_component(_components.MeshVertexFace, indices, [self.vertex_count, self.face_count])
 
     def faces(self, comp=None):
@@ -1269,11 +1269,12 @@ class Mesh(SurfaceShape, _NodeTypeDef[_om2.MFnMesh, 'Mesh']):
         return _components.MeshVertexFaceIter(miter, comp)
 
     def __create_component(self, cls, indices=None, complete_length=None):
-        # type: (type, Iterable[Any], Any) -> Any
+        # type: (type, Sequence[Any], Any) -> Any
         comp = cls._comp_mfn()
         mobj = comp.create(cls._comp_type)
         if indices is not None:
             comp.addElements(indices)
+            comp.setCompleteData(len(indices))
         else:
             if isinstance(complete_length, int):
                 comp.setCompleteData(complete_length)
