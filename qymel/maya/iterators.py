@@ -98,7 +98,7 @@ class MeshVertexIter(_ComponentIter['MeshVertexIter']):
         return self._miter.onBoundary()
 
     def __init__(self, miter, comp, mfn_mesh):
-        # type: (_om2.MItMeshVertex, Component, _om2.MFnMesh) -> NoReturn
+        # type: (_om2.MItMeshVertex, '_general.Component', _om2.MFnMesh) -> NoReturn
         super(MeshVertexIter, self).__init__(miter, comp)
         self._mfn_mesh = mfn_mesh
 
@@ -108,11 +108,14 @@ class MeshVertexIter(_ComponentIter['MeshVertexIter']):
             return self._miter.hasColor(face_id)
         return self._miter.hasColor()
 
-    def color(self, color_set=None, face_id=None):
+    def color(self, face_id=None, color_set=None):
         # type: (Union[_general.ColorSet, str], int) -> _om2.MColor
         color_set_name = _get_color_set_name(color_set, None)
         if face_id is not None:
-            return self._miter.getColor(color_set_name, face_id)
+            raise RuntimeError('executing this method with face_id cannot used due to Maya\'s problem')
+            # このまま実行するとTypeErrorになる
+            # > TypeError: function takes at most 1 argument (2 given)
+            # return self._miter.getColor(face_id, color_set_name)
         return self._miter.getColor(color_set_name)
 
     def colors(self, color_set=None):
@@ -125,9 +128,12 @@ class MeshVertexIter(_ComponentIter['MeshVertexIter']):
         color_set_name = _get_color_set_name(color_set, None)
         return self._miter.getColorIndices(color_set_name)
 
-    def normal(self, space=_om2.MSpace.kObject):
-        # type: (int) -> _om2.MVector
-        # MItMeshVertex.getNormalを引数付きで呼ぶとMayaが落ちる
+    def normal(self, face_id=None, space=_om2.MSpace.kObject):
+        # type: (int, int) -> _om2.MVector
+        if face_id is not None:
+            raise RuntimeError('executing this method with face_id cannot used due to Maya\'s problem')
+            # このまま実行するとMayaが落ちる
+            # return self._miter.getNormals(face_id, space)
         return self._mfn_mesh.getVertexNormal(self.index, True, space)
 
     def normal_indices(self):
@@ -249,10 +255,12 @@ class MeshFaceIter(_ComponentIter['MeshFaceIter']):
         # type: (int) -> float
         return self._miter.getArea(space)
 
-    def normal(self, space=_om2.MSpace.kObject, vertex_id=None):
+    def normal(self, vertex_id=None, space=_om2.MSpace.kObject):
         # type: (int, int) -> _om2.MVector
         if vertex_id is not None:
-            return self._miter.getNormal(vertex_id, space)
+            raise RuntimeError('executing this method with face_id cannot used due to Maya\'s problem')
+            # このまま実行するとMayaが落ちる
+            # return self._miter.getNormal(vertex_id, space)
         return self._miter.getNormal(space)
 
     def normals(self, space=_om2.MSpace.kObject):
