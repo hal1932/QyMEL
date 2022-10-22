@@ -44,6 +44,32 @@ class _DictEntry(object):
 
 class FileInfo(_DictEntry):
 
+    @staticmethod
+    def ls():
+        # type: () -> Sequence[FileInfo]
+        infos = []  # type: List[FileInfo]
+        flatten_items = _cmds.fileInfo(query=True)
+        for i in range(0, len(flatten_items), 2):
+            key = flatten_items[i]
+            value = flatten_items[i + 1]
+            infos.append(FileInfo(key, value))
+        return infos
+
+    @staticmethod
+    def query(key):
+        # type: (str) -> Optional[FileInfo]
+        value = _cmds.fileInfo(key, query=True)
+        if len(value) == 0:
+            return None
+        return FileInfo(key, value[0])
+
+    @staticmethod
+    def create(key, value):
+        # type: (str, str) -> FileInfo
+        info = FileInfo(key, '')
+        info.update(value)
+        return info
+
     def __init__(self, key, value):
         # type: (str, str) -> NoReturn
         super(FileInfo, self).__init__(key, value)
@@ -55,7 +81,7 @@ class FileInfo(_DictEntry):
 
     def remove(self):
         # type: () -> NoReturn
-        _cmds.fileInfo(self.key, remove=True)
+        _cmds.fileInfo(remove=self.key)
         self._remove()
 
 
@@ -154,9 +180,9 @@ class Scene(object):
         # type: () -> List[FileInfo]
         infos = _cmds.fileInfo(query=True)
         result = []  # type: List[FileInfo]
-        for i in range(len(infos) / 2):
-            key = infos[i * 2]
-            value = infos[i * 2 + 1]
+        for i in range(0, len(infos), 2):
+            key = infos[i]
+            value = infos[i + 1]
             result.append(FileInfo(key, value))
         return result
 
@@ -173,6 +199,32 @@ class Scene(object):
 
 class FileRule(_DictEntry):
 
+    @staticmethod
+    def ls():
+        # type: () -> Sequence[FileRule]
+        rules = []  # type: List[FileRule]
+        flatten_items = _cmds.workspace(query=True, fileRule=True)
+        for i in range(0, len(flatten_items), 2):
+            key = flatten_items[i]
+            value = flatten_items[i + 1]
+            rules.append(FileRule(key, value))
+        return rules
+
+    @staticmethod
+    def query(key):
+        # type: (str) -> Optional[FileRule]
+        value = _cmds.workspace(fileRuleEntry=key)
+        if len(value) == 0:
+            return None
+        return FileRule(key, value)
+
+    @staticmethod
+    def create(key, value):
+        # type: (str, str) -> FileRule
+        rule = FileRule(key, '')
+        rule.update(value)
+        return rule
+
     def __init__(self, key, value):
         # type: (str, str) -> NoReturn
         super(FileRule, self).__init__(key, value)
@@ -188,11 +240,37 @@ class FileRule(_DictEntry):
         self._remove()
 
 
-class DictVariable(_DictEntry):
+class WorkspaceVariable(_DictEntry):
+
+    @staticmethod
+    def ls():
+        # type: () -> Sequence[WorkspaceVariable]
+        rules = []  # type: List[WorkspaceVariable]
+        flatten_items = _cmds.workspace(query=True, variable=True)
+        for i in range(0, len(flatten_items), 2):
+            key = flatten_items[i]
+            value = flatten_items[i + 1]
+            rules.append(WorkspaceVariable(key, value))
+        return rules
+
+    @staticmethod
+    def query(key):
+        # type: (str) -> Optional[WorkspaceVariable]
+        value = _cmds.workspace(variableEntry=key)
+        if len(value) == 0:
+            return None
+        return WorkspaceVariable(key, value)
+
+    @staticmethod
+    def create(key, value):
+        # type: (str, str) -> WorkspaceVariable
+        rule = WorkspaceVariable(key, '')
+        rule.update(value)
+        return rule
 
     def __init__(self, key, value):
         # type: (str, str) -> NoReturn
-        super(DictVariable, self).__init__(key, value)
+        super(WorkspaceVariable, self).__init__(key, value)
 
     def update(self, new_value):
         # type: (str) -> NoReturn
@@ -244,13 +322,13 @@ class Workspace(object):
 
     @staticmethod
     def variables():
-        # type: () -> List[DictVariable]
-        return Workspace.__entries(DictVariable, 'variable')
+        # type: () -> List[WorkspaceVariable]
+        return Workspace.__entries(WorkspaceVariable, 'variable')
 
     @staticmethod
     def variable(key, default_value=None):
-        # type: (str, str) -> DictVariable
-        return Workspace.__entry(DictVariable, 'variable', key, default_value)
+        # type: (str, str) -> WorkspaceVariable
+        return Workspace.__entry(WorkspaceVariable, 'variable', key, default_value)
 
     @staticmethod
     def expand_name(path):
@@ -273,9 +351,9 @@ class Workspace(object):
         kwargs = {'query': True, entry: True}
         entries = _cmds.workspace(**kwargs)
         result = []  # type: List[cls]
-        for i in range(len(entries) / 2):
-            key = entries[i * 2]
-            value = entries[i * 2 + 1]
+        for i in range(0, len(entries), 2):
+            key = entries[i]
+            value = entries[i + 1]
             result.append(cls(key, value))
         return result
 
