@@ -5,7 +5,7 @@ import maya.cmds as cmds
 import qymel.maya as qm
 
 from qymel.maya.scene_checker.checker import Checker
-from qymel.maya.scene_checker.item import CheckItem, CheckResult
+from qymel.maya.scene_checker.items import CheckItem, CheckResult
 
 
 class CubeExistsAtOrigin(CheckItem):
