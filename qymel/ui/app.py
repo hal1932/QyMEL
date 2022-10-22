@@ -104,7 +104,7 @@ if _MAYA:
 
     class MainWindowBase(_MainWindowBase, _MayaWidgetBaseMixin):
 
-        def __init__(self):
+        def __init__(self, parent=None):
             maya_window = get_maya_window()
 
             for child in maya_window.children():
@@ -112,7 +112,8 @@ if _MAYA:
                 if child.objectName() == self.absolute_name:
                     child.close()
 
-            super(MainWindowBase, self).__init__(parent=maya_window)
+            parent = parent or maya_window
+            super(MainWindowBase, self).__init__(parent=parent)
 else:
     MainWindowBase = _MainWindowBase
 
@@ -120,12 +121,12 @@ else:
 class ToolMainWindowBase(MainWindowBase):
 
     @property
-    def execute_label(self):
+    def execute_and_close_label(self):
         # type: () -> text_type
-        return u'実行'
+        return u'適用して閉じる'
 
     @property
-    def apply_label(self):
+    def execute_label(self):
         # type: () -> text_type
         return u'適用'
 
@@ -134,8 +135,9 @@ class ToolMainWindowBase(MainWindowBase):
         # type: () -> text_type
         return u'閉じる'
 
-    def __init__(self):
-        super(ToolMainWindowBase, self).__init__()
+    def __init__(self, parent=None):
+        # type: (QObject) -> NoReturn
+        super(ToolMainWindowBase, self).__init__(parent=parent)
 
     def setup_ui(self):
         # type: () -> ToolMainWindowBase
@@ -149,11 +151,11 @@ class ToolMainWindowBase(MainWindowBase):
         user_widget = QWidget()
         self._setup_ui(user_widget)
 
+        execute_and_close_button = QPushButton(self.execute_and_close_label)
+        execute_and_close_button.clicked.connect(self._execute_and_close)
+
         execute_button = QPushButton(self.execute_label)
         execute_button.clicked.connect(self._execute)
-
-        apply_button = QPushButton(self.apply_label)
-        apply_button.clicked.connect(self._apply)
 
         close_button = QPushButton(self.close_label)
         close_button.clicked.connect(self._close)
@@ -161,8 +163,8 @@ class ToolMainWindowBase(MainWindowBase):
         widget.setLayout(_layouts.vbox(
             user_widget,
             _layouts.hbox(
+                execute_and_close_button,
                 execute_button,
-                apply_button,
                 close_button,
             )
         ))
@@ -170,11 +172,11 @@ class ToolMainWindowBase(MainWindowBase):
         return self
 
     def _execute(self):
-        self._apply()
-        self._close()
-
-    def _apply(self):
         pass
+
+    def _execute_and_close(self):
+        self._execute()
+        self._close()
 
     def _close(self):
         self.close()
