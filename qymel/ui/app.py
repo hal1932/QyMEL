@@ -43,8 +43,10 @@ class AppBase(object):
 
     def _exec_application_main_loop(self, app):
         # type: (QApplication) -> NoReturn
+        ret = app.exec_()
+        self._finalize()
         if not _MAYA:
-            sys.exit(app.exec_())
+            sys.exit(ret)
 
     def _initialize(self, app):
         # type: (QApplication) -> NoReturn
@@ -54,8 +56,18 @@ class AppBase(object):
         # type: () -> QMainWindow
         pass
 
+    def _finalize(self):
+        pass
+
 
 class _MainWindowBase(QMainWindow):
+
+    before_setup_ui = Signal()
+    after_setup_ui = Signal()
+    after_show = Signal()
+    before_shutdown_ui = Signal()
+    after_shutdown_ui = Signal()
+    after_close = Signal()
 
     @property
     def absolute_name(self):
@@ -76,12 +88,24 @@ class _MainWindowBase(QMainWindow):
         widget = QWidget()
 
         self.setCentralWidget(widget)
+
+        self.before_setup_ui.emit()
         self._setup_ui(widget)
+        self.after_setup_ui.emit()
+
         return self
+
+    def showEvent(self, _):
+        # type: (QShowEvent) -> NoReturn
+        self.after_show.emit()
 
     def closeEvent(self, _):
         # type: (QCloseEvent) -> NoReturn
+        self.before_shutdown_ui.emit()
         self._shutdown_ui()
+        self.after_shutdown_ui.emit()
+
+        self.after_close.emit()
 
     def _setup_ui(self, central_widget):
         # type: (QWidget) -> NoReturn
@@ -149,7 +173,10 @@ class ToolMainWindowBase(MainWindowBase):
         self.setCentralWidget(widget)
 
         user_widget = QWidget()
+
+        self.before_setup_ui.emit()
         self._setup_ui(user_widget)
+        self.after_setup_ui.emit()
 
         execute_and_close_button = QPushButton(self.execute_and_close_label)
         execute_and_close_button.clicked.connect(self._execute_and_close)
