@@ -39,6 +39,12 @@ def vseparator():
     return frame
 
 
+def desktop():
+    # type: () -> QDesktopWidget
+    app = QApplication.instance()
+    return app.desktop()
+
+
 class Clickable(QWidget):
 
     clicked = Signal()

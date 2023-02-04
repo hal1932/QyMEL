@@ -107,6 +107,10 @@ class _MainWindowBase(QMainWindow):
 
         self.after_close.emit()
 
+    def screen(self):
+        # type: () -> QScreen
+        return self.window().windowHandle().screen()
+
     def _setup_ui(self, central_widget):
         # type: (QWidget) -> NoReturn
         pass

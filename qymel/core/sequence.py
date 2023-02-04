@@ -8,6 +8,14 @@ from six.moves import *
 TItem = TypeVar('_TItem')
 
 
+def any(sequence, predicate=None):
+    # type: (Sequence[TItem], Callable[[TItem], bool]) -> bool
+    for item in sequence:
+        if predicate is None or predicate(item):
+            return True
+    return False
+
+
 def first(sequence, predicate=None):
     # type: (Sequence[TItem], Callable[[TItem], bool]) -> TItem
     for item in sequence:

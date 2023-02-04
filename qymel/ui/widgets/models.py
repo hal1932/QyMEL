@@ -358,7 +358,7 @@ class TreeDefinition(BindDefinition):
 
 class TreeItem(object):
     """
-    see `<TestClass>`
+    see `<TreeModel>`
     >>> class MyTreeItem(TreeItem):
     >>>     def __init__(self, index, name, color):
     >>>         super(MyTreeItem, self).__init__()
@@ -540,8 +540,6 @@ class TreeModel(QAbstractItemModel, Generic[TTreeItem]):
         flags = Qt.ItemIsEnabled
         if self._binder.binding(index, Qt.EditRole):
             flags |= Qt.ItemIsEditable
-        else:
-            flags &= not Qt.ItemIsEditable
         return flags
 
     def rowCount(self, parent=QModelIndex()):

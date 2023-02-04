@@ -13,6 +13,7 @@ import maya.api.OpenMayaAnim as _om2anim
 from . import objects as _objects
 from . import general as _general
 from . import components as _components
+from . import iterators as _iterators
 from . import plugins as _plugins
 from .internal import nodes as _nodes
 from .internal import graphs as _graphs
@@ -61,6 +62,7 @@ class DependNode(_objects.MayaObject, _NodeTypeDef[_om2.MFnDependencyNode, 'Depe
                 del kwargs['type']
         else:
             kwargs['type'] = mel_type
+        kwargs['noIntermediate'] = True
         return _graphs.ls_nodes(*args, **kwargs)
 
     @property
@@ -214,11 +216,6 @@ class ContainerBase(DependNode):
 
     _mfn_type = _om2.MFn.kContainerBase
     _mel_type = 'containerBase'
-
-    @staticmethod
-    def ls(*args, **kwargs):
-        kwargs['type'] = ContainerBase._mel_type
-        return _graphs.ls_nodes(*args, **kwargs)
 
 
 class DisplayLayer(DependNode):
@@ -672,7 +669,7 @@ class DagNode(Entity, _NodeTypeDef[_om2.MFnDagNode, 'DagNode']):
     def ls(cls, *args, **kwargs):
         # type: (Any, Any) -> List[DagNode]
         kwargs['dagObjects'] = True
-        return cls.__bases__[0].ls(*args, **kwargs)
+        return super().ls(*args, **kwargs)
 
     @property
     def mdagpath(self):
@@ -1065,6 +1062,11 @@ class Shape(DagNode):
     _mfn_type = _om2.MFn.kShape
     _mel_type = 'shape'
 
+    def transform(self):
+        # type: () -> Optional[Transform]
+        parent = self.parent()
+        return parent if isinstance(parent, Transform) else None
+
     def shading_groups(self):
         # type: () -> [ShadingEngine]
         names = _cmds.ls(_cmds.listHistory(self.mel_object, future=True), type='shadingEngine')
@@ -1241,32 +1243,28 @@ class Mesh(SurfaceShape, _NodeTypeDef[_om2.MFnMesh, 'Mesh']):
         return self.__create_component(_components.MeshVertexFace, indices, [self.vertex_count, self.face_count])
 
     def faces(self, comp=None):
-        # type: (_components.MeshFace) -> _components.MeshFaceIter
+        # type: (_components.MeshFace) -> _iterators.MeshFaceIter
         if comp is None:
             comp = self.face_comp()
-        miter = _om2.MItMeshPolygon(self.mdagpath, comp.mobject)
-        return _components.MeshFaceIter(miter, comp)
+        return comp.iterator()
 
     def vertices(self, comp=None):
-        # type: (_components.MeshVertex) -> _components.MeshVertexIter
+        # type: (_components.MeshVertex) -> _iterators.MeshVertexIter
         if comp is None:
             comp = self.vertex_comp()
-        miter = _om2.MItMeshVertex(self.mdagpath, comp.mobject)
-        return _components.MeshVertexIter(miter, comp, self.mfn)
+        return comp.iterator()
 
     def edges(self, comp=None):
-        # type: (_components.MeshEdge) -> _components.MeshEdgeIter
+        # type: (_components.MeshEdge) -> _iterators.MeshEdgeIter
         if comp is None:
             comp = self.edge_comp()
-        miter = _om2.MItMeshEdge(self.mdagpath, comp.mobject)
-        return _components.MeshEdgeIter(miter, comp)
+        return comp.iterator()
 
     def vertex_faces(self, comp=None):
-        # type: (_components.MeshVertexFace) -> _components.MeshVertexFaceIter
+        # type: (_components.MeshVertexFace) -> _iterators.MeshVertexFaceIter
         if comp is None:
             comp = self.vertex_face_comp()
-        miter = _om2.MItMeshFaceVertex(self.mdagpath, comp.mobject)
-        return _components.MeshVertexFaceIter(miter, comp)
+        return comp.iterator()
 
     def __create_component(self, cls, indices=None, complete_length=None):
         # type: (type, Sequence[Any], Any) -> Any
@@ -1274,7 +1272,6 @@ class Mesh(SurfaceShape, _NodeTypeDef[_om2.MFnMesh, 'Mesh']):
         mobj = comp.create(cls._comp_type)
         if indices is not None:
             comp.addElements(indices)
-            comp.setCompleteData(len(indices))
         else:
             if isinstance(complete_length, int):
                 comp.setCompleteData(complete_length)
