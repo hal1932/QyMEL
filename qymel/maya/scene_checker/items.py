@@ -12,6 +12,15 @@ class CheckItem(object):
     _description = ''
     _eps = 1e-4
 
+    @staticmethod
+    def find_from_module(module) -> Sequence['CheckItem']:
+        items: list[CheckItem] = []
+        for key in dir(module):
+            value = getattr(module, key)
+            if isinstance(value, type) and issubclass(value, CheckItem) and value != CheckItem:
+                items.append(value())
+        return items
+
     @property
     def label(self) -> str:
         return self.__class__._label
@@ -24,24 +33,33 @@ class CheckItem(object):
     def description(self) -> str:
         return self.__class__._description
 
-    def __init__(self):
-        pass
-
     def __str__(self) -> str:
         return f'[{self.category}][{self.label}] {self.description}'
 
     def execute(self) -> Sequence['CheckResult']:
-        return self._execute() or [CheckResult.success(self)]
+        self.__results: list[CheckResult] = []
+        self._execute()
+        return self.__results or [CheckResult.success(self)]
 
-    def modify(self, error: 'CheckResult') -> 'CheckResult':
-        return self._modify(error) or CheckResult.success(self)
+    def modify(self, error: 'CheckResult') -> None:
+        self._modify(error)
 
     @abstractmethod
-    def _execute(self) -> Optional[Sequence['CheckResult']]:
+    def _execute(self) -> None:
         raise NotImplementedError()
 
-    def _modify(self, error: 'CheckResult') -> Optional['CheckResult']:
+    def _modify(self, error: 'CheckResult') -> None:
         pass
+
+    def append_warning(self, nodes: Optional[Union[str, List[str]]], message: str, modifiable: bool = False):
+        if nodes is not None:
+            nodes = [nodes] if isinstance(nodes, str) else nodes
+        self.__results.append(CheckResult.warning(self, message, modifiable, nodes))
+
+    def append_error(self, nodes: Optional[Union[str, List[str]]], message: str, modifiable: bool = False):
+        if nodes is not None:
+            nodes = [nodes] if isinstance(nodes, str) else nodes
+        self.__results.append(CheckResult.error(self, message, modifiable, nodes))
 
     def float_equals(self, lhs: float, rhs: float) -> bool:
         return math.fabs(lhs - rhs) < self.__class__._eps
