@@ -9,8 +9,10 @@ import maya.cmds as _cmds
 from qymel.ui.pyside_module import *
 from qymel.ui import app as _app
 from qymel.ui import layouts as _layouts
+from qymel.ui import scopes as _ui_scopes
 from qymel.ui.widgets import models as _models
 from qymel.ui.objects import serializer as _serializer
+from qymel.maya import scopes as _maya_scopes
 
 from .. import checker as _checker
 from .. import groups as _groups
@@ -34,7 +36,7 @@ class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
         self._main_splitter = QSplitter()
 
         self._groups.selection_changed.connect(self.__reload_group)
-        self._items.selection_changed.connect(self.__reload_description2)
+        self._items.selection_changed.connect(self.__reload_description)
         self._controls.execute_all_requested.connect(self.__execute_all)
         self._controls.modify_all_requested.connect(self.__modify_all)
 
@@ -77,7 +79,11 @@ class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
         self._items.load_from(group)
         self._description.load_from(None, None)
 
-    def __reload_description2(self, selection: Optional['_ItemListItem']):
+    def __reload_description(self, selection: Optional['_ItemListItem']):
+        if not selection:
+            self._description.load_from(None, None)
+            return
+
         group = selection.group
         if selection.is_category:
             item = None
@@ -87,12 +93,16 @@ class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
             category = item.category
         self._description.load_from(category, item, group.results(item) if item else [])
 
+    @_ui_scopes.wait_cursor_scope
     def __execute_all(self):
         group = self._groups.selected_group
         group.execute_all()
         self._items.load_results()
         self._controls.load_from(group.results())
+        self.__reload_description(None)
 
+    @_ui_scopes.wait_cursor_scope
+    @_maya_scopes.undo_scope
     def __modify_all(self):
         group = self._groups.selected_group
         group.modify_all()
@@ -249,6 +259,9 @@ class _ItemListWidget(QWidget):
                 nodes.append(child)
         self.__model.layoutChanged.emit()
 
+        self.__view.clearFocus()
+        self.__view.clearSelection()
+
 
 class _DescriptionWidget(QWidget):
 
@@ -294,8 +307,8 @@ class _DescriptionWidget(QWidget):
             self.__nodes,
         ))
 
-        self.__fix_selected = QPushButton('選択項目を自動修正')
-        self.__fix_all = QPushButton('すべて自動修正')
+        self.__fix_selected = QPushButton('選択したノードを自動修正')
+        self.__fix_all = QPushButton('すべてのノードを自動修正')
 
         controls = QWidget()
         controls.setLayout(_layouts.hbox(
@@ -332,7 +345,7 @@ class _DescriptionWidget(QWidget):
         if category:
             header = f'[{category}]'
 
-        if item is None:
+        if not item:
             self.__label.setText(header)
         else:
             self.setEnabled(True)
