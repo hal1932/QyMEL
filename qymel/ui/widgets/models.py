@@ -151,11 +151,13 @@ class ItemsModel(QAbstractItemModel, Generic[TItem, TBindDef]):
 
     def flags(self, index):
         # type: (QModelIndex) -> Qt.ItemFlags
-        flags = Qt.ItemIsEnabled
+        if not index.isValid():
+            return Qt.NoItemFlags
+        flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
         if self._binder.is_bound(index, Qt.EditRole):
             flags |= Qt.ItemIsEditable
         else:
-            flags &= not Qt.ItemIsEditable
+            flags &= ~Qt.ItemIsEditable
         return flags
 
     def index(self, row, column, parent=QModelIndex()):
