@@ -263,6 +263,66 @@ class _ItemListWidget(QWidget):
         self.__view.clearSelection()
 
 
+class _ResultItem(object):
+
+    def __init__(self, label: str, nodes: List[str]):
+        self.label = label
+        self.nodes = nodes
+
+
+class _ResultItemWidget(QWidget):
+
+    selection_changed = Signal(list)
+
+    def __init__(self):
+        super().__init__()
+        self.__model = _models.ListModel()
+        self.__model.define(_models.ListDefinition(bindings={
+            Qt.DisplayRole: 'label'
+        }))
+
+        self.__view = QListView()
+        self.__view.setModel(self.__model)
+        self.__view.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.__view.selectionModel().selectionChanged.connect(self.__select_nodes)
+        self.__view.selectionModel().selectionChanged.connect(lambda _1, _2: self.selection_changed.emit(self.selected_items()))
+        self.__view.setEnabled(True)
+
+        self.setLayout(_layouts.vbox(
+            self.__view,
+            contents_margins=0
+        ))
+
+    def clear(self):
+        self.__model.clear()
+
+    def append(self, label: str, nodes: List[str]):
+        self.__model.append(_ResultItem(label, nodes))
+
+    def items(self) -> List[_ResultItem]:
+        return self.__model.items()
+
+    def select(self, items: _ResultItem, replace: bool = False):
+        selection = QItemSelection()
+        for item in items:
+            item_index = self.__model.item_index_of(item)
+            index = self.__model.index(item_index, 0)
+            selection.merge(QItemSelection(index, index), QItemSelectionModel.Select)
+
+        command = QItemSelectionModel.ClearAndSelect if replace else QItemSelectionModel.Select
+        self.__view.selectionModel().select(selection, command)
+
+    def selected_items(self) -> List[_ResultItem]:
+        indices = self.__view.selectionModel().selectedIndexes()
+        return self.__model.items(indices)
+
+    def __select_nodes(self):
+        indices = self.__view.selectionModel().selectedIndexes()
+        items = self.__model.items(indices)
+        nodes = list(itertools.chain.from_iterable(item.nodes for item in items))
+        _cmds.select(nodes, replace=True)
+
+
 class _DescriptionWidget(QWidget):
 
     def __init__(self):
@@ -279,31 +339,25 @@ class _DescriptionWidget(QWidget):
         self.__description.setWordWrap(True)
         self.__description.setMargin(5)
 
-        def _select_nodes(nodes):
-            _cmds.select(clear=True)
-            for node in nodes:
-                if _cmds.objExists(node):
-                    _cmds.select(node)
-
-        self.__results = QListWidget()
-        self.__results.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.__results.itemSelectionChanged.connect(functools.partial(self.__sync_result_selection, True, False))
-        self.__results.itemSelectionChanged.connect(
-            lambda: _select_nodes(self.__results.currentItem().data(Qt.UserRole) if self.__results.currentItem() else [])
+        self.__results = _ResultItemWidget()
+        self.__results.selection_changed.connect(
+            lambda items: self.__sync_result_selection(items, True, False)
         )
-        result_group = QGroupBox('チェック結果')
-        result_group.setLayout(_layouts.vbox(
+
+        self.__result_group_title = 'チェック結果（$COUNT項目）'
+        self.__result_group = QGroupBox(self.__result_group_title)
+        self.__result_group.setLayout(_layouts.vbox(
             self.__results,
         ))
 
-        self.__nodes = QListWidget()
-        self.__nodes.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.__nodes.itemSelectionChanged.connect(functools.partial(self.__sync_result_selection, False, True))
-        self.__nodes.itemSelectionChanged.connect(
-            lambda: _select_nodes([self.__nodes.currentItem().text()] if self.__nodes.currentItem() else [])
+        self.__nodes = _ResultItemWidget()
+        self.__nodes.selection_changed.connect(
+            lambda items: self.__sync_result_selection(items, False, True)
         )
-        nodes_group = QGroupBox('対象ノード')
-        nodes_group.setLayout(_layouts.vbox(
+
+        self.__nodes_group_title = '対象ノード（$COUNT個）'
+        self.__nodes_group = QGroupBox(self.__nodes_group_title)
+        self.__nodes_group.setLayout(_layouts.vbox(
             self.__nodes,
         ))
 
@@ -325,8 +379,8 @@ class _DescriptionWidget(QWidget):
                 contents_margins=0
             ),
             self.__description,
-            result_group,
-            nodes_group,
+            self.__result_group,
+            self.__nodes_group,
             controls
         ))
 
@@ -337,6 +391,9 @@ class _DescriptionWidget(QWidget):
         self.__results.clear()
         self.__nodes.clear()
         self.setEnabled(False)
+
+        self.__result_group.setTitle(self.__result_group_title.replace('$COUNT', '0'))
+        self.__nodes_group.setTitle(self.__nodes_group_title.replace('$COUNT', '0'))
 
     def load_from(self, category: Optional[str], item: Optional[_items.CheckItem], results: Sequence[_items.CheckResult] = []):
         self.clear()
@@ -353,17 +410,12 @@ class _DescriptionWidget(QWidget):
             self.__description.setText(item.description)
 
             if len(results) == 1 and results[0].status == _items.CheckResultStatus.SUCCESS:
-                item = QListWidgetItem()
-                item.setText('OK')
-                item.setData(Qt.UserRole, [])
-                self.__results.addItem(item)
+                self.__results.append('OK', [])
             else:
                 for result in results:
-                    item = QListWidgetItem()
-                    item.setText(result.message)
-                    item.setData(Qt.UserRole, result.nodes)
-                    self.__results.addItem(item)
-                    self.__nodes.addItems(result.nodes)
+                    self.__results.append(result.message, result.nodes)
+                    for node in result.nodes:
+                        self.__nodes.append(node, [node])
 
             if len(results) > 0:
                 if all(r.is_success for r in results):
@@ -380,14 +432,22 @@ class _DescriptionWidget(QWidget):
                 icon_pixmap = icon.pixmap(icon.actualSize(QSize(32, 32)))
                 self.__icon.setPixmap(icon_pixmap)
 
-    def __sync_result_selection(self, from_results: bool, from_nodes: bool):
+        result_count = len(results)
+        self.__result_group.setTitle(self.__result_group_title.replace('$COUNT', str(result_count)))
+
+        nodes_count = sum(len(r.nodes) for r in results)
+        self.__nodes_group.setTitle(self.__nodes_group_title.replace('$COUNT', str(nodes_count)))
+
+    def __sync_result_selection(self, selection: List[_ResultItem], from_results: bool, from_nodes: bool):
         if from_results:
             # results -> nodes
-            nodes = list(itertools.chain.from_iterable(item.data(Qt.UserRole) for item in self.__results.selectedItems()))
-            for i in range(self.__nodes.count()):
-                item = self.__nodes.item(i)
-                self.__nodes.setItemSelected(item, item.text() in nodes)
+            node_items = []
+            selected_nodes = list(itertools.chain.from_iterable(item.nodes for item in selection))
+            for item in self.__nodes.items():
+                if item.nodes[0] in selected_nodes:
+                    node_items.append(item)
+            self.__nodes.select(node_items, True)
+
         if from_nodes:
             # nodes -> results
             pass
-

@@ -149,6 +149,16 @@ class ItemsModel(QAbstractItemModel, Generic[TItem, TBindDef]):
             index = index.row()
         return self._items[index]
 
+    def items(self, indices=None):
+        # type: (Optional[Union[Sequence[QModelIndex], Sequence[int]]]) -> List[TItem]
+        if not indices:
+            return self._items
+        return [self.item(index) for index in indices]
+
+    def item_index_of(self, item):
+        # type: (TItem) -> int
+        return self._items.index(item)
+
     def flags(self, index):
         # type: (QModelIndex) -> Qt.ItemFlags
         if not index.isValid():
