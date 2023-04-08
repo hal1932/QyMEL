@@ -67,6 +67,9 @@ class CheckItemGroup(object):
     def clear_results(self):
         self.__results = {}
 
+    def is_executed(self, item: _items.CheckItem) -> bool:
+        return item in self.__results
+
     def execute(self, item: _items.CheckItem) -> Sequence[_items.CheckResult]:
         results = item.execute()
         self.__results[item] = results

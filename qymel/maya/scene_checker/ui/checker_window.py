@@ -10,6 +10,7 @@ from qymel.maya import scopes as _maya_scopes
 
 from .. import checker as _checker
 from .. import groups as _groups
+from .. import items as _items
 from . import control_widget as _control
 from . import group_selector_widget as _group_selector
 from . import item_list_widget as _item_list
@@ -41,6 +42,7 @@ class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
 
         self._groups.selection_changed.connect(self.__reload_group)
         self._items.selection_changed.connect(self.__reload_description)
+        self._items.execute_requested.connect(self.execute_items)
         self._controls.execute_all_requested.connect(self.execute_all)
         self._controls.modify_all_requested.connect(self.__modify_all)
 
@@ -85,7 +87,7 @@ class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
         self._items.load_from(group)
         self._description.load_from(None, None)
 
-    def __reload_description(self, selection: Optional['_ItemListItem']):
+    def __reload_description(self, selection: Optional[_item_list.ItemListItem]):
         if not selection:
             self._description.load_from(None, None)
             return
@@ -113,6 +115,16 @@ class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
 
         if self.close_on_success and not group.has_errors():
             self.close()
+
+    @_ui_scopes.wait_cursor_scope
+    def execute_items(self, items: List[_items.CheckItem]):
+        group = self._groups.selected_group
+        for item in items:
+            group.execute(item)
+
+        self._items.load_results()
+        self._controls.load_from(group.results())
+        self.__reload_description(None)
 
     @_ui_scopes.wait_cursor_scope
     @_maya_scopes.undo_scope
