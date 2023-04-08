@@ -15,9 +15,15 @@ except ImportError:
 
 from .pyside_module import *
 from . import layouts as _layouts
+from .objects import serializer as _serializer
 
 
 class AppBase(object):
+
+    @property
+    def window(self):
+        # type: () -> QMainWindow
+        return self._window
 
     def __init__(self):
         self._app = None  # type: Optional[QApplication]
@@ -111,6 +117,20 @@ class _MainWindowBase(QMainWindow):
         # type: () -> QScreen
         return self.window().windowHandle().screen()
 
+    def enable_serialzie(self, settings):
+        # type: (QSettings) -> NoReturn
+        serializer = _serializer.ObjectSerializer()
+
+        def _restore_ui():
+            serializer.deserialize(settings, self)
+
+        def _store_ui():
+            serializer.serialize(self, settings)
+            settings.sync()
+
+        self.after_setup_ui.connect(_restore_ui)
+        self.before_shutdown_ui.connect(_store_ui)
+
     def _setup_ui(self, central_widget):
         # type: (QWidget) -> NoReturn
         pass
@@ -203,10 +223,12 @@ class ToolMainWindowBase(MainWindowBase):
         return self
 
     def _execute(self):
-        pass
+        # type: () -> bool
+        return True
 
     def _execute_and_close(self):
-        self._execute()
+        if self._execute() == False:
+            return
         self._close()
 
     def _close(self):

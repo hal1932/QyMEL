@@ -29,6 +29,13 @@ class Checker(object):
         for group in self.__groups:
             group.execute_all()
 
+    def execute_group(self, group_name: str) -> Optional[_groups.CheckItemGroup]:
+        for group in self.__groups:
+            if group == group_name:
+                group.execute_all()
+                return group
+        return None
+
     def has_modifiables(self) -> bool:
         for group in self.__groups:
             if group.has_modifiables:
