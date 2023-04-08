@@ -26,6 +26,14 @@ class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
     def checker(self) -> _checker.Checker:
         return self._checker
 
+    @property
+    def close_on_success(self) -> bool:
+        return self.__close_on_success
+
+    @close_on_success.setter
+    def close_on_success(self, value: bool):
+        self.__close_on_success = value
+
     def __init__(self, checker: _checker.Checker, parent: QObject = None):
         super().__init__(parent=parent)
         self._checker = checker
@@ -37,8 +45,10 @@ class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
 
         self._groups.selection_changed.connect(self.__reload_group)
         self._items.selection_changed.connect(self.__reload_description)
-        self._controls.execute_all_requested.connect(self.__execute_all)
+        self._controls.execute_all_requested.connect(self.execute_all)
         self._controls.modify_all_requested.connect(self.__modify_all)
+
+        self.__close_on_success = False
 
     def _setup_ui(self, central_widget: QWidget):
         self.setWindowTitle('QyMEL Maya Scene Checker')
@@ -67,7 +77,7 @@ class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
     def deserialize(self, settings: QSettings):
         screen = self.parent().windowHandle().screen()
         self.setGeometry(settings.value('geom') or QRect(screen.geometry().center(), QSize(0, 0)))
-        self._main_splitter.setSizes([int(x) for x in settings.value('split')] or [])
+        self._main_splitter.setSizes([int(x) for x in (settings.value('split') or [])] or [])
 
     def reload(self):
         self._groups.load_from(self.checker)
@@ -93,20 +103,27 @@ class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
             category = item.category
         self._description.load_from(category, item, group.results(item) if item else [])
 
+    def select_group(self, group_name: str):
+        self._groups.select(group_name)
+        return self._groups.selected_group
+
     @_ui_scopes.wait_cursor_scope
-    def __execute_all(self):
+    def execute_all(self):
         group = self._groups.selected_group
         group.execute_all()
         self._items.load_results()
         self._controls.load_from(group.results())
         self.__reload_description(None)
 
+        if self.close_on_success and not group.has_errors():
+            self.close()
+
     @_ui_scopes.wait_cursor_scope
     @_maya_scopes.undo_scope
     def __modify_all(self):
         group = self._groups.selected_group
         group.modify_all()
-        self.__execute_all()
+        self.execute_all()
 
 
 class _ControlWidget(QWidget):
@@ -158,6 +175,9 @@ class _GroupSelectorWidget(QWidget):
 
         self.__combo.currentIndexChanged.connect(
             lambda _: self.selection_changed.emit(self.selected_group))
+
+    def select(self, name: str):
+        self.__combo.setCurrentText(name)
 
     def load_from(self, checker: _checker.Checker):
         selection = self.__combo.currentIndex()
@@ -355,19 +375,19 @@ class _DescriptionWidget(QWidget):
             lambda items: self.__sync_result_selection(items, False, True)
         )
 
-        self.__nodes_group_title = '対象ノード（$COUNT個）'
+        self.__nodes_group_title = '対象オブジェクト（$COUNT個）'
         self.__nodes_group = QGroupBox(self.__nodes_group_title)
         self.__nodes_group.setLayout(_layouts.vbox(
             self.__nodes,
         ))
 
-        self.__fix_selected = QPushButton('選択したノードを自動修正')
-        self.__fix_all = QPushButton('すべてのノードを自動修正')
+        self.__modify_selected = QPushButton('選択したノードを自動修正')
+        self.__modify_all = QPushButton('すべてのノードを自動修正')
 
         controls = QWidget()
         controls.setLayout(_layouts.hbox(
-            self.__fix_selected,
-            self.__fix_all,
+            self.__modify_selected,
+            self.__modify_all,
             contents_margins=0
         ))
 
@@ -402,6 +422,8 @@ class _DescriptionWidget(QWidget):
         if category:
             header = f'[{category}]'
 
+        enable_modification = False
+
         if not item:
             self.__label.setText(header)
         else:
@@ -424,10 +446,12 @@ class _DescriptionWidget(QWidget):
                     errors = filter(lambda r: r.is_error, results)
                     is_modifiable = any(e.is_modifiable for e in errors)
                     icon = _icons.error(is_modifiable)
+                    enable_modification |= is_modifiable
                 else:
                     warnings = filter(lambda r: r.is_warning, results)
                     is_modifiable = any(w.is_modifiable for w in warnings)
                     icon = _icons.warning(is_modifiable)
+                    enable_modification |= is_modifiable
 
                 icon_pixmap = icon.pixmap(icon.actualSize(QSize(32, 32)))
                 self.__icon.setPixmap(icon_pixmap)
@@ -437,6 +461,9 @@ class _DescriptionWidget(QWidget):
 
         nodes_count = sum(len(r.nodes) for r in results)
         self.__nodes_group.setTitle(self.__nodes_group_title.replace('$COUNT', str(nodes_count)))
+
+        self.__modify_selected.setEnabled(enable_modification)
+        self.__modify_all.setEnabled(enable_modification)
 
     def __sync_result_selection(self, selection: List[_ResultItem], from_results: bool, from_nodes: bool):
         if from_results:
