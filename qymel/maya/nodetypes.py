@@ -791,6 +791,36 @@ class DagNode(Entity, _NodeTypeDef[_om2.MFnDagNode, 'DagNode']):
         child_mobj = mfn.child(index)
         return _graphs_to_node_instance(child_mobj, _om2.MFnDagNode(child_mobj).getPath())
 
+    def first_child(self, **kwargs):
+        # type: (Any) -> Optional[DagNode]
+        kwargs['children'] = True
+        children = self.children(**kwargs)
+        if len(children) == 0:
+            return None
+
+        name = kwargs.pop('name', children[0].name)
+        for child in children:
+            if child.name == name:
+                return child
+
+        return None
+
+    def last_child(self, **kwargs):
+        # type: (Any) -> Optional[DagNode]
+        kwargs['children'] = True
+        children = self.children(**kwargs)
+        if len(children) == 0:
+            return None
+
+        children.reverse()
+
+        name = kwargs.pop('name', children[0].name)
+        for child in children:
+            if child.name == name:
+                return child
+
+        return None
+
     def children(self, **kwargs):
         # type: (Any) -> List[DagNode]
         if not self.is_world:

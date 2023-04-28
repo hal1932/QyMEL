@@ -117,6 +117,10 @@ class _MainWindowBase(QMainWindow):
         # type: () -> QScreen
         return self.window().windowHandle().screen()
 
+    def default_geometry(self):
+        # type: () -> QRect
+        return QRect(self.screen().geometry().center(), QSize(0, 0))
+
     def enable_serialzie(self, settings):
         # type: (QSettings) -> NoReturn
         serializer = _serializer.ObjectSerializer()
@@ -130,6 +134,10 @@ class _MainWindowBase(QMainWindow):
 
         self.after_setup_ui.connect(_restore_ui)
         self.before_shutdown_ui.connect(_store_ui)
+
+    def screen(self):
+        # type: () -> QScreen
+        return self.parent().windowHandle().screen()
 
     def _setup_ui(self, central_widget):
         # type: (QWidget) -> NoReturn
