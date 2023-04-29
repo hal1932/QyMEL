@@ -1,10 +1,7 @@
 # coding: utf-8
 from typing import *
 
-import functools
-
 from . import groups as _groups
-from . import items as _items
 
 
 class Checker(object):

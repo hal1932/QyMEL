@@ -11,7 +11,7 @@ from ..pyside_module import *
 from ...core import scopes as _scopes
 
 
-__all__ = ['LoggingContext', 'LogAutoFlushScope', 'LogWidget']
+__all__ = ['LoggingContext', 'LogAutoFlushScope', 'LogViewer']
 
 
 class LoggingContext(object):
@@ -47,17 +47,17 @@ class LogAutoFlushScope(_scopes.Scope):
         LoggingContext.auto_flush = self.__current_value
 
 
-class LogWidget(QWidget):
+class LogViewer(QWidget):
     """
     >>> logger = logging.getLogger(__name__)
-    >>> viewer = LogWidget()
+    >>> viewer = LogViewer()
     >>> logger.handlers.append(viewer.create_handler())
     >>> viewer.show()
     """
 
     def __init__(self, max_blocks=1000, parent=None):
         # type: (int, QObject) -> NoReturn
-        super(LogWidget, self).__init__(parent)
+        super(LogViewer, self).__init__(parent)
 
         self.debug_format = QTextCharFormat()
         self.debug_format.setForeground(QBrush(QColor(119, 119, 119)))
@@ -168,7 +168,7 @@ class LogTextEdit(QTextEdit):
 class LogHandler(logging.Handler):
 
     def __init__(self, view, level):
-        # type: (LogWidget, int) -> NoReturn
+        # type: (LogViewer, int) -> NoReturn
         super(LogHandler, self).__init__(level)
         self.__view = view
 
