@@ -82,6 +82,7 @@ def desktop():
 
 
 from .clickable import *
+from .event_proxy import *
 from .expandable_splitter import *
 from .expander import *
 from .file_selector import *
