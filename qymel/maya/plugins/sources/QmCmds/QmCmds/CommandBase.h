@@ -3,6 +3,8 @@
 
 class CommandBase : public MPxCommand {
 public:
+	virtual ~CommandBase() {}
+
 	MStatus doIt(const MArgList& args) {
 		auto syntax = CreateSyntax();
 		ArgParser parser(syntax, args);

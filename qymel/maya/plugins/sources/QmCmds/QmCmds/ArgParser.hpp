@@ -17,7 +17,7 @@ namespace {
 			++index;
 		}
 
-		return status;
+		return p_result->length() == 0 ? status : MStatus::kSuccess;
 	}
 }
 
@@ -46,7 +46,7 @@ inline MStatus ArgParser::SelectFlagArguments(TArray* p_result, const char* flag
 		p_result->append(selector(args));
 	}
 
-	return status;
+	return p_result->length() == 0 ? status : MStatus::kSuccess;
 }
 
 template<class TArray>

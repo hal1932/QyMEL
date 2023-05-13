@@ -25,6 +25,12 @@
     <ClCompile Include="QmMeshSetNormals.cpp">
       <Filter>ソース ファイル\commands</Filter>
     </ClCompile>
+    <ClCompile Include="QmMeshEditor.cpp">
+      <Filter>ソース ファイル\commands</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshEditCommand.cpp">
+      <Filter>ソース ファイル\commands</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArgParser.h">
@@ -61,6 +67,12 @@
       <Filter>ヘッダー ファイル\commands</Filter>
     </ClInclude>
     <ClInclude Include="QmMeshSetVertexColors.h">
+      <Filter>ヘッダー ファイル\commands</Filter>
+    </ClInclude>
+    <ClInclude Include="QmMeshEditor.h">
+      <Filter>ヘッダー ファイル\commands</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshEditCommand.h">
       <Filter>ヘッダー ファイル\commands</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <memory>
+#include <string>
 #include <algorithm>
 #include <functional>
 
@@ -32,6 +33,7 @@
 
 #include <maya/MItDependencyNodes.h>
 #include <maya/MItDag.h>
+#include <maya/MItMeshPolygon.h>
 
 #include <maya/MVector.h>
 #include <maya/MVectorArray.h>
@@ -41,3 +43,13 @@
 #include <maya/MFloatVectorArray.h>
 #include <maya/MColor.h>
 #include <maya/MColorArray.h>
+#include <maya/MPointArray.h>
+
+template<class T>
+inline void SafeDelete(T** pp_object) {
+    if (*pp_object == nullptr) {
+        return;
+    }
+    delete* pp_object;
+    *pp_object = nullptr;
+}

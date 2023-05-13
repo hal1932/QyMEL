@@ -43,7 +43,12 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetExt>.mll</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetExt>.mll</TargetExt>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -103,8 +108,10 @@
   <ItemGroup>
     <ClCompile Include="array_utils.hpp" />
     <ClCompile Include="CommandDefinition.cpp" />
+    <ClCompile Include="MeshEditCommand.cpp" />
     <ClCompile Include="node_utils.cpp" />
     <ClCompile Include="pluginMain.cpp" />
+    <ClCompile Include="QmMeshEditor.cpp" />
     <ClCompile Include="QmMeshSetNormals.cpp" />
     <ClCompile Include="QmMeshSetVertexColors.cpp" />
     <ClCompile Include="QmSkinSetWeights.cpp" />
@@ -120,8 +127,10 @@
     <ClInclude Include="CommandDefinition.h" />
     <ClInclude Include="CommandBase.h" />
     <ClInclude Include="component_utils.h" />
+    <ClInclude Include="MeshEditCommand.h" />
     <ClInclude Include="node_utils.h" />
     <ClInclude Include="nodetypes.h" />
+    <ClInclude Include="QmMeshEditor.h" />
     <ClInclude Include="QmMeshSetNormals.h" />
     <ClInclude Include="QmMeshSetVertexColors.h" />
     <ClInclude Include="QmSkinSetWeights.h" />

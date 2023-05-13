@@ -2,11 +2,17 @@
 
 namespace utils {
 
-	template<class T, class TArray>
-	inline std::vector<T> ArrayToStdVector(const TArray& source);
+	template<class TArray>
+	inline void ZipArray(TArray* p_result, const TArray& source_lhs, const TArray& source_rhs);
 
-	template<class TArray, class T>
-	inline void ArrayCopyFromStdVector(TArray* p_array, const std::vector<T>& source);
+	template<class TArray>
+	inline void UnzipArray(TArray* p_result_lhs, TArray* p_result_rhs, const TArray& source);
+
+	template<class TDestArray, class TSourceArray>
+	inline void ConvertArray(TDestArray* p_result, const TSourceArray& source);
+
+	template<class TArray>
+	inline void MakeSequence(TArray* p_result, int start, int count);
 
 	#include "array_utils.hpp"
 }// namespace array
