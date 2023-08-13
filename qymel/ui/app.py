@@ -144,6 +144,18 @@ class _MainWindowBase(QMainWindow, _serializer.SerializableObjectMixin):
         self.after_setup_ui.connect(_restore_ui)
         self.before_shutdown_ui.connect(_store_ui)
 
+    def serialize(self, settings):
+        # type: (QSettings) -> NoReturn
+        settings.setValue('_geom', self.geometry())
+        self._serialize(settings)
+
+    def deserialize(self, settings):
+        # type: (QSettings) -> NoReturn
+        geom = settings.value('_geom')
+        if geom:
+            self.setGeometry(geom)
+        self._deserialize(settings)
+
     def screen(self):
         # type: () -> QScreen
         return self.parent().windowHandle().screen()
@@ -153,6 +165,14 @@ class _MainWindowBase(QMainWindow, _serializer.SerializableObjectMixin):
         pass
 
     def _shutdown_ui(self):
+        pass
+
+    def _serialize(self, settings):
+        # type: (QSettings) -> None
+        pass
+
+    def _deserialize(self, settings):
+        # type: (QSettings) -> None
         pass
 
 

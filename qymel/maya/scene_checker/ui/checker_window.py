@@ -81,13 +81,10 @@ class CheckerWindow(_app.MainWindowBase):
     def _shutdown_ui(self):
         pass
 
-    def serialize(self, settings: QSettings):
-        settings.setValue('geom', self.geometry())
+    def _serialize(self, settings: QSettings):
         settings.setValue('split', self._main_splitter.sizes())
 
-    def deserialize(self, settings: QSettings):
-        screen = self.parent().windowHandle().screen()
-        self.setGeometry(settings.value('geom') or QRect(screen.geometry().center(), QSize(0, 0)))
+    def _deserialize(self, settings: QSettings):
         self._main_splitter.setSizes([int(x) for x in (settings.value('split') or [])] or [])
 
     def set_custom_shelf(self, top_shelf: Optional[QWidget], group_shelf: Optional[QWidget]):
