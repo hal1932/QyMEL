@@ -5,7 +5,6 @@ from qymel.ui.pyside_module import *
 from qymel.ui import app as _app
 from qymel.ui import layouts as _layouts
 from qymel.ui import scopes as _ui_scopes
-from qymel.ui.objects import serializer as _serializer
 from qymel.maya import scopes as _maya_scopes
 
 from .. import checker as _checker
@@ -17,7 +16,12 @@ from . import item_list_widget as _item_list
 from . import description_widget as _description
 
 
-class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
+class CheckerWindow(_app.MainWindowBase):
+
+    group_selection_changed = Signal(_groups.CheckItemGroup)
+    item_selection_changed = Signal(_items.CheckItem)
+    item_executed = Signal(_items.CheckItem)
+    all_items_executed = Signal()
 
     @property
     def checker(self) -> _checker.Checker:
@@ -40,6 +44,9 @@ class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
         self._controls = _control.ControlWidget()
         self._main_splitter = QSplitter()
 
+        self._custom_top_shelf: Optional[QWidget] = None
+        self._custom_group_shelf: Optional[QWidget] = None
+
         self._groups.selection_changed.connect(self.__reload_group)
         self._items.selection_changed.connect(self.__reload_description)
         self._items.execute_requested.connect(self.execute_items)
@@ -57,12 +64,18 @@ class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
             self._main_splitter.setStretchFactor(i, 1)
             self._main_splitter.setCollapsible(i, False)
 
-        central_widget.setLayout(_layouts.vbox(
-            self._groups,
-            self._main_splitter,
-            self._controls,
-            _layouts.stretch(),
-        ))
+        layout = _layouts.vbox()
+        central_widget.setLayout(layout)
+
+        if self._custom_top_shelf:
+            layout.addWidget(self._custom_top_shelf)
+        layout.addWidget(self._groups)
+        if self._custom_group_shelf:
+            layout.addWidget(self._custom_group_shelf)
+        layout.addWidget(self._main_splitter)
+        layout.addWidget(self._controls)
+        layout.addStretch()
+
         self.reload()
 
     def _shutdown_ui(self):
@@ -77,29 +90,39 @@ class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
         self.setGeometry(settings.value('geom') or QRect(screen.geometry().center(), QSize(0, 0)))
         self._main_splitter.setSizes([int(x) for x in (settings.value('split') or [])] or [])
 
+    def set_custom_shelf(self, top_shelf: Optional[QWidget], group_shelf: Optional[QWidget]):
+        self._custom_top_shelf = top_shelf
+        self._custom_group_shelf = group_shelf
+
     def reload(self):
         self._groups.load_from(self.checker)
         group = self._groups.selected_group
         if group is not None:
             self._controls.load_from(group.results())
 
-    def __reload_group(self, group: Optional[_groups.CheckItemGroup]):
+    def refresh(self):
+        self._items.refresh()
+        self._description.refresh()
+
+    def __reload_group(self, group: _groups.CheckItemGroup):
         self._items.load_from(group)
         self._description.load_from(None, None)
+        self.group_selection_changed.emit(group)
 
     def __reload_description(self, selection: Optional[_item_list.ItemListItem]):
         if not selection:
             self._description.load_from(None, None)
-            return
-
-        group = selection.group
-        if selection.is_category:
-            item = None
-            category = selection.label
         else:
-            item = selection.items[0]
-            category = item.category
-        self._description.load_from(category, item, group.results(item) if item else [])
+            group = selection.group
+            if selection.is_category:
+                item = None
+                category = selection.label
+            else:
+                item = selection.items[0]
+                category = item.category
+            self._description.load_from(category, item, group.results(item) if item else [])
+
+        self.item_selection_changed.emit(selection)
 
     def select_group(self, group_name: str):
         self._groups.select(group_name)
@@ -113,6 +136,8 @@ class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
         self._controls.load_from(group.results())
         self.__reload_description(None)
 
+        self.all_items_executed.emit()
+
         if self.close_on_success and not group.has_errors():
             self.close()
 
@@ -125,6 +150,9 @@ class CheckerWindow(_app.MainWindowBase, _serializer.SerializableObjectMixin):
         self._items.load_results()
         self._controls.load_from(group.results())
         self.__reload_description(None)
+
+        for item in items:
+            self.item_executed.emit(item)
 
     @_ui_scopes.wait_cursor_scope
     @_maya_scopes.undo_scope

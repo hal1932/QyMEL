@@ -25,6 +25,11 @@ class _ComponentIter(Generic[_TComp]):
         # type: () -> _om2.MObject
         return self._miter.currentItem()
 
+    @property
+    def mel_object(self):
+        # type: () -> str
+        raise NotImplementedError()
+
     def __init__(self, miter, comp):
         self._miter = miter
         self._comp = comp  # 使う機会はないけど、ループの最中にcompのスコープが切れないように手許で抱えておく
@@ -61,6 +66,11 @@ class _ComponentIter(Generic[_TComp]):
 
 
 class MeshVertexIter(_ComponentIter['MeshVertexIter']):
+
+    @property
+    def mel_object(self):
+        # type: () -> str
+        return '{}.vtx[{}]'.format(self._mfn_mesh.fullPathName(), self.index)
 
     @property
     def index(self):
@@ -178,6 +188,11 @@ class MeshVertexIter(_ComponentIter['MeshVertexIter']):
 class MeshFaceIter(_ComponentIter['MeshFaceIter']):
 
     @property
+    def mel_object(self):
+        # type: () -> str
+        return '{}.f[{}]'.format(self._mfn_mesh.fullPathName(), self.index)
+
+    @property
     def index(self):
         # type: () -> int
         return self._miter.index()
@@ -237,9 +252,10 @@ class MeshFaceIter(_ComponentIter['MeshFaceIter']):
         # type: () -> int
         return self._miter.numTriangles()
 
-    def __init__(self, miter, comp):
-        # type: (_om2.MItMeshPolygon, 'Component') -> NoReturn
+    def __init__(self, miter, comp, mfn_mesh):
+        # type: (_om2.MItMeshPolygon, 'Component', _om2.MFnMesh) -> NoReturn
         super(MeshFaceIter, self).__init__(miter, comp)
+        self._mfn_mesh = mfn_mesh
 
     def _next(self):
         if _om.MGlobal.apiVersion() >= 20220000:
@@ -300,6 +316,11 @@ class MeshFaceIter(_ComponentIter['MeshFaceIter']):
 class MeshEdgeIter(_ComponentIter['MeshEdgeIter']):
 
     @property
+    def mel_object(self):
+        # type: () -> str
+        return '{}.e[{}]'.format(self._mfn_mesh.fullPathName(), self.index)
+
+    @property
     def index(self):
         # type: () -> int
         return self._miter.index()
@@ -329,9 +350,10 @@ class MeshEdgeIter(_ComponentIter['MeshEdgeIter']):
         # type: () -> bool
         return self._miter.isSmooth
 
-    def __init__(self, miter, comp):
-        # type: (_om2.MItMeshEdge, Component) -> NoReturn
+    def __init__(self, miter, comp, mfn_mesh):
+        # type: (_om2.MItMeshEdge, Component, _om2.MFnMesh) -> NoReturn
         super(MeshEdgeIter, self).__init__(miter, comp)
+        self._mfn_mesh = mfn_mesh
 
     def center(self, space=_om2.MSpace.kObject):
         # type: (int) -> _om2.MPoint
@@ -346,7 +368,13 @@ class MeshEdgeIter(_ComponentIter['MeshEdgeIter']):
         return _om2.MPointArray([self._miter.point(0, space), self._miter.point(1, space)])
 
 
-class MeshVertexFaceIter(_ComponentIter['MeshVertexFaceIter']):
+class MeshFaceVertexIter(_ComponentIter['MeshFaceVertexIter']):
+
+    @property
+    def mel_object(self):
+        # type: () -> str
+        vtx_id, face_id = self.index
+        return '{}.f[{}][{}]'.format(self._mfn_mesh.fullPathName(), vtx_id, face_id)
 
     @property
     def index(self):
@@ -374,9 +402,10 @@ class MeshVertexFaceIter(_ComponentIter['MeshVertexFaceIter']):
         # type: () -> bool
         return self._miter.hasColor()
 
-    def __init__(self, miter, comp):
-        # type: (_om2.MItMeshFaceVertex, Component) -> NoReturn
-        super(MeshVertexFaceIter, self).__init__(miter, comp)
+    def __init__(self, miter, comp, mfn_mesh):
+        # type: (_om2.MItMeshFaceVertex, Component, _om2.MFnMesh) -> NoReturn
+        super(MeshFaceVertexIter, self).__init__(miter, comp)
+        self._mfn_mesh = mfn_mesh
 
     def color(self, color_set=None):
         # type: (Union[_general.ColorSet, str]) -> _om2.MColor

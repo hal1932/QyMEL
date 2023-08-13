@@ -17,6 +17,11 @@ class DescriptionWidget(QWidget):
 
     def __init__(self):
         super().__init__()
+
+        self.__category = None
+        self.__item = None
+        self.__results = []
+
         self.__icon = QLabel()
 
         self.__label = QLabel()
@@ -88,6 +93,10 @@ class DescriptionWidget(QWidget):
     def load_from(self, category: Optional[str], item: Optional[_items.CheckItem], results: Sequence[_items.CheckResult] = []):
         self.clear()
 
+        self.__category = category
+        self.__item = item
+        self.__results = results
+
         header = ''
         if category:
             header = f'[{category}]'
@@ -134,6 +143,9 @@ class DescriptionWidget(QWidget):
 
         self.__modify_selected.setEnabled(enable_modification)
         self.__modify_all.setEnabled(enable_modification)
+
+    def refresh(self):
+        self.load_from(self.__category, self.__item, self.__results)
 
     def __sync_result_selection(self, selection: List['_ResultItem'], from_results: bool, from_nodes: bool):
         if from_results:

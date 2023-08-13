@@ -40,5 +40,4 @@ class GroupSelectorWidget(QWidget):
         self.__combo.clear()
         self.__combo.addItems(group.label for group in self.__groups)
         if selection >= 0:
-
             self.__combo.setCurrentIndex(selection)

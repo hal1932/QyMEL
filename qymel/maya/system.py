@@ -5,6 +5,7 @@ from six import *
 from six.moves import *
 
 import os
+import shutil
 
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
@@ -121,32 +122,45 @@ class Scene(object):
         return result
 
     @staticmethod
-    def rename(new_file_path):
+    def rename(new_name):
         # type: (str) -> str
-        _, ext = os.path.split(new_file_path)
+        _, ext = os.path.splitext(new_name)
         file_type = FileTranslator.find_by_extension(ext)
         if file_type is not None:
-            _cmds.file(type=file_type)
-
-        new_file_path = Scene.normalize_path(new_file_path)
-        return _cmds.file(rename=new_file_path)
+            _cmds.file(type=file_type.name)
+        return _cmds.file(rename=new_name)
 
     @staticmethod
     def save(file_path=None, file_type=None, force=False):
         # type: (str, str, bool) -> str
+        file_path = file_path.replace(os.sep, '/')
+
         if file_path is not None:
-            Scene.rename(file_path)
+            if len(os.path.dirname(file_path)) > 0:
+                file_name = os.path.basename(file_path)
+            else:
+                file_name = file_path
+            Scene.rename(file_name)
 
         kwargs = {'save': True, 'force': force}
         if file_type is not None:
             kwargs['type'] = file_type
 
-        return _cmds.file(**kwargs)
+        new_file_path = _cmds.file(**kwargs)
+        if os.path.isfile(new_file_path) and new_file_path != file_path:
+            shutil.move(new_file_path, file_path)
+
+        return file_path
 
     @staticmethod
     def is_mofieied():
         # type: () -> bool
         return _cmds.file(query=True, modified=True)
+
+    @staticmethod
+    def set_modified_state():
+        # type: () -> NoReturn
+            _cmds.file(modified=True)
 
     @staticmethod
     def import_file(file_path, **kwargs):
@@ -376,7 +390,7 @@ class FileTranslator(object):
         # type: (str) -> FileTranslator
         extension = extension.lstrip('.')
         for name in _cmds.translator(query=True, list=True):
-            ext = _cmds.translator(query=True, extension=True)
+            ext = _cmds.translator(name, query=True, extension=True)
             if ext == extension:
                 return FileTranslator(name)
         return None

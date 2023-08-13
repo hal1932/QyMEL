@@ -322,32 +322,6 @@ class SkinCluster(GeometryFilter, _NodeTypeDef[_om2anim.MFnSkinCluster, 'SkinClu
 
         return result
 
-    def set_weights(self, mesh, values, component=None, influences=None):
-        # type: (Mesh, Sequence[Sequence[float]], _components.MeshVertex, Sequence[Joint]) -> NoReturn
-        mfn = self.mfn
-
-        if component is None:
-            component = mesh.vertex_comp(range(mesh.vertex_count))
-
-        if influences is None:
-            influence_mdagpaths = mfn.influenceObjects()
-        else:
-            influence_mdagpaths = [infl.mdagpath for infl in influences]
-
-        influence_indices = [mfn.indexForInfluenceObject(dagpath) for dagpath in influence_mdagpaths]
-
-        flatten_values = []
-        for i in range(len(component)):
-            for j in range(len(influence_indices)):
-                flatten_values.append(values[j][i])
-
-        _cmds.qmSkinSetWeights(
-            self.mel_object,
-            path=mesh.mdagpath.fullPathName(),
-            components=component.elements,
-            influenceIndices=influence_indices,
-            values=flatten_values)
-
 
 class Entity(ContainerBase):
     pass
@@ -789,7 +763,8 @@ class DagNode(Entity, _NodeTypeDef[_om2.MFnDagNode, 'DagNode']):
             return None
 
         child_mobj = mfn.child(index)
-        return _graphs_to_node_instance(child_mobj, _om2.MFnDagNode(child_mobj).getPath())
+        child_mfn = _om2.MFnDagNode(child_mobj)
+        return _graphs_to_node_instance(child_mfn, _om2.MFnDagNode(child_mobj).getPath())
 
     def first_child(self, **kwargs):
         # type: (Any) -> Optional[DagNode]
@@ -1290,8 +1265,8 @@ class Mesh(SurfaceShape, _NodeTypeDef[_om2.MFnMesh, 'Mesh']):
             comp = self.edge_comp()
         return comp.iterator()
 
-    def vertex_faces(self, comp=None):
-        # type: (_components.MeshVertexFace) -> _iterators.MeshVertexFaceIter
+    def face_vertices(self, comp=None):
+        # type: (_components.MeshVertexFace) -> _iterators.MeshFaceVertexIter
         if comp is None:
             comp = self.vertex_face_comp()
         return comp.iterator()

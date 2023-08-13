@@ -103,6 +103,11 @@ class Component(_objects.MayaObject, Generic[_TCompFn, _TCompElem, _TCompIter, _
         self.__cursor += 1
         return value
 
+    def node(self):
+        # type: () -> 'DagNode'
+        mfn = _om2.MFnDagNode(self.mdagpath)
+        return _graphs.to_node_instance(mfn, self.mdagpath)
+
     def clone(self):
         # type: () -> _TComp
         clone = self.clone_empty()
@@ -209,7 +214,7 @@ class MeshFace(SingleIndexedComponent[_iterators.MeshFaceIter, 'MeshFace']):
     def iterator(self):
         # type: () -> MeshFaceIter
         ite = _om2.MItMeshPolygon(self.mdagpath, self.mobject)
-        return _iterators.MeshFaceIter(ite, self)
+        return _iterators.MeshFaceIter(ite, self, _om2.MFnMesh(self.mdagpath))
 
 
 class MeshEdge(SingleIndexedComponent[_iterators.MeshEdgeIter, 'MeshEdge']):
@@ -224,10 +229,10 @@ class MeshEdge(SingleIndexedComponent[_iterators.MeshEdgeIter, 'MeshEdge']):
     def iterator(self):
         # type: () -> MeshEdgeIter
         ite = _om2.MItMeshEdge(self.mdagpath, self.mobject)
-        return _iterators.MeshEdgeIter(ite, self)
+        return _iterators.MeshEdgeIter(ite, self, _om2.MFnMesh(self.mdagpath))
 
 
-class MeshVertexFace(DoubleIndexedComponent[_iterators.MeshVertexFaceIter, 'MeshVertexFace']):
+class MeshVertexFace(DoubleIndexedComponent[_iterators.MeshFaceVertexIter, 'MeshVertexFace']):
 
     _comp_type = _om2.MFn.kMeshVtxFaceComponent
     _comp_repr = 'vtxface'
@@ -239,7 +244,7 @@ class MeshVertexFace(DoubleIndexedComponent[_iterators.MeshVertexFaceIter, 'Mesh
     def iterator(self):
         # type: () -> MeshVertexFaceIter
         ite = _om2.MItMeshFaceVertex(self.mdagpath, self.mobject)
-        return _iterators.MeshVertexFaceIter(ite, self)
+        return _iterators.MeshFaceVertexIter(ite, self, _om2.MFnMesh(self.mdagpath))
 
 
 _components.ComponentFactory.register(__name__)

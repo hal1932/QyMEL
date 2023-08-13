@@ -35,7 +35,10 @@ class AppBase(object):
         self._initialize(self._app)
         self._window = self._create_window()
         if self._window is not None:
-            self._window.setup_ui().show()
+            self._on_before_setup_ui()
+            self._window.setup_ui()
+            self._on_after_setup_ui()
+            self._window.show()
 
         self._exec_application_main_loop(self._app)
 
@@ -62,11 +65,17 @@ class AppBase(object):
         # type: () -> QMainWindow
         pass
 
+    def _on_before_setup_ui(self):
+        pass
+
+    def _on_after_setup_ui(self):
+        pass
+
     def _finalize(self):
         pass
 
 
-class _MainWindowBase(QMainWindow):
+class _MainWindowBase(QMainWindow, _serializer.SerializableObjectMixin):
 
     before_setup_ui = Signal()
     after_setup_ui = Signal()
@@ -121,7 +130,7 @@ class _MainWindowBase(QMainWindow):
         # type: () -> QRect
         return QRect(self.screen().geometry().center(), QSize(0, 0))
 
-    def enable_serialzie(self, settings):
+    def enable_serialzie(self, settings=None):
         # type: (QSettings) -> NoReturn
         serializer = _serializer.ObjectSerializer()
 
