@@ -1,9 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
 from typing import *
-from six import *
-from six.moves import *
-
 import time
 import functools
 import types
@@ -16,8 +12,7 @@ class Scope(object):
     def __enter__(self):
         self._on_enter()
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        # type: (Type, Exception, types.TracebackType) -> bool
+    def __exit__(self, exc_type: Type, exc_val: Exception, exc_tb: types.TracebackType) -> bool:
         self._on_exit()
         return False  # 例外伝搬を止めない
 
@@ -30,16 +25,15 @@ class Scope(object):
 
 class ProfileScope(Scope):
 
-    def __init__(self, callback=None):
-        # type: (Callable[[pstats.Stats], None]) -> NoReturn
+    def __init__(self, callback: Optional[Callable[[pstats.Stats], None]] = None) -> None:
         super(ProfileScope, self).__init__()
         self.profile = cProfile.Profile()
         self.callback = callback
 
-    def _on_enter(self):
+    def _on_enter(self) -> None:
         self.profile.enable()
 
-    def _on_exit(self):
+    def _on_exit(self) -> None:
         self.profile.disable()
         stats = pstats.Stats(self.profile).sort_stats('cumulative')
         if self.callback is not None:
@@ -58,15 +52,14 @@ def profile_scope(func):
 
 class TimeScope(Scope):
 
-    def __init__(self, callback=None):
-        # type: (Callable[[float], None]) -> NoReturn
+    def __init__(self, callback: Optional[Callable[[float], None]] = None) -> None:
         self.callback = callback
         self.begin = 0
 
-    def _on_enter(self):
+    def _on_enter(self) -> None:
         self.begin = time.time()
 
-    def _on_exit(self):
+    def _on_exit(self) -> None:
         elapsed = time.time() - self.begin
         if self.callback is not None:
             callable(elapsed)
@@ -84,15 +77,14 @@ def time_scope(func):
 
 class ProcessTimeScope(Scope):
 
-    def __init__(self, callback=None):
-        # type: (Callable[[float], None]) -> NoReturn
+    def __init__(self, callback: Optional[Callable[[float], None]] = None) -> None:
         self.callback = callback
         self.begin = 0
 
-    def _on_enter(self):
+    def _on_enter(self) -> None:
         self.begin = time.process_time()
 
-    def _on_exit(self):
+    def _on_exit(self) -> None:
         elapsed = time.process_time() - self.begin
         if self.callback is not None:
             callable(elapsed)
@@ -103,6 +95,6 @@ class ProcessTimeScope(Scope):
 def process_time_scope(func):
     @functools.wraps(func)
     def _(*args, **kwargs):
-        with TimeScope(callback):
+        with TimeScope():
             func(*args, **kwargs)
     return _

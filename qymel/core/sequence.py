@@ -1,47 +1,56 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
 from typing import *
-from six import *
-from six.moves import *
 
 
-TItem = TypeVar('_TItem')
+_TItem = TypeVar('_TItem')
 
 
-def any(sequence, predicate=None):
-    # type: (Sequence[TItem], Callable[[TItem], bool]) -> bool
+def any(
+        sequence: Sequence[_TItem],
+        predicate: Optional[Callable[[_TItem], bool]] = None
+) -> bool:
     for item in sequence:
         if predicate is None or predicate(item):
             return True
     return False
 
 
-def first(sequence, predicate=None):
-    # type: (Sequence[TItem], Callable[[TItem], bool]) -> TItem
+def first(
+        sequence: Sequence[_TItem],
+        predicate: Optional[Callable[[_TItem], bool]] = None
+) -> _TItem:
     for item in sequence:
         if predicate is None or predicate(item):
             return item
     raise StopIteration()
 
 
-def first_or_default(sequence, predicate=None, default=None):
-    # type: (Sequence[TItem], Callable[[TItem], bool], TItem) -> TItem
+def first_or_default(
+        sequence: Sequence[_TItem],
+        predicate: Optional[Callable[[_TItem], bool]] = None,
+        default: bool = None
+) -> _TItem:
     for item in sequence:
         if predicate is None or predicate(item):
             return item
     return default
 
 
-def last(sequence, predicate=None):
-    # type: (Sequence[TItem], Callable[[TItem], bool]) -> TItem
+def last(
+        sequence: Sequence[_TItem],
+        predicate: Optional[Callable[[_TItem], bool]] = None
+) -> _TItem:
     for item in reversed(sequence):
         if predicate is None or predicate(item):
             return item
     raise StopIteration()
 
 
-def last_or_default(sequence, predicate=None, default=None):
-    # type: (Sequence[TItem], Callable[[TItem], bool], TItem) -> TItem
+def last_or_default(
+        sequence: Sequence[_TItem],
+        predicate: Optional[Callable[[_TItem], bool]] = None,
+        default: _TItem = None
+) -> _TItem:
     for item in reversed(sequence):
         if predicate is None or predicate(item):
             return item

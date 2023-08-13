@@ -1,9 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
 from typing import *
-from six import *
-from six.moves import *
-
 import subprocess
 import ctypes
 import ctypes.wintypes
@@ -15,14 +11,12 @@ _kernel32 = ctypes.windll.kernel32
 
 class NonBlockingPipeReader(object):
 
-    def __init__(self, pipe):
-        # type: (IO) -> None
+    def __init__(self, pipe: IO) -> None:
         self.__handle = msvcrt.get_osfhandle(pipe.fileno())
         self.__stocked_lines = []  # type: List[str]
         self.__unstocked_str = ''  # type: str
 
-    def read(self, size=MAXSIZE):
-        # type: (int) -> Tuple[int, str]
+    def read(self, size: int = MAXSIZE) -> bytes:
         available = ctypes.wintypes.DWORD()
         readable = _kernel32.PeekNamedPipe(self.__handle, None, 0, None, ctypes.byref(available), None)
         if not readable or available.value == 0:
@@ -39,8 +33,7 @@ class NonBlockingPipeReader(object):
 
         return buffer.value
 
-    def readline(self, encoding=None):
-        # type: (Optional[str]) -> str
+    def readline(self, encoding: Optional[str] = None) -> str:
         if self.__stocked_lines:
             line = self.__stocked_lines.pop(0)
         else:
@@ -106,7 +99,7 @@ for i in range(10000):
             i += 1
     while True:
         err = stdout.readline()
-        if len(out) > 0:
+        if len(err) > 0:
             errors.append(err)
             i += 1
         else:
