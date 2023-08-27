@@ -1,5 +1,5 @@
 # coding: utf-8
-from typing import *
+from typing import IO, Optional, List
 import subprocess
 import ctypes
 import ctypes.wintypes
@@ -13,16 +13,16 @@ class NonBlockingPipeReader(object):
 
     def __init__(self, pipe: IO) -> None:
         self.__handle = msvcrt.get_osfhandle(pipe.fileno())
-        self.__stocked_lines = []  # type: List[str]
-        self.__unstocked_str = ''  # type: str
+        self.__stocked_lines: List[str] = []
+        self.__unstocked_str = ''
 
-    def read(self, size: int = MAXSIZE) -> bytes:
+    def read(self, size: int = 0) -> bytes:
         available = ctypes.wintypes.DWORD()
         readable = _kernel32.PeekNamedPipe(self.__handle, None, 0, None, ctypes.byref(available), None)
         if not readable or available.value == 0:
             return b''
 
-        if size == MAXSIZE:
+        if size == 0:
             size = available.value
 
         buffer = ctypes.create_string_buffer(size)
@@ -69,13 +69,12 @@ if __name__ == '__main__':
 
     SCRIPT = '''
 import sys
-for i in range(10000):
-    # pipe = sys.stdout if i % 2 == 0 else sys.stderr
-    pipe = sys.stdout
-    pipe.write(str(pipe.__class__) + str(i) + \\"\\n\\")
+for i in range(1000):
+    pipe = sys.stdout if i % 2 == 0 else sys.stderr
+    pipe.write(str(i) + \\"\\n\\")
     pipe.flush()
 '''
-    COMMAND = 'C:/Python27/python.exe -c "{}"'.format(SCRIPT)
+    COMMAND = 'C:/Python37/python.exe -c "{}"'.format(SCRIPT)
 
     pr = cProfile.Profile()
 
@@ -97,8 +96,10 @@ for i in range(10000):
         if len(out) > 0:
             outputs.append(out)
             i += 1
+        else:
+            pass
     while True:
-        err = stdout.readline()
+        err = stderr.readline()
         if len(err) > 0:
             errors.append(err)
             i += 1
@@ -109,7 +110,7 @@ for i in range(10000):
     ps = pstats.Stats(pr).sort_stats('cumulative')
     ps.print_stats()
 
-    print(len(outputs))
+    print(len(outputs), len(errors))
 
     for got, expected in zip(outputs, comm_outputs.splitlines()):
         assert got == expected.decode()

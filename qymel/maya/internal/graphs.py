@@ -1,28 +1,23 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
 from typing import *
-from six import *
-from six.moves import *
 
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 
-from . import nodes as _nodes
-from . import plugs as _plugs
-from . import components as _components
+from . import factory as _factory
+from . import plug_impl as _plug_impl
 
 
 # 呼び出し回数が極端に多くなる可能性のある静的メソッドをキャッシュ化しておく
 _om2_MGlobal_getSelectionListByName = _om2.MGlobal.getSelectionListByName
-_plugs_PlugFactory_create = _plugs.PlugFactory.create
-_nodes_NodeFactory_create = _nodes.NodeFactory.create
-_nodes_NodeFactory_create_default = _nodes.NodeFactory.create_default
-_components_ComponentFactory_create = _components.ComponentFactory.create
-_components_ComponentFactory_create_default = _components.ComponentFactory.create_default
+_factory_PlugFactory_create = _factory.PlugFactory.create
+_factory_NodeFactory_create = _factory.NodeFactory.create
+_factory_NodeFactory_create_default = _factory.NodeFactory.create_default
+_factory_ComponentFactory_create = _factory.ComponentFactory.create
+_factory_ComponentFactory_create_default = _factory.ComponentFactory.create_default
 
 
-def ls(*args, **kwargs):
-    # type: (Any, Any) -> Any
+def ls(*args: str, **kwargs: Any) -> List[Union['Plug', 'Component', 'DependNode']]:
     if kwargs.get('objectsOnly', False):
         return ls_nodes(*args, **kwargs)
 
@@ -32,7 +27,7 @@ def ls(*args, **kwargs):
     return [eval(name, tmp_mfn_comp, tmp_mfn_node) for name in _cmds.ls(*args, **kwargs)]
 
 
-def ls_nodes(*args, **kwargs):
+def ls_nodes(*args: str, **kwargs: Any) -> List['DependNode']:
     result = []
 
     kwargs['long'] = True
@@ -47,8 +42,11 @@ def ls_nodes(*args, **kwargs):
     return result
 
 
-def eval(obj_name, tmp_mfn_comp, tmp_mfn_node):
-    # type: (str, _om2.MFnComponent, _om2.MFnDependencyNode) -> Any
+def eval(
+        obj_name: str,
+        tmp_mfn_comp: _om2.MFnComponent,
+        tmp_mfn_node: _om2.MFnDependencyNode
+) -> Optional[Union['Plug', 'Component', 'DependNode']]:
     if '.' in obj_name:
         plug = eval_plug(obj_name)
         if plug is not None:
@@ -75,7 +73,7 @@ def eval_plug(plug_name):
         pass
 
     if mplug is not None:
-        plug = _plugs_PlugFactory_create(mplug)
+        plug = _factory_PlugFactory_create(mplug)
         return plug
 
     return None
@@ -124,11 +122,11 @@ def to_node_instance(mfn, mdagpath=None):
     type_name = mfn.typeName
     mobj = mfn.object()
 
-    node = _nodes_NodeFactory_create(type_name, mobj, mdagpath)
+    node = _factory_NodeFactory_create(type_name, mobj, mdagpath)
     if node is not None:
         return node
 
-    return _nodes_NodeFactory_create_default(mfn, mdagpath)
+    return _factory_NodeFactory_create_default(mfn, mdagpath)
 
 
 def get_mobject(node_name):
@@ -154,18 +152,18 @@ def get_world_mobject():
 
 def _to_plug_instance(mplug):
     # type: (_om2.MPlug) -> object
-    return _plugs_PlugFactory_create(mplug)
+    return _factory_PlugFactory_create(mplug)
 
 
 def to_comp_instance(mfn, mdagpath, mobject):
     # type: (_om2.MFnComponent, _om2.MDagPath, _om2.MObject) -> object
     comp_type = mfn.componentType
 
-    comp = _components_ComponentFactory_create(comp_type, mdagpath, mobject)
+    comp = _factory_ComponentFactory_create(comp_type, mdagpath, mobject)
     if comp is not None:
         return comp
 
-    return _components_ComponentFactory_create_default(mdagpath, mobject)
+    return _factory_ComponentFactory_create_default(mdagpath, mobject)
 
 
 def get_mplug(name):

@@ -34,15 +34,15 @@ class DescriptionWidget(QWidget):
         self.__description.setWordWrap(True)
         self.__description.setMargin(5)
 
-        self.__results = _ResultItemWidget()
-        self.__results.selection_changed.connect(
+        self.__result_items = _ResultItemWidget()
+        self.__result_items.selection_changed.connect(
             lambda items: self.__sync_result_selection(items, True, False)
         )
 
         self.__result_group_title = 'チェック結果（$COUNT項目）'
         self.__result_group = QGroupBox(self.__result_group_title)
         self.__result_group.setLayout(_layouts.vbox(
-            self.__results,
+            self.__result_items,
         ))
 
         self.__nodes = _ResultItemWidget()
@@ -83,7 +83,7 @@ class DescriptionWidget(QWidget):
         self.__icon.setPixmap(None)
         self.__label.setText('')
         self.__description.setText('')
-        self.__results.clear()
+        self.__result_items.clear()
         self.__nodes.clear()
         self.setEnabled(False)
 
@@ -111,10 +111,10 @@ class DescriptionWidget(QWidget):
             self.__description.setText(item.description)
 
             if len(results) == 1 and results[0].status == _items.CheckResultStatus.SUCCESS:
-                self.__results.append('OK', [])
+                self.__result_items.append('OK', [])
             else:
                 for result in results:
-                    self.__results.append(result.message, result.nodes)
+                    self.__result_items.append(result.message, result.nodes)
                     for node in result.nodes:
                         self.__nodes.append(node, [node])
 

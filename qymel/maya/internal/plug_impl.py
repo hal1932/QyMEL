@@ -8,22 +8,6 @@ import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 
 
-class PlugFactory(object):
-
-    _cls = None  # type: type
-
-    @staticmethod
-    def register(cls):
-        # type: (type) -> NoReturn
-        PlugFactory._cls = cls
-
-    @staticmethod
-    def create(mplug):
-        # type: (_om2.MPlug) -> object
-        cls = PlugFactory._cls
-        return cls(mplug)
-
-
 def plug_get_impl(mplug):
     # type: (_om2.MPlug) -> Any
     mobj = mplug.attribute()

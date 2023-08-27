@@ -9,7 +9,15 @@ import maya.api.OpenMaya as om2
 import qymel.maya as qm
 
 
-class TestMeshVertexIter(unittest.TestCase):
+class TestCase(unittest.TestCase):
+
+    def assertFloatSequenceEquals(self, lhs, rhs):
+        self.assertEqual(len(lhs), len(rhs))
+        for l, r in zip(lhs, rhs):
+            self.assertAlmostEqual(l, r, places=4)
+
+
+class TestMeshVertexIter(TestCase):
 
     def setUp(self) -> None:
         cmds.file(new=True, force=True)
@@ -49,8 +57,11 @@ class TestMeshVertexIter(unittest.TestCase):
             # for f in range(miter.numConnectedFaces()):
             #     self.assertEqual(vtx.color(f, self.color), miter.color(f. self.color))
 
-            self.assertSequenceEqual(list(vtx.colors(self.color)), list(miter.getColors(self.color)))
-            self.assertSequenceEqual(list(vtx.color_indices(self.color)), list(miter.getColorIndices(self.color)))
+            def _colors(cols):
+                return [[c.r, c.g, c.b, c.a] for c in cols]
+
+            self.assertFloatSequenceEquals(_colors(vtx.colors(self.color)), _colors(miter.getColors(self.color)))
+            self.assertFloatSequenceEquals(vtx.color_indices(self.color), miter.getColorIndices(self.color))
 
             miter.next()
 
@@ -92,7 +103,7 @@ class TestMeshVertexIter(unittest.TestCase):
         return qm.MeshVertexIter(om2.MItMeshVertex(self.dagpath), comp, om2.MFnMesh(self.dagpath))
 
 
-class TestMeshFaceIter(unittest.TestCase):
+class TestMeshFaceIter(TestCase):
 
     def setUp(self) -> None:
         cmds.file(new=True, force=True)
@@ -161,10 +172,10 @@ class TestMeshFaceIter(unittest.TestCase):
         mobj = mcomp.create(om2.MFn.kMeshPolygonComponent)
         mcomp.setCompleteData(cmds.polyEvaluate(self.shape1, face=True))
         comp = qm.MeshFace(mobj, self.dagpath)
-        return qm.MeshFaceIter(om2.MItMeshPolygon(self.dagpath), comp)
+        return qm.MeshFaceIter(om2.MItMeshPolygon(self.dagpath), comp, om2.MFnMesh(self.dagpath))
 
 
-class TestMeshEdgeIter(unittest.TestCase):
+class TestMeshEdgeIter(TestCase):
 
     def setUp(self) -> None:
         cmds.file(new=True, force=True)
@@ -198,10 +209,10 @@ class TestMeshEdgeIter(unittest.TestCase):
         mobj = mcomp.create(om2.MFn.kMeshEdgeComponent)
         mcomp.setCompleteData(cmds.polyEvaluate(self.shape1, edge=True))
         comp = qm.MeshEdge(mobj, self.dagpath)
-        return qm.MeshEdgeIter(om2.MItMeshEdge(self.dagpath), comp)
+        return qm.MeshEdgeIter(om2.MItMeshEdge(self.dagpath), comp, om2.MFnMesh(self.dagpath))
 
 
-class TestMeshVertexFaceITer(unittest.TestCase):
+class TestMeshVertexFaceITer(TestCase):
 
     def setUp(self) -> None:
         cmds.file(new=True, force=True)
@@ -269,4 +280,4 @@ class TestMeshVertexFaceITer(unittest.TestCase):
         mobj = mcomp.create(om2.MFn.kMeshVtxFaceComponent)
         mcomp.setCompleteData(cmds.polyEvaluate(self.shape1, vertex=True), cmds.polyEvaluate(self.shape1, face=True))
         comp = qm.MeshVertexFace(mobj, self.dagpath)
-        return qm.MeshVertexFaceIter(om2.MItMeshFaceVertex(self.dagpath), comp)
+        return qm.MeshFaceVertexIter(om2.MItMeshFaceVertex(self.dagpath), comp, om2.MFnMesh(self.dagpath))

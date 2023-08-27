@@ -88,6 +88,7 @@ class ItemListWidget(QWidget):
         ))
 
     def refresh(self):
+        self.load_results()
         self.__model.dataChanged.emit(QModelIndex(), QModelIndex())
 
     def load_from(self, group: _groups.CheckItemGroup):

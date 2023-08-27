@@ -136,21 +136,13 @@ class Scene(object):
         file_path = file_path.replace(os.sep, '/')
 
         if file_path is not None:
-            if len(os.path.dirname(file_path)) > 0:
-                file_name = os.path.basename(file_path)
-            else:
-                file_name = file_path
-            Scene.rename(file_name)
+            Scene.rename(file_path)
 
         kwargs = {'save': True, 'force': force}
         if file_type is not None:
             kwargs['type'] = file_type
 
-        new_file_path = _cmds.file(**kwargs)
-        if os.path.isfile(new_file_path) and new_file_path != file_path:
-            shutil.move(new_file_path, file_path)
-
-        return file_path
+        return _cmds.file(**kwargs)
 
     @staticmethod
     def is_mofieied():
