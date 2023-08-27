@@ -10,7 +10,6 @@ from . import objects as _objects
 from . import general as _general
 from . import components as _components
 from . import iterators as _iterators
-from . import plugins as _plugins
 from .internal import factory as _factory
 from .internal import graphs as _graphs
 
