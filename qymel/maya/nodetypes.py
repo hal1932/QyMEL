@@ -28,9 +28,9 @@ TFnDependNode = TypeVar('TFnDependNode', bound=_om2.MFnDependencyNode)
 
 class DependNode(_objects.MayaObject, Generic[TFnDependNode]):
 
-    _mfn_type = _om2.MFn.kDependencyNode
-    _mfn_set = _om2.MFnDependencyNode
-    _mel_type = None
+    _mfn_type: int = _om2.MFn.kDependencyNode
+    _mfn_set: Type[TFnDependNode] = _om2.MFnDependencyNode
+    _mel_type: str = None
 
     @classmethod
     def ls(cls, *args, **kwargs) -> List['DependNode']:
@@ -1311,5 +1311,3 @@ class Blinn(Reflect):
 
 _factory.NodeFactory.register(__name__)
 _factory.NodeFactory.register_default(DependNode, DagNode)
-
-_plugins.load_plugins()
