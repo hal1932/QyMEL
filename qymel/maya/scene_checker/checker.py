@@ -33,6 +33,12 @@ class Checker(object):
                 return group
         return None
 
+    def has_results(self) -> bool:
+        for group in self.__groups:
+            if len(group.results()) > 0:
+                return True
+        return False
+
     def has_modifiables(self) -> bool:
         for group in self.__groups:
             if group.has_modifiables:

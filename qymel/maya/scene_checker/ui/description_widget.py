@@ -60,11 +60,11 @@ class DescriptionWidget(QWidget):
         self.__modify_all = QPushButton('すべてのノードを自動修正')
 
         controls = QWidget()
-        controls.setLayout(_layouts.hbox(
-            self.__modify_selected,
-            self.__modify_all,
-            contents_margins=0
-        ))
+        # controls.setLayout(_layouts.hbox(
+        #     self.__modify_selected,
+        #     self.__modify_all,
+        #     contents_margins=0
+        # ))
 
         self.setLayout(_layouts.vbox(
             _layouts.hbox(
