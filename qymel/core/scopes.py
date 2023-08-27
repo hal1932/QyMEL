@@ -11,15 +11,16 @@ class Scope(object):
 
     def __enter__(self):
         self._on_enter()
+        return self
 
     def __exit__(self, exc_type: Type, exc_val: Exception, exc_tb: types.TracebackType) -> bool:
         self._on_exit()
         return False  # 例外伝搬を止めない
 
-    def _on_enter(self):
+    def _on_enter(self) -> None:
         pass
 
-    def _on_exit(self):
+    def _on_exit(self) -> None:
         pass
 
 

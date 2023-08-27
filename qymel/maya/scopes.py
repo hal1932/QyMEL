@@ -1,9 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
 from typing import *
-from six import *
-from six.moves import *
-
 import functools
 
 import maya.cmds as _cmds
@@ -31,7 +27,7 @@ class KeepSelectionScope(_scopes.Scope):
 
     def __init__(self):
         super(KeepSelectionScope, self).__init__()
-        self.selection = []  # type: List[str]
+        self.selection: List[str] = []
 
     def _on_enter(self):
         self.selection = _cmds.ls(sl=True)
