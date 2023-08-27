@@ -1,9 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
 from typing import *
-from six import *
-from six.moves import *
-
 import os
 
 from ..pyside_module import *
@@ -23,28 +19,23 @@ class FileSelector(QWidget):
     selection_changed = Signal()
 
     @property
-    def selected_paths(self):
-        # type: () -> List[str]
+    def selected_paths(self) -> List[str]:
         text = self.__file_path.text()
         return text.split(os.pathsep) if os.pathsep in text else [text]
 
     @selected_paths.setter
-    def selected_paths(self, value):
-        # type: (List[str]) -> NoReturn
+    def selected_paths(self, value: List[str]) -> None:
         self.__file_path.setText(os.pathsep.join(value))
 
     @property
-    def readonly(self):
-        # type: () -> bool
+    def readonly(self) -> bool:
         return self.__file_path.isReadOnly()
 
     @readonly.setter
-    def readonly(self, value):
-        # type: (bool) -> NoReturn
+    def readonly(self, value: bool) -> None:
         self.__file_path.setReadOnly(value)
 
-    def __init__(self, parent=None):
-        # type: (str, QObject) -> NoReturn
+    def __init__(self, parent: Optional[QObject] = None) -> None:
         super(FileSelector, self).__init__(parent)
 
         self.accept_mode = FileSelector.ACCEPT_OPEN
@@ -69,7 +60,7 @@ class FileSelector(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
-    def __select_path(self):
+    def __select_path(self) -> None:
         dialog = QFileDialog(self)
 
         if self.accept_mode == FileSelector.ACCEPT_OPEN:

@@ -1,8 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
 from typing import *
-from six import *
-from six.moves import *
 
 from ..pyside_module import *
 
@@ -21,18 +18,15 @@ def stretch():
     return _stretch_instance
 
 
-def hbox(*items, **kwargs):
-    # type: (List[TLayoutItem], Any) -> QHBoxLayout
+def hbox(*items: *TLayoutItem, **kwargs) -> QHBoxLayout:
     return _box(QHBoxLayout, items, kwargs)
 
 
-def vbox(*items, **kwargs):
-    # type: (List[TLayoutItem], Any) -> QVBoxLayout
+def vbox(*items: *TLayoutItem, **kwargs) -> QVBoxLayout:
     return _box(QVBoxLayout, items, kwargs)
 
 
-def _box(cls, items, kwargs):
-    # type: (Type, List[TLayoutItem], Dict[str, Any]) -> NoReturn
+def _box(cls: Type[QVBoxLayout, QHBoxLayout], items: Iterable[TLayoutItem], kwargs: Dict[str, Any]) -> QBoxLayout:
     box = cls()
     for item in items:
         if isinstance(item, QWidget):
@@ -54,8 +48,7 @@ def _box(cls, items, kwargs):
     return box
 
 
-def delete_layout_children(layout):
-    # type: (QLayout) -> QLayout
+def delete_layout_children(layout: QLayout) -> QLayout:
     if layout.count() == 0:
         return layout
 
@@ -78,8 +71,7 @@ def delete_layout_children(layout):
     return layout
 
 
-def delete_layout_item_by_index(layout, index):
-    # type: (QLayout, int) -> bool
+def delete_layout_item_by_index(layout: QLayout, index: int) -> bool:
     item = layout.takeAt(index)
     if item.widget() is not None:
         item.widget().deleteLater()
@@ -88,10 +80,9 @@ def delete_layout_item_by_index(layout, index):
     return True
 
 
-def delete_layout_item(layout, predicate):
-    # type: (QLayout, Callable[[QObject], bool]) -> bool
+def delete_layout_item(layout: QLayout, predicate: Callable[[QObject], bool]) -> bool:
     delete_index = -1
-    for i in xrange(layout.count()):
+    for i in range(layout.count()):
         child = layout.itemAt(i)
         if predicate(child):
             delete_index = i

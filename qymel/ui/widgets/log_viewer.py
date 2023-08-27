@@ -1,8 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
 from typing import *
-from six import *
-from six.moves import *
 
 import logging
 import datetime
@@ -34,16 +31,15 @@ class LogAutoFlushScope(_scopes.Scope):
     >>>     logger.warning('warning')
     """
 
-    def __init__(self, enable_auto_flush=True):
-        # type: (bool) -> NoReturn
+    def __init__(self, enable_auto_flush: bool = True) -> None:
         super(LogAutoFlushScope, self).__init__()
         self.__scoped_value = enable_auto_flush
         self.__current_value = LoggingContext.auto_flush
 
-    def _on_enter(self):
+    def _on_enter(self) -> None:
         LoggingContext.auto_flush = self.__scoped_value
 
-    def _on_exit(self):
+    def _on_exit(self) -> None:
         LoggingContext.auto_flush = self.__current_value
 
 
@@ -55,8 +51,7 @@ class LogViewer(QWidget):
     >>> viewer.show()
     """
 
-    def __init__(self, max_blocks=1000, parent=None):
-        # type: (int, QObject) -> NoReturn
+    def __init__(self, max_blocks: int = 1000, parent: Optional[QObject] = None) -> None:
         super(LogViewer, self).__init__(parent)
 
         self.debug_format = QTextCharFormat()
@@ -86,42 +81,33 @@ class LogViewer(QWidget):
         editor_layout.addWidget(self._editor)
         self.setLayout(editor_layout)
 
-    def create_handler(self, level=logging.NOTSET):
-        # type: (int) -> logging.Handler
+    def create_handler(self, level: int = logging.NOTSET) -> logging.Handler:
         return LogHandler(self, level)
 
-    def clear(self):
-        # type: () -> NoReturn
+    def clear(self) -> None:
         self._editor.clear()
 
-    def flush(self):
-        # type: () -> NoReturn
+    def flush(self) -> None:
         cursor = self._editor.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
         QApplication.processEvents()
 
-    def append_debug_line(self, text):
-        # type: (text_type) -> NoReturn
+    def append_debug_line(self, text: str) -> None:
         self._append(u'{}\n'.format(text), self.debug_format)
 
-    def append_info_line(self, text):
-        # type: (text_type) -> NoReturn
+    def append_info_line(self, text: str) -> None:
         self._append(u'{}\n'.format(text), self.info_format)
 
-    def append_warning_line(self, text):
-        # type: (text_type) -> NoReturn
+    def append_warning_line(self, text: str) -> None:
         self._append(u'{}\n'.format(text), self.warning_format)
 
-    def append_error_line(self, text):
-        # type: (text_type) -> NoReturn
+    def append_error_line(self, text: str) -> None:
         self._append(u'{}\n'.format(text), self.error_format)
 
-    def append_critical_line(self, text):
-        # type: (text_type) -> NoReturn
+    def append_critical_line(self, text: str) -> None:
         self._append(u'{}\n'.format(text), self.critical_format)
 
-    def _append(self, text, char_format):
-        # type: (text_type, text_type) -> NoReturn
+    def _append(self, text: str, char_format: str) -> None:
         if len(text) == 0:
             return
 
@@ -141,8 +127,7 @@ class LogViewer(QWidget):
 
 class LogTextEdit(QTextEdit):
 
-    def __init__(self, max_blocks=0, parent=None):
-        # type: (int, QObject) -> NoReturn
+    def __init__(self, max_blocks: int = 0, parent: Optional[QObject] = None) -> None:
         super(LogTextEdit, self).__init__(parent)
         self.setReadOnly(True)
         self.textChanged.connect(self.__scroll_to_end)
@@ -150,8 +135,7 @@ class LogTextEdit(QTextEdit):
         if max_blocks > 0:
             self.document().setMaximumBlockCount(max_blocks + 1)
 
-    def contextMenuEvent(self, e):
-        # type: (QContextMenuEvent) -> NoReturn
+    def contextMenuEvent(self, e: QContextMenuEvent) -> None:
         menu = self.createStandardContextMenu()  # type: QMenu
         menu.addSeparator()
         clear_action = menu.addAction('Clear')
@@ -160,20 +144,18 @@ class LogTextEdit(QTextEdit):
         if action == clear_action:
             self.clear()
 
-    def __scroll_to_end(self):
+    def __scroll_to_end(self) -> None:
         scroll_bar = self.verticalScrollBar()
         scroll_bar.setValue(scroll_bar.maximum())
 
 
 class LogHandler(logging.Handler):
 
-    def __init__(self, view, level):
-        # type: (LogViewer, int) -> NoReturn
+    def __init__(self, view: LogViewer, level: int) -> None:
         super(LogHandler, self).__init__(level)
         self.__view = view
 
-    def emit(self, record):
-        # type: (logging.LogRecord) -> NoReturn
+    def emit(self, record: logging.LogRecord) -> None:
         try:
             if record.levelno == logging.DEBUG:
                 self.__view.append_debug_line(record.getMessage())

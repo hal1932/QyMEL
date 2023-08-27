@@ -1,9 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
 from typing import *
-from six import *
-from six.moves import *
-
 import sys
 
 try:
@@ -21,15 +17,14 @@ from .objects import serializer as _serializer
 class AppBase(object):
 
     @property
-    def window(self):
-        # type: () -> QMainWindow
+    def window(self) -> QMainWindow:
         return self._window
 
-    def __init__(self):
-        self._app = None  # type: Optional[QApplication]
-        self._window = None  # type: Optional[QMainWindow]
+    def __init__(self) -> None:
+        self._app: Optional[QApplication] = None
+        self._window: Optional[QMainWindow] = None
 
-    def execute(self):
+    def execute(self) -> None:
         self._app = self._setup_application()
 
         self._initialize(self._app)
@@ -42,36 +37,32 @@ class AppBase(object):
 
         self._exec_application_main_loop(self._app)
 
-    def _setup_application(self):
-        # type: () -> QApplication
+    def _setup_application(self) -> QApplication:
         app = QApplication.instance()
         if not _MAYA:
             if app is None:
                 app = QApplication(sys.argv)
         return app
 
-    def _exec_application_main_loop(self, app):
-        # type: (QApplication) -> NoReturn
+    def _exec_application_main_loop(self, app: QApplication) -> None:
         ret = app.exec_()
         self._finalize()
         if not _MAYA:
             sys.exit(ret)
 
-    def _initialize(self, app):
-        # type: (QApplication) -> NoReturn
+    def _initialize(self, app: QApplication) -> None:
         pass
 
-    def _create_window(self):
-        # type: () -> QMainWindow
+    def _create_window(self) -> QMainWindow:
         pass
 
-    def _on_before_setup_ui(self):
+    def _on_before_setup_ui(self) -> None:
         pass
 
-    def _on_after_setup_ui(self):
+    def _on_after_setup_ui(self) -> None:
         pass
 
-    def _finalize(self):
+    def _finalize(self) -> None:
         pass
 
 
@@ -85,18 +76,15 @@ class _MainWindowBase(QMainWindow, _serializer.SerializableObjectMixin):
     after_close = Signal()
 
     @property
-    def absolute_name(self):
-        # type: () -> str
-        return '{}.{}'.format(self.__module__, self.__class__.__name__)
+    def absolute_name(self) -> str:
+        return f'{self.__module__}.{self.__class__.__name__}'
 
-    def __init__(self, parent=None):
-        # type: (QObject) -> NoReturn
+    def __init__(self, parent: Optional[QObject] = None) -> None:
         super(_MainWindowBase, self).__init__(parent)
         self.setObjectName(self.absolute_name)
         self.setAttribute(Qt.WA_DeleteOnClose)
 
-    def setup_ui(self):
-        # type: () -> MainWindowBase
+    def setup_ui(self) -> 'MainWindowBase':
         widget = self.centralWidget()
         if widget is not None:
             widget.deleteLater()
@@ -110,28 +98,23 @@ class _MainWindowBase(QMainWindow, _serializer.SerializableObjectMixin):
 
         return self
 
-    def showEvent(self, _):
-        # type: (QShowEvent) -> NoReturn
+    def showEvent(self, _: QShowEvent) -> None:
         self.after_show.emit()
 
-    def closeEvent(self, _):
-        # type: (QCloseEvent) -> NoReturn
+    def closeEvent(self, _: QCloseEvent) -> None:
         self.before_shutdown_ui.emit()
         self._shutdown_ui()
         self.after_shutdown_ui.emit()
 
         self.after_close.emit()
 
-    def screen(self):
-        # type: () -> QScreen
+    def screen(self) -> QScreen:
         return self.window().windowHandle().screen()
 
-    def default_geometry(self):
-        # type: () -> QRect
+    def default_geometry(self) -> QRect:
         return QRect(self.screen().geometry().center(), QSize(0, 0))
 
-    def enable_serialzie(self, settings=None):
-        # type: (QSettings) -> NoReturn
+    def enable_serialzie(self, settings: QSettings) -> None:
         serializer = _serializer.ObjectSerializer()
 
         def _restore_ui():
@@ -144,52 +127,38 @@ class _MainWindowBase(QMainWindow, _serializer.SerializableObjectMixin):
         self.after_setup_ui.connect(_restore_ui)
         self.before_shutdown_ui.connect(_store_ui)
 
-    def serialize(self, settings):
-        # type: (QSettings) -> NoReturn
+    def serialize(self, settings: QSettings) -> None:
         settings.setValue('_geom', self.geometry())
         self._serialize(settings)
 
-    def deserialize(self, settings):
-        # type: (QSettings) -> NoReturn
+    def deserialize(self, settings: QSettings) -> None:
         geom = settings.value('_geom')
         if geom:
             self.setGeometry(geom)
         self._deserialize(settings)
 
-    def screen(self):
-        # type: () -> QScreen
-        return self.parent().windowHandle().screen()
-
-    def _setup_ui(self, central_widget):
-        # type: (QWidget) -> NoReturn
+    def _setup_ui(self, central_widget: QWidget) -> None:
         pass
 
-    def _shutdown_ui(self):
+    def _shutdown_ui(self) -> None:
         pass
 
-    def _serialize(self, settings):
-        # type: (QSettings) -> None
+    def _serialize(self, settings: QSettings) -> None:
         pass
 
-    def _deserialize(self, settings):
-        # type: (QSettings) -> None
+    def _deserialize(self, settings: QSettings) -> None:
         pass
 
 
 if _MAYA:
-    def get_maya_window():
-        # type: () -> QWidget
-        maya_main_window_ptr = _omui.MQtUtil.mainWindow()
-        if sys.version_info.major == 2:
-            maya_main_window_ptr = long(maya_main_window_ptr)
-        else:
-            maya_main_window_ptr = int(maya_main_window_ptr)
+    def get_maya_window() -> QWidget:
+        maya_main_window_ptr = int(_omui.MQtUtil.mainWindow())
         return wrapInstance(maya_main_window_ptr, QWidget)
 
 
     class MainWindowBase(_MainWindowBase, _MayaWidgetBaseMixin):
 
-        def __init__(self, parent=None):
+        def __init__(self, parent: Optional[QObject] = None) -> None:
             maya_window = get_maya_window()
 
             for child in maya_window.children():
@@ -206,26 +175,21 @@ else:
 class ToolMainWindowBase(MainWindowBase):
 
     @property
-    def execute_and_close_label(self):
-        # type: () -> text_type
+    def execute_and_close_label(self) -> str:
         return u'適用して閉じる'
 
     @property
-    def execute_label(self):
-        # type: () -> text_type
+    def execute_label(self) -> str:
         return u'適用'
 
     @property
-    def close_label(self):
-        # type: () -> text_type
+    def close_label(self) -> str:
         return u'閉じる'
 
-    def __init__(self, parent=None):
-        # type: (QObject) -> NoReturn
+    def __init__(self, parent: Optional[QObject] = None) -> None:
         super(ToolMainWindowBase, self).__init__(parent=parent)
 
-    def setup_ui(self):
-        # type: () -> ToolMainWindowBase
+    def setup_ui(self) -> 'ToolMainWindowBase':
         widget = self.centralWidget()
         if widget is not None:
             widget.deleteLater()
@@ -259,14 +223,13 @@ class ToolMainWindowBase(MainWindowBase):
 
         return self
 
-    def _execute(self):
-        # type: () -> bool
+    def _execute(self) -> bool:
         return True
 
-    def _execute_and_close(self):
+    def _execute_and_close(self) -> None:
         if self._execute() == False:
             return
         self._close()
 
-    def _close(self):
+    def _close(self) -> None:
         self.close()

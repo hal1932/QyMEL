@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
-
 from qymel.ui.app import *
 from qymel.ui.layouts import *
 from qymel.ui.widgets.models import *

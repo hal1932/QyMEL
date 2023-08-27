@@ -6,6 +6,9 @@ import functools
 from ..pyside_module import *
 
 
+_TObject = TypeVar('_TObject', bound=QObject)
+
+
 class EventProxy(object):
     """
     btn1 = EventProxy.instantiate(QPushButton, 'TEST1')
@@ -28,14 +31,14 @@ class EventProxy(object):
     __cls_indices: Dict[str, int] = {}
 
     @staticmethod
-    def create(cls: type) -> type:
+    def create(cls: Type[_TObject]) -> Type[_TObject]:
         cls_name = EventProxy.__get_new_cls_name(cls)
         proxy = type(cls_name, tuple([EventProxy, cls]), {})
         setattr(proxy, '__target_cls', cls)
         return proxy
 
     @staticmethod
-    def instantiate(cls: type, *args, **kwargs) -> 'EventProxy':
+    def instantiate(cls: Type[_TObject], *args, **kwargs) -> _TObject:
         proxy = EventProxy.create(cls)
         return proxy(*args, **kwargs)
 

@@ -4,8 +4,7 @@ import os
 from .pyside_module import *
 
 
-def get_or_create(project_name, settings_name):
-    # type: (str) -> QSettings
+def get_or_create(project_name: str, settings_name: str) -> QSettings:
     dir = os.path.join(os.environ['APPDATA'], project_name)
     if not os.path.isdir(dir):
         os.makedirs(dir)

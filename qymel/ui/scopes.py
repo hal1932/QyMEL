@@ -1,9 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
 from typing import *
-from six import *
-from six.moves import *
-
 import functools
 
 from ..core import scopes as _scopes
@@ -12,10 +8,10 @@ from .pyside_module import *
 
 class WaitCursorScope(_scopes.Scope):
 
-    def _on_enter(self):
+    def _on_enter(self) -> None:
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
-    def _on_exit(self):
+    def _on_exit(self) -> None:
         QApplication.restoreOverrideCursor()
 
 
@@ -29,13 +25,12 @@ def wait_cursor_scope(func):
 
 class KeepRowSelectionScope(_scopes.Scope):
 
-    def __init__(self, view):
-        # type: (Union[QAbstractItemView]) -> NoReturn
+    def __init__(self, view: QAbstractItemView) -> None:
         super(KeepRowSelectionScope, self).__init__()
         self.__view = view
-        self.__selection = None  # type: List[QModelIndex]
+        self.__selection: List[QModelIndex] = None
 
-    def _on_enter(self):
+    def _on_enter(self) -> None:
         indices = self.__view.selectedIndexes()
 
         model = self.__view.model()
@@ -44,7 +39,7 @@ class KeepRowSelectionScope(_scopes.Scope):
 
         self.__selection = indices
 
-    def _on_exit(self):
+    def _on_exit(self) -> None:
         if self.__selection is None:
             return
 

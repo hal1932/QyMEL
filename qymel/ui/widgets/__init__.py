@@ -1,53 +1,44 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
 from typing import *
-from six import *
-from six.moves import *
 
 from ..pyside_module import *
 
 
-def hline(parent=None):
-    # type: (QObject) -> QFrame
+def hline(parent: Optional[QObject] = None) -> QFrame:
     frame = QFrame(parent)
     frame.setFrameShape(QFrame.HLine)
     frame.setFrameShadow(QFrame.Sunken)
     return frame
 
 
-def vline(parent=None):
-    # type: (QObject) -> QFrame
+def vline(parent: Optional[QObject] = None) -> QFrame:
     frame = QFrame(parent)
     frame.setFrameShape(QFrame.VLine)
     frame.setFrameShadow(QFrame.Sunken)
     return frame
 
 
-def hseparator(parent=None):
-    # type: (QObject) -> QFrame
+def hseparator(parent: Optional[QObject] = None) -> QFrame:
     frame = QFrame(parent)
     frame.setFrameShape(QFrame.HLine)
     frame.setFrameShadow(QFrame.Sunken)
     return frame
 
 
-def vseparator(parent=None):
-    # type: (QObject) -> QFrame
+def vseparator(parent: Optional[QObject] = None) -> QFrame:
     frame = QFrame(parent)
     frame.setFrameShape(QFrame.VLine)
     frame.setFrameShadow(QFrame.Sunken)
     return frame
 
 
-def groupbox(title, layout, parent=None):
-    # type: (text_type, QLayout, QObject) -> QGroupBox
+def groupbox(title: str, layout: QLayout, parent: Optional[QObject] = None) -> QGroupBox:
     box = QGroupBox(title, parent)
     box.setLayout(layout)
     return box
 
 
-def scroll_area(layout, parent=None):
-    # type: (QLayout, QObject) -> QScrollArea
+def scroll_area(layout: QLayout, parent: Optional[QObject] = None) -> QScrollArea:
     area = QScrollArea(parent)
     widget = QWidget(area)
     widget.setLayout(layout)
@@ -56,16 +47,14 @@ def scroll_area(layout, parent=None):
     return area
 
 
-def image(pixmap_or_filepath, parent=None):
-    # type: (Union[QPixmap, text_type], QObject) -> QLabel
+def image(pixmap_or_filepath: Union[QPixmap, str], parent: Optional[QObject] = None) -> QLabel:
     label = QLabel(parent)
     pix = pixmap_or_filepath if isinstance(pixmap_or_filepath, QPixmap) else QPixmap(pixmap_or_filepath)
     label.setPixmap(pix)
     return label
 
 
-def image_button(pixmap_or_filepath, parent=None):
-    # type: (Union[QPixmap, text_type], QObject) -> QPushButton
+def image_button(pixmap_or_filepath: Union[QPixmap, str], parent: Optional[QObject] = None) -> QPushButton:
     button = QPushButton(parent)
     pix = pixmap_or_filepath if isinstance(pixmap_or_filepath, QPixmap) else QPixmap(pixmap_or_filepath)
     icon = QIcon(pix)
@@ -75,8 +64,7 @@ def image_button(pixmap_or_filepath, parent=None):
     return button
 
 
-def desktop():
-    # type: () -> QDesktopWidget
+def desktop() -> QDesktopWidget:
     app = QApplication.instance()
     return app.desktop()
 

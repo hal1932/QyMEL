@@ -1,7 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
 from typing import *
-
 import enum
 
 from ..pyside_module import *
@@ -28,26 +26,23 @@ class ExpandableSplitter(QSplitter):
 
         self.splitterMoved.connect(_splitter_moved)
 
-    def createHandle(self):
-        # type: () -> QSplitterHandle
+    def createHandle(self) -> QSplitterHandle:
         return ExpandableSplitterHandle(self.orientation(), self)
 
 
 class ExpandableSplitterHandle(QSplitterHandle):
 
-    def __init__(self, orientation, parent=None):
-        # type: (Qt.Orientation, QSplitter) -> NoReturn
+    def __init__(self, orientation: Qt.Orientation, parent: Optional[QSplitter] = None) -> None:
         super(ExpandableSplitterHandle, self).__init__(orientation, parent)
         self.setMouseTracking(True)
 
-        self.__expanders = []  # type: List[Expander]
-        self.__last_pos = None
-        self.__range = tuple()  # type: Tuple[int, int]
+        self.__expanders: List[Expander] = []
+        self.__last_pos: Optional[int] = None
+        self.__range: Tuple[int, int] = tuple()
 
         self.setOrientation(orientation)
 
-    def on_splitter_moved(self, pos):
-        # type: (int) -> NoReturn
+    def on_splitter_moved(self, pos: int) -> None:
         if pos == 0:
             for expander in self.__expanders:
                 disabled = expander.direction == ExpandDirection.LEFT or expander.direction == ExpandDirection.UPPER
@@ -60,7 +55,7 @@ class ExpandableSplitterHandle(QSplitterHandle):
             for expander in self.__expanders:
                 expander.enable(True)
 
-    def setOrientation(self, orientation):
+    def setOrientation(self, orientation: Qt.Orientation) -> None:
         super(ExpandableSplitterHandle, self).setOrientation(orientation)
 
         if orientation == Qt.Horizontal:
@@ -68,8 +63,7 @@ class ExpandableSplitterHandle(QSplitterHandle):
         else:
             self.__expanders = [Expander(ExpandDirection.LOWER), Expander(ExpandDirection.UPPER)]
 
-    def resizeEvent(self, event):
-        # type: (QResizeEvent) -> NoReturn
+    def resizeEvent(self, event: QResizeEvent) -> None:
         super(ExpandableSplitterHandle, self).resizeEvent(event)
 
         for expander in self.__expanders:
@@ -78,8 +72,7 @@ class ExpandableSplitterHandle(QSplitterHandle):
         index = self.splitter().indexOf(self)
         self.__range = self.splitter().getRange(index)
 
-    def paintEvent(self, event):
-        # type: (QPaintEvent) -> NoReturn
+    def paintEvent(self, event: QPaintEvent) -> None:
         painter = QPainter(self)
         for expander in self.__expanders:
             option = QStyleOptionButton()
@@ -88,8 +81,7 @@ class ExpandableSplitterHandle(QSplitterHandle):
             self.style().drawControl(QStyle.CE_PushButton, option, painter, self)
         painter.end()
 
-    def mouseMoveEvent(self, event):
-        # type: (QMouseEvent) -> NoReturn
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         super(ExpandableSplitterHandle, self).mouseMoveEvent(event)
 
         QApplication.restoreOverrideCursor()
@@ -104,24 +96,21 @@ class ExpandableSplitterHandle(QSplitterHandle):
         if need_to_repainted:
             self.repaint()
 
-    def leaveEvent(self, event):
-        # type: (QEvent) -> NoReturn
+    def leaveEvent(self, event: QEvent) -> None:
         super(ExpandableSplitterHandle, self).leaveEvent(event)
 
         if any(expander.activate(False) for expander in self.__expanders):
             self.repaint()
         QApplication.restoreOverrideCursor()
 
-    def mousePressEvent(self, event):
-        # type: (QMouseEvent) -> NoReturn
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         super(ExpandableSplitterHandle, self).mousePressEvent(event)
 
         pos = self.__current_position()
         if self.__range[0] < pos < self.__range[1]:
             self.__last_pos = pos
 
-    def mouseReleaseEvent(self, event):
-        # type: (QMouseEvent) -> NoReturn
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         super(ExpandableSplitterHandle, self).mouseReleaseEvent(event)
 
         current_pos = self.__current_position()
@@ -175,8 +164,7 @@ class ExpandableSplitterHandle(QSplitterHandle):
 
                 expander.enable(enabled)
 
-    def __current_position(self):
-        # type: () -> int
+    def __current_position(self) -> None:
         pos = self.pos()
         if self.orientation() == Qt.Horizontal:
             return pos.x()
@@ -193,21 +181,18 @@ class ExpandDirection(enum.Enum):
 
 class Expander(object):
 
-    ARROW_PIXMAP = None  # type: Optional[QPixmap]
+    ARROW_PIXMAP: Optional[QPixmap] = None
     ARROW_SIZE = QSize(16, 16)
 
     @property
-    def direction(self):
-        # type: () -> ExpandDirection
+    def direction(self) -> ExpandDirection:
         return self.__direction
 
     @property
-    def is_enabled(self):
-        # type: () -> bool
+    def is_enabled(self) -> bool:
         return self.__enabled
 
-    def __init__(self, direction):
-        # type: (ExpandDirection) -> NoReturn
+    def __init__(self, direction: ExpandDirection) -> None:
         if not Expander.ARROW_PIXMAP:
             Expander.ARROW_PIXMAP = QApplication.style().standardIcon(QStyle.SP_MediaPlay).pixmap(Expander.ARROW_SIZE)
 
@@ -229,47 +214,45 @@ class Expander(object):
         self.__enabled = True
         self.__activated = False
 
-    def resize(self, handle_rect):
-        # type: (QRect) -> NoReturn
+    def resize(self, handle_rect: QRect) -> None:
         hw = handle_rect.width()
         hh = handle_rect.height()
 
         self.__icon_size = QSize(hw, hh)
 
+        hw_4 = int(hw / 4)
+        hh_4 = int(hh / 4)
+
         if self.__direction == ExpandDirection.RIGHT:
-            self.__rect = QRect(QPoint(0, hh / 4 * 1), QSize(hw, hh / 4))
+            self.__rect = QRect(QPoint(0, hh_4 * 1), QSize(hw, hh_4))
             return
 
         if self.__direction == ExpandDirection.LEFT:
-            self.__rect = QRect(QPoint(0, hh / 4 * 2), QSize(hw, hh / 4))
+            self.__rect = QRect(QPoint(0, hh_4 * 2), QSize(hw, hh_4))
             return
 
         if self.__direction == ExpandDirection.UPPER:
-            self.__rect = QRect(QPoint(hw / 4 * 1, 0), QSize(hw / 4, hh))
+            self.__rect = QRect(QPoint(hw_4 * 1, 0), QSize(hw_4, hh))
             return
 
         if self.__direction == ExpandDirection.LOWER:
-            self.__rect = QRect(QPoint(hw / 4 * 2, 0), QSize(hw / 4, hh))
+            self.__rect = QRect(QPoint(hw_4 * 2, 0), QSize(hw_4, hh))
             return
 
-    def contains(self, point):
-        # type: (QPoint) -> bool
+    def contains(self, point: QPoint) -> bool:
         return self.__rect.contains(point)
 
-    def activate(self, value):
-        # type: (bool) -> bool
+    def activate(self, value: bool) -> bool:
         updated = value != self.__activated
         self.__activated = value
         return updated
 
-    def enable(self, value):
-        # type: (bool) -> bool
+    def enable(self, value: bool) -> bool:
         updated = value != self.__enabled
         self.__enabled = value
         return updated
 
-    def apply_to(self, option):
-        # type: (QStyleOptionButton) -> NoReturn
+    def apply_to(self, option: QStyleOptionButton) -> None:
         option.rect = self.__rect
         option.icon = self.__icon
         option.iconSize = self.__icon_size

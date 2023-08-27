@@ -1,8 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
 from typing import *
-from six import *
-from six.moves import *
 
 from ..pyside_module import *
 from . import query as _query
@@ -10,12 +7,10 @@ from . import query as _query
 
 class SerializableObjectMixin(object):
 
-    def serialize(self, settings):
-        # type: (QSettings) -> NoReturn
+    def serialize(self, settings: QSettings) -> None:
         pass
 
-    def deserialize(self, settings):
-        # type: (QSettings) -> NoReturn
+    def deserialize(self, settings: QSettings) -> None:
         pass
 
 
@@ -53,38 +48,31 @@ class ObjectSerializer(object):
     >>> serializer.deserialize(settings, root)
     """
 
-    def serialize(self, source, destination):
-        # type: (QObject, QSettings) -> NoReturn
-        def _serialize(node, path):
-            # type: (QObject, text_type) -> NoReturn
+    def serialize(self, source: QObject, destination: QSettings) -> None:
+        def _serialize(node: QObject, path: str):
             destination.beginGroup(path)
             node.serialize(destination)
             destination.endGroup()
         self._walk_serializables(source, _serialize)
 
-    def deserialize(self, settings, destination):
-        # type: (QSettings, QObject) -> NoReturn
-        def _deserialize(node, path):
-            # type: (QObject, text_type) -> NoReturn
+    def deserialize(self, settings: QSettings, destination: QObject) -> None:
+        def _deserialize(node: QObject, path: str):
             settings.beginGroup(path)
             node.deserialize(settings)
             settings.endGroup()
         self._walk_serializables(destination, _deserialize)
 
-    def _walk_serializables(self, root, callback):
-        # type: (QObject, Callable[[SerializableObjectMixin, text_type]]) -> NoReturn
+    def _walk_serializables(self, root: QObject, callback: Callable[[QObject, str], None]) -> None:
         paths = {root: root.__class__.__name__}
         children = {}  # type: Dict[QObject, List[QObject]]
 
-        def _is_serializable(node):
-            # type: (QObject) -> bool
+        def _is_serializable(node: QObject) -> bool:
             return isinstance(node, SerializableObjectMixin)
 
-        def _fetch_path(node):
-            # type: (QObject) -> QObject
+        def _fetch_path(node: QObject) -> QObject:
             parent = node.parent()
             parent_path = paths[parent]
-            siblings = children.get(parent, _query.ObjectQuery(parent).descendents(_is_serializable))
+            siblings = children.get(parent, _query.ObjectQuery(parent).descendants(_is_serializable))
             node_path = '{}/{}_{}'.format(parent_path, node.__class__.__name__, siblings.index(node))
             paths[node] = node_path
             return node
@@ -93,5 +81,5 @@ class ObjectSerializer(object):
             callback(root, paths[root])
 
         query = _query.ObjectQuery(root)
-        for child in query.idescendents(predicate=_is_serializable, selector=_fetch_path):
+        for child in query.idescendants(predicate=_is_serializable, selector=_fetch_path):
             callback(child, paths[child])

@@ -8,9 +8,8 @@ class Clickable(QWidget):
 
     clicked = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QObject] = None) -> None:
         super(Clickable, self).__init__(parent)
 
-    def mouseReleaseEvent(self, e):
-        # type: (QMouseEvent) -> NoReturn
+    def mouseReleaseEvent(self, e: QMouseEvent) -> None:
         self.clicked.emit()

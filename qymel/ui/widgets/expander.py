@@ -1,7 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
 from typing import *
-from six.moves import *
 
 from ..pyside_module import *
 from .. import layouts as _layouts
@@ -31,17 +29,14 @@ class Expander(QFrame):
     """
 
     @property
-    def header_layout(self):
-        # type: () -> QLayout
+    def header_layout(self) -> QLayout:
         return self._header_layout
 
     @property
-    def content_layout(self):
-        # type: () -> QLayout
+    def content_layout(self) -> QLayout:
         return self._content_layout
 
-    def __init__(self, parent=None):
-        # type: (QObject) -> NoReturn
+    def __init__(self, parent: Optional[QObject] = None) -> None:
         super(Expander, self).__init__(parent)
 
         toggle_icon = QApplication.style().standardIcon(QStyle.SP_MediaPlay)
@@ -75,8 +70,7 @@ class Expander(QFrame):
 
         self._expanded = False
 
-    def set_header_widget(self, header):
-        # type: (QWidget) -> NoReturn
+    def set_header_widget(self, header: QWidget) -> None:
         layout = self._header_layout
         _layouts.delete_layout_children(layout)
 
@@ -86,8 +80,7 @@ class Expander(QFrame):
 
         self._update_layout()
 
-    def set_content_widget(self, content):
-        # type: (QWidget) -> NoReturn
+    def set_content_widget(self, content: QWidget) -> None:
         layout = self._content_layout
         _layouts.delete_layout_children(layout)
 
@@ -96,13 +89,13 @@ class Expander(QFrame):
 
         self._update_layout()
 
-    def toggle(self):
+    def toggle(self) -> None:
         if self._expanded:
             self.collapse()
         else:
             self.expand()
 
-    def expand(self):
+    def expand(self) -> None:
         collapsed_height = self.sizeHint().height() - self._content.maximumHeight()
 
         content_layout = self._content.layout()
@@ -120,7 +113,7 @@ class Expander(QFrame):
 
         self._expanded = True
 
-    def collapse(self):
+    def collapse(self) -> None:
         collapsed_height = self.sizeHint().height() - self._content.maximumHeight()
 
         self._toggle_image.setPixmap(self._toggle_pix)
@@ -130,7 +123,7 @@ class Expander(QFrame):
 
         self._expanded = False
 
-    def _update_layout(self):
+    def _update_layout(self) -> None:
         if self._expanded:
             self.expand()
         else:
