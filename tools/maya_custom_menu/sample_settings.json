@@ -1,0 +1,12 @@
+[
+    {
+        "label": "TestScripts1",
+        "directory_path": "sample_scripts/TestScripts1",
+        "recursive": true
+    },
+    {
+        "label": "TestScripts2",
+        "directory_path": "sample_scripts/TestScripts2",
+        "recursive": true
+    }
+]
