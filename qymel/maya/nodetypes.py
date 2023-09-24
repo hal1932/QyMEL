@@ -207,7 +207,7 @@ class DisplayLayer(DependNode[TFnDependNode], Generic[TFnDependNode]):
         node_paths = [node.mel_object for node in nodes]
         _cmds.editDisplayLayerMembers(self.mel_object, *node_paths, noRecurse=no_recurse)
 
-    def remove(self, node: Sequence['DagNode'], no_recurse: bool = True) -> None:
+    def remove(self, node: 'DagNode', no_recurse: bool = True) -> None:
         _cmds.editDisplayLayerMembers('defaultLayer', node.mel_object, noRecurse=no_recurse)
 
     def clear(self) -> None:
