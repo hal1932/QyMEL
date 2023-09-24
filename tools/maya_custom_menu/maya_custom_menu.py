@@ -105,6 +105,10 @@ def _load_settings(settings_path: str) -> List[_MenuItem]:
         _cmds.error(f'failed to load settings: {e}')
         return []
 
+    for item in items:
+        item.directory_path = os.path.expandvars(item.directory_path)
+        item.directory_path = os.path.expanduser(item.directory_path)
+
     errors_notfound: List[str] = []
 
     settings_root = os.path.dirname(settings_path)
