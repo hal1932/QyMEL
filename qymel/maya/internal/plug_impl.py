@@ -1,15 +1,13 @@
 # coding: utf-8
-from __future__ import absolute_import, print_function, division
 from typing import *
-from six import *
-from six.moves import *
 
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 
+from .types import *
 
-def plug_get_impl(mplug):
-    # type: (_om2.MPlug) -> Any
+
+def plug_get_impl(mplug: _om2.MPlug) -> Any:
     mobj = mplug.attribute()
     api_type = mobj.apiType()
 
@@ -43,8 +41,7 @@ def plug_get_impl(mplug):
         return _cmds.getAttr(mplug.name())
 
 
-def _get_component_list_data(mplug):
-    # type: (_om2.MPlug) -> Tuple[int]
+def _get_component_list_data(mplug: _om2.MPlug) -> Tuple[Any]:
     mfn = _om2.MFnComponentListData(mplug.asMObject())
     return tuple(mfn.get(i) for i in range(mfn.length()))
 

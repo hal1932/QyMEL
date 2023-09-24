@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import annotations
 from typing import *
 import sys
 import inspect
@@ -6,16 +7,17 @@ import inspect
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 
+from .types import *
+
 
 class NodeFactory(object):
 
-    _cls_dict = {}  # type: Dict[str, type]
-    _default_cls_dict = {}  # type: Dict[str, type]
-    _dynamic_cls_cache = {}  # type: Dict[str, type]
+    _cls_dict: Dict[str, Type[TDependNode]] = {}
+    _default_cls_dict: Dict[str, Type[TDependNode]] = {}
+    _dynamic_cls_cache: Dict[str, Type[TDependNode]] = {}
 
     @staticmethod
-    def register(module_name):
-        # type: (str) -> NoReturn
+    def register(module_name: str) -> None:
         module = sys.modules[module_name]
         for name, symbol in module.__dict__.items():
             if not inspect.isclass(symbol) or not hasattr(symbol, '_mel_type'):
@@ -26,14 +28,12 @@ class NodeFactory(object):
             NodeFactory._cls_dict[mel_type] = symbol
 
     @staticmethod
-    def register_default(node_cls, dag_node_cls):
-        # type: (type, type) -> NoReturn
+    def register_default(node_cls: Type[TDependNode], dag_node_cls: Type[TDependNode]) -> None:
         NodeFactory._default_cls_dict['node'] = node_cls
         NodeFactory._default_cls_dict['dag_node'] = dag_node_cls
 
     @staticmethod
-    def create(mel_type, mobject, mdagpath=None):
-        # type: (str, _om2.MObject, _om2.MDagPath) -> Any
+    def create(mel_type: str, mobject: _om2.MObject, mdagpath: Optional[_om2.MDagPath] = None) -> Optional[TDependNode]:
         if mel_type not in NodeFactory._cls_dict:
             return None
 
@@ -43,9 +43,8 @@ class NodeFactory(object):
         return cls(mobject)
 
     @staticmethod
-    def create_default(mfn, mdagpath=None):
-        # type: (_om2.MFnDependencyNode, Optional[_om2.MDagPath]) -> object
-        mobject = mfn.object()  # type: _om2.MObject
+    def create_default(mfn: _om2.MFnDependencyNode, mdagpath: Optional[_om2.MDagPath] = None) -> TDependNode:
+        mobject = mfn.object()
         cls = NodeFactory.__create_dynamic_node_type(mfn, mobject, mdagpath)
 
         if mobject.hasFn(_om2.MFn.kDagNode) and mdagpath is not None:
@@ -54,8 +53,11 @@ class NodeFactory(object):
         return cls(mobject)
 
     @staticmethod
-    def __create_dynamic_node_type(mfn, mobject, mdagpath=None):
-        # type: (_om2.MFnDependencyNode, _om2.MObject, Optional[_om2.MDagPath]) -> type
+    def __create_dynamic_node_type(
+            mfn: _om2.MFnDependencyNode,
+            mobject: _om2.MObject,
+            mdagpath: Optional[_om2.MDagPath] = None
+    ) -> Type[TDependNode]:
         type_name = mfn.typeName
         cls = NodeFactory._dynamic_cls_cache.get(type_name, None)
         if cls is not None:
@@ -92,28 +94,25 @@ class NodeFactory(object):
 
 class PlugFactory(object):
 
-    _cls = None  # type: type
+    _cls: Optional[Type[TPlug]] = None
 
     @staticmethod
-    def register(cls):
-        # type: (type) -> NoReturn
+    def register(cls: Type[TPlug]) -> None:
         PlugFactory._cls = cls
 
     @staticmethod
-    def create(mplug):
-        # type: (_om2.MPlug) -> object
+    def create(mplug: _om2.MPlug) -> TPlug:
         cls = PlugFactory._cls
         return cls(mplug)
 
 
 class ComponentFactory(object):
 
-    _cls_dict = {}  # type: Dict[_om2.MFn, type]
-    _default_cls = None  # type: type
+    _cls_dict: Dict[_om2.MFn, Type[TComponent]] = {}
+    _default_cls: Optional[Type[TComponent]] = None
 
     @staticmethod
-    def register(module_name):
-        # type: (str) -> NoReturn
+    def register(module_name: str) -> None:
         module = sys.modules[module_name]
         for name, symbol in module.__dict__.items():
             if not inspect.isclass(symbol) or not hasattr(symbol, '_comp_type'):
@@ -122,13 +121,11 @@ class ComponentFactory(object):
             ComponentFactory._cls_dict[comp_type] = symbol
 
     @staticmethod
-    def register_default(cls):
-        # type: (type) -> NoReturn
+    def register_default(cls: Type[TComponent]) -> None:
         ComponentFactory._default_cls = cls
 
     @staticmethod
-    def create(comp_type, mdagpath, mobject):
-        # type: (_om2.MFn, _om2.MDagPath, _om2.MObject) -> object
+    def create(comp_type: _om2.MFn, mdagpath: _om2.MDagPath, mobject: _om2.MObject) -> Optional[TComponent]:
         if comp_type not in ComponentFactory._cls_dict:
             return None
 
@@ -136,8 +133,7 @@ class ComponentFactory(object):
         return cls(mobject, mdagpath)
 
     @staticmethod
-    def create_default(mdagpath, mobject):
-        # type: (_om2.MDagPath, _om2.MObject) -> object
+    def create_default(mdagpath: _om2.MDagPath, mobject: _om2.MObject) -> TComponent:
         cls = ComponentFactory._default_cls
         return cls(mdagpath, mobject)
 

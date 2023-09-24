@@ -1,11 +1,12 @@
 # coding: utf-8
+from __future__ import annotations
 from typing import *
 
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 
+from .types import *
 from . import factory as _factory
-from . import plug_impl as _plug_impl
 
 
 # 呼び出し回数が極端に多くなる可能性のある静的メソッドをキャッシュ化しておく
@@ -17,7 +18,7 @@ _factory_ComponentFactory_create = _factory.ComponentFactory.create
 _factory_ComponentFactory_create_default = _factory.ComponentFactory.create_default
 
 
-def ls(*args: str, **kwargs: Any) -> List[Union['Plug', 'Component', 'DependNode']]:
+def ls(*args: str, **kwargs: Any) -> List[Union[TDependNode, TPlug, TComponent]]:
     if kwargs.get('objectsOnly', False):
         return ls_nodes(*args, **kwargs)
 
@@ -27,7 +28,7 @@ def ls(*args: str, **kwargs: Any) -> List[Union['Plug', 'Component', 'DependNode
     return [eval(name, tmp_mfn_comp, tmp_mfn_node) for name in _cmds.ls(*args, **kwargs)]
 
 
-def ls_nodes(*args: str, **kwargs: Any) -> List['DependNode']:
+def ls_nodes(*args: str, **kwargs: Any) -> List[TComponent]:
     result = []
 
     kwargs['long'] = True
@@ -46,7 +47,7 @@ def eval(
         obj_name: str,
         tmp_mfn_comp: _om2.MFnComponent,
         tmp_mfn_node: _om2.MFnDependencyNode
-) -> Optional[Union['Plug', 'Component', 'DependNode']]:
+) -> Optional[Union[TDependNode, TPlug, TComponent]]:
     if '.' in obj_name:
         plug = eval_plug(obj_name)
         if plug is not None:
@@ -64,8 +65,7 @@ def eval(
     raise RuntimeError('unknown object type: {}'.format(obj_name))
 
 
-def eval_plug(plug_name):
-    # type: (str) -> Any
+def eval_plug(plug_name: str) -> Optional[TPlug]:
     mplug = None
     try:
         mplug = get_mplug(plug_name)
@@ -79,8 +79,7 @@ def eval_plug(plug_name):
     return None
 
 
-def eval_component(comp_name, tmp_mfn_comp):
-    # type: (str, _om2.MFnComponent) -> Any
+def eval_component(comp_name: str, tmp_mfn_comp: _om2.MFnComponent) -> Optional[TComponent]:
     mdagpath = None
     mobj = None
     try:
@@ -96,8 +95,7 @@ def eval_component(comp_name, tmp_mfn_comp):
     return None
 
 
-def eval_node(node_name, tmp_mfn_node):
-    # type: (str, _om2.MFnDependencyNode) -> Any
+def eval_node(node_name: str, tmp_mfn_node: _om2.MFnDependencyNode) -> Optional[TDependNode]:
     if '.' in node_name:
         raise TypeError('invalid node: {}'.format(node_name))
 
@@ -111,14 +109,13 @@ def eval_node(node_name, tmp_mfn_node):
     return None
 
 
-def create_node(*args, **kwargs):
+def create_node(*args: str, **kwargs: Any) -> TDependNode:
     node_name = _cmds.createNode(*args, **kwargs)
     mobj, mdagpath = get_mobject(node_name)
     return to_node_instance(_om2.MFnDependencyNode(mobj), mdagpath)
 
 
-def to_node_instance(mfn, mdagpath=None):
-    # type: (_om2.MFnDependencyNode, _om2.MDagPath) -> Any
+def to_node_instance(mfn: _om2.MFnDependencyNode, mdagpath: Optional[_om2.MDagPath] = None) -> TDependNode:
     type_name = mfn.typeName
     mobj = mfn.object()
 
@@ -129,8 +126,7 @@ def to_node_instance(mfn, mdagpath=None):
     return _factory_NodeFactory_create_default(mfn, mdagpath)
 
 
-def get_mobject(node_name):
-    # type: (str) -> (_om2.MObject, _om2.MDagPath)
+def get_mobject(node_name: str) -> Tuple[_om2.MObject, Optional[_om2.MDagPath]]:
     sel = _om2_MGlobal_getSelectionListByName(node_name)
     mobj = sel.getDependNode(0)
 
@@ -140,8 +136,7 @@ def get_mobject(node_name):
     return mobj, None
 
 
-def get_world_mobject():
-    # type: () -> _om2.MObject
+def get_world_mobject() -> _om2.MObject:
     ite = _om2.MItDag()
     while not ite.isDone():
         mobj = ite.currentItem()
@@ -150,13 +145,11 @@ def get_world_mobject():
     raise RuntimeError('cannot find the MObject of the World')
 
 
-def _to_plug_instance(mplug):
-    # type: (_om2.MPlug) -> object
+def _to_plug_instance(mplug: _om2.MPlug) -> TPlug:
     return _factory_PlugFactory_create(mplug)
 
 
-def to_comp_instance(mfn, mdagpath, mobject):
-    # type: (_om2.MFnComponent, _om2.MDagPath, _om2.MObject) -> object
+def to_comp_instance(mfn: _om2.MFnComponent, mdagpath: _om2.MDagPath, mobject: _om2.MObject) -> TComponent:
     comp_type = mfn.componentType
 
     comp = _factory_ComponentFactory_create(comp_type, mdagpath, mobject)
@@ -166,14 +159,12 @@ def to_comp_instance(mfn, mdagpath, mobject):
     return _factory_ComponentFactory_create_default(mdagpath, mobject)
 
 
-def get_mplug(name):
-    # type: (str) -> _om2.MPlug
+def get_mplug(name: str) -> _om2.MPlug:
     sel = _om2_MGlobal_getSelectionListByName(name)
     return sel.getPlug(0)
 
 
-def keep_mplug(mplug):
-    # type: (_om2.MPlug) -> _om2.MPlug
+def keep_mplug(mplug: _om2.MPlug) -> _om2.MPlug:
     u"""
     ネットワークプラグをGC管理下から外すためのメソッド
       ネットワークプラグはメモリ管理がMaya内部で行われるので
@@ -206,14 +197,12 @@ def keep_mplug(mplug):
     return mplug
 
 
-def get_comp_mobject(name):
-    # type: (str) -> (_om2.MDagPath, _om2.MObject)
+def get_comp_mobject(name: str) -> Tuple[_om2.MDagPath, _om2.MObject]:
     sel = _om2_MGlobal_getSelectionListByName(name)
     return sel.getComponent(0)
 
 
-def connections(mfn):
-    # type: (_om2.MFnDependencyNode) -> List[_om2.MObject]
+def connections(mfn: _om2.MFnDependencyNode) -> List[_om2.MObject]:
     result = []
 
     for i in range(mfn.attributeCount()):
