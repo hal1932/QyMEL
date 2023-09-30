@@ -102,8 +102,7 @@ class PlugFactory(object):
 
     @staticmethod
     def create(mplug: _om2.MPlug) -> TPlug:
-        cls = PlugFactory._cls
-        return cls(mplug)
+        return PlugFactory._cls(mplug)
 
 
 class ComponentFactory(object):

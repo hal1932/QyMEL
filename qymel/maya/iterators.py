@@ -1,25 +1,28 @@
 # coding: utf-8
+from __future__ import annotations
 from typing import *
+
+import abc
 
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 import maya.OpenMaya as _om
 
+from .internal.types import *
+
 if TYPE_CHECKING:
-    from . import general as _general
     from . import components as _components
+    from . import general as _general
+
+TMItComp = TypeVar('TMItComp', _om2.MItMeshVertex, _om2.MItMeshEdge, _om2.MItMeshPolygon, _om2.MItMeshFaceVertex)
+TColorSet = TypeVar('TColorSet', '_general.ColorSet', str)
+TUvSet = TypeVar('TUvSet', '_general.UvSet', str)
 
 
-_TComp = TypeVar('_TComp')
-_TItComp = TypeVar('_TItComp', _om2.MItMeshVertex, _om2.MItMeshEdge, _om2.MItMeshPolygon, _om2.MItMeshFaceVertex)
-_TColorSet = TypeVar('_TColorSet', '_general.ColorSet', str, None)
-_TUvSet = TypeVar('_TUvSet', '_general.UvSet', str, None)
-
-
-class _ComponentIter(Generic[_TComp, _TItComp]):
+class _ComponentIter(Generic[TMItComp]):
 
     @property
-    def miter(self) -> _TItComp:
+    def miter(self) -> TMItComp:
         return self._miter
 
     @property
@@ -27,10 +30,11 @@ class _ComponentIter(Generic[_TComp, _TItComp]):
         return self._miter.currentItem()
 
     @property
+    @abc.abstractmethod
     def mel_object(self) -> str:
         raise NotImplementedError()
 
-    def __init__(self, miter: _TItComp, comp: '_components.Component') -> None:
+    def __init__(self, miter: TMItComp, comp: _components.Component) -> None:
         self._miter = miter
         self._comp = comp  # 使う機会はないけど、ループの最中にcompのスコープが切れないように手許で抱えておく
         self.__is_first = True
@@ -38,13 +42,13 @@ class _ComponentIter(Generic[_TComp, _TItComp]):
     def __getattr__(self, item: str) -> Any:
         return getattr(self._miter, item)
 
-    def __iter__(self) -> _TComp:
+    def __iter__(self):
         return self
 
-    def next(self) -> _TComp:
+    def next(self):
         return self.__next__()
 
-    def __next__(self) -> _TComp:
+    def __next__(self):
         if self.__is_first:
             self.__is_first = False
             return self
@@ -57,7 +61,7 @@ class _ComponentIter(Generic[_TComp, _TItComp]):
         return self
 
 
-class MeshVertexIter(_ComponentIter['MeshVertexIter', _om2.MItMeshVertex]):
+class MeshVertexIter(_ComponentIter[_om2.MItMeshVertex]):
 
     @property
     def mel_object(self) -> str:
@@ -91,7 +95,7 @@ class MeshVertexIter(_ComponentIter['MeshVertexIter', _om2.MItMeshVertex]):
     def on_boundary(self) -> bool:
         return self._miter.onBoundary()
 
-    def __init__(self, miter: _om2.MItMeshVertex, comp: '_components.Component', mfn_mesh: _om2.MFnMesh) -> None:
+    def __init__(self, miter: _om2.MItMeshVertex, comp: _components.Component, mfn_mesh: _om2.MFnMesh) -> None:
         super(MeshVertexIter, self).__init__(miter, comp)
         self._mfn_mesh = mfn_mesh
 
@@ -100,7 +104,7 @@ class MeshVertexIter(_ComponentIter['MeshVertexIter', _om2.MItMeshVertex]):
             return self._miter.hasColor(face_id)
         return self._miter.hasColor()
 
-    def color(self, face_id: Optional[int] = None, color_set: _TColorSet = None) -> _om2.MColor:
+    def color(self, face_id: Optional[int] = None, color_set: Optional[TColorSet] = None) -> _om2.MColor:
         color_set_name = _get_color_set_name(color_set, None)
         if face_id is not None:
             raise RuntimeError('executing this method with face_id cannot used due to Maya\'s problem')
@@ -109,11 +113,11 @@ class MeshVertexIter(_ComponentIter['MeshVertexIter', _om2.MItMeshVertex]):
             # return self._miter.getColor(face_id, color_set_name)
         return self._miter.getColor(color_set_name)
 
-    def colors(self, color_set: _TColorSet = None) -> _om2.MColorArray:
+    def colors(self, color_set: Optional[TColorSet] = None) -> _om2.MColorArray:
         color_set_name = _get_color_set_name(color_set, None)
         return self._miter.getColors(color_set_name)
 
-    def color_indices(self, color_set: _TColorSet = None) -> _om2.MIntArray:
+    def color_indices(self, color_set: Optional[TColorSet] = None) -> _om2.MIntArray:
         color_set_name = _get_color_set_name(color_set, None)
         return self._miter.getColorIndices(color_set_name)
 
@@ -130,15 +134,15 @@ class MeshVertexIter(_ComponentIter['MeshVertexIter', _om2.MItMeshVertex]):
     def normals(self, space: int = _om2.MSpace.kObject) -> _om2.MVectorArray:
         return self._miter.getNormals(space)
 
-    def uv(self, uv_set: _TUvSet = None) -> List[float]:
+    def uv(self, uv_set: Optional[TUvSet] = None) -> List[float]:
         uv_set_name = _get_uv_set_name(uv_set, None)
         return self._miter.getUV(uv_set_name)
 
-    def uv_indices(self, uv_set: _TUvSet = None) -> _om2.MIntArray:
+    def uv_indices(self, uv_set: Optional[TUvSet] = None) -> _om2.MIntArray:
         uv_set_name = _get_uv_set_name(uv_set, None)
         return self._miter.getUVIndices(uv_set_name)
 
-    def uvs(self, uv_set: _TUvSet = None) -> Dict[int, Tuple[float, float]]:
+    def uvs(self, uv_set: Optional[TUvSet] = None) -> Dict[int, Tuple[float, float]]:
         uv_set_name = _get_uv_set_name(uv_set, None)
         us, vs, face_ids = self._miter.getUVs(uv_set_name)
 
@@ -148,7 +152,7 @@ class MeshVertexIter(_ComponentIter['MeshVertexIter', _om2.MItMeshVertex]):
 
         return result
 
-    def uv_count(self, uv_set: _TUvSet = None) -> int:
+    def uv_count(self, uv_set: Optional[TUvSet] = None) -> int:
         uv_set_name = _get_uv_set_name(uv_set, None)
         return self._miter.numUVs(uv_set_name)
 
@@ -156,7 +160,7 @@ class MeshVertexIter(_ComponentIter['MeshVertexIter', _om2.MItMeshVertex]):
         return self._miter.position(space)
 
 
-class MeshFaceIter(_ComponentIter['MeshFaceIter', _om2.MItMeshPolygon]):
+class MeshFaceIter(_ComponentIter[_om2.MItMeshPolygon]):
 
     @property
     def mel_object(self) -> str:
@@ -210,7 +214,7 @@ class MeshFaceIter(_ComponentIter['MeshFaceIter', _om2.MItMeshPolygon]):
     def triangle_count(self) -> int:
         return self._miter.numTriangles()
 
-    def __init__(self, miter: _om2.MItMeshPolygon, comp: '_components.Component', mfn_mesh: _om2.MFnMesh) -> None:
+    def __init__(self, miter: _om2.MItMeshPolygon, comp: _components.Component, mfn_mesh: _om2.MFnMesh) -> None:
         super(MeshFaceIter, self).__init__(miter, comp)
         self._mfn_mesh = mfn_mesh
 
@@ -263,7 +267,7 @@ class MeshFaceIter(_ComponentIter['MeshFaceIter', _om2.MItMeshPolygon]):
         return result
 
 
-class MeshEdgeIter(_ComponentIter['MeshEdgeIter', _om2.MItMeshEdge]):
+class MeshEdgeIter(_ComponentIter[_om2.MItMeshEdge]):
 
     @property
     def mel_object(self) -> str:
@@ -293,7 +297,7 @@ class MeshEdgeIter(_ComponentIter['MeshEdgeIter', _om2.MItMeshEdge]):
     def is_smooth(self) -> bool:
         return self._miter.isSmooth
 
-    def __init__(self, miter: _om2.MItMeshEdge, comp: '_components.Component', mfn_mesh: _om2.MFnMesh) -> None:
+    def __init__(self, miter: _om2.MItMeshEdge, comp: _components.Component, mfn_mesh: _om2.MFnMesh) -> None:
         super(MeshEdgeIter, self).__init__(miter, comp)
         self._mfn_mesh = mfn_mesh
 
@@ -307,7 +311,7 @@ class MeshEdgeIter(_ComponentIter['MeshEdgeIter', _om2.MItMeshEdge]):
         return _om2.MPointArray([self._miter.point(0, space), self._miter.point(1, space)])
 
 
-class MeshFaceVertexIter(_ComponentIter['MeshFaceVertexIter', _om2.MItMeshFaceVertex]):
+class MeshFaceVertexIter(_ComponentIter[_om2.MItMeshFaceVertex]):
 
     @property
     def mel_object(self) -> str:
@@ -335,15 +339,15 @@ class MeshFaceVertexIter(_ComponentIter['MeshFaceVertexIter', _om2.MItMeshFaceVe
     def has_color(self) -> bool:
         return self._miter.hasColor()
 
-    def __init__(self, miter: _om2.MItMeshFaceVertex, comp: '_components.Component', mfn_mesh: _om2.MFnMesh) -> None:
+    def __init__(self, miter: _om2.MItMeshFaceVertex, comp: _components.Component, mfn_mesh: _om2.MFnMesh) -> None:
         super(MeshFaceVertexIter, self).__init__(miter, comp)
         self._mfn_mesh = mfn_mesh
 
-    def color(self, color_set: _TColorSet = None) -> _om2.MColor:
+    def color(self, color_set: Optional[TColorSet] = None) -> _om2.MColor:
         color_set_name = _get_color_set_name(color_set, '')
         return self._miter.getColor(color_set_name)
 
-    def color_index(self, color_set: _TColorSet = None) -> int:
+    def color_index(self, color_set: Optional[TColorSet] = None) -> int:
         color_set_name = _get_color_set_name(color_set, '')
         return self._miter.getColorIndex(color_set_name)
 
@@ -354,7 +358,7 @@ class MeshFaceVertexIter(_ComponentIter['MeshFaceVertexIter', _om2.MItMeshFaceVe
         uv_set_name = _get_uv_set_name(uv_set, 'map1')
         return self._miter.getTangent(space, uv_set_name)
 
-    def binormal(self, space: int = _om2.MSpace.kObject, uv_set: _TUvSet = None) -> _om2.MVector:
+    def binormal(self, space: int = _om2.MSpace.kObject, uv_set: Optional[TUvSet] = None) -> _om2.MVector:
         uv_set_name = _get_uv_set_name(uv_set, 'map1')
         return self._miter.getBinormal(space, uv_set_name)
 
@@ -366,15 +370,15 @@ class MeshFaceVertexIter(_ComponentIter['MeshFaceVertexIter', _om2.MItMeshFaceVe
         # type: () -> int
         return self._miter.tangentId()
 
-    def uv(self, uv_set: _TUvSet = None) -> Tuple[float, float]:
+    def uv(self, uv_set: Optional[TUvSet] = None) -> Tuple[float, float]:
         uv_set_name = _get_uv_set_name(uv_set, 'map1')
         return self._miter.getUV(uv_set_name)
 
-    def uv_index(self, uv_set: _TUvSet = None) -> int:
+    def uv_index(self, uv_set: Optional[TUvSet] = None) -> int:
         uv_set_name = _get_uv_set_name(uv_set, 'map1')
         return self._miter.getUVIndex(uv_set_name)
 
-    def has_uv(self, uv_set: _TUvSet = None) -> bool:
+    def has_uv(self, uv_set: Optional[TUvSet] = None) -> bool:
         uv_set_name = _get_uv_set_name(uv_set, 'map1')
         return self._miter.hasUVs(uv_set_name)
 
@@ -382,7 +386,7 @@ class MeshFaceVertexIter(_ComponentIter['MeshFaceVertexIter', _om2.MItMeshFaceVe
         return self._miter.position(space)
 
 
-def _get_color_set_name(color_set: _TColorSet, default_value: Optional[str]) -> str:
+def _get_color_set_name(color_set: Optional[TColorSet], default_value: Optional[str]) -> str:
     if color_set is None:
         return default_value
 
@@ -392,7 +396,7 @@ def _get_color_set_name(color_set: _TColorSet, default_value: Optional[str]) -> 
     return color_set.mel_object
 
 
-def _get_uv_set_name(uv_set: _TUvSet, default_value: Optional[str]) -> str:
+def _get_uv_set_name(uv_set: Optional[TUvSet], default_value: Optional[str]) -> str:
     if uv_set is None:
         return default_value
 

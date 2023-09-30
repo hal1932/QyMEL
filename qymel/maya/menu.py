@@ -56,7 +56,7 @@ class Menu(object):
     def has_items(self) -> bool:
         return _cmds.menu(self.mel_object, query=True, numberOfItems=True) > 0
 
-    def __init__(self, name: str = None):
+    def __init__(self, name: Optional[str] = None):
         self.__mel_object = name
         self.__updated_properties: Dict[str, Any] = {}
 

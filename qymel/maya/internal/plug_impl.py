@@ -41,7 +41,7 @@ def plug_get_impl(mplug: _om2.MPlug) -> Any:
         return _cmds.getAttr(mplug.name())
 
 
-def _get_component_list_data(mplug: _om2.MPlug) -> Tuple[Any]:
+def _get_component_list_data(mplug: _om2.MPlug) -> Tuple[Any, ...]:
     mfn = _om2.MFnComponentListData(mplug.asMObject())
     return tuple(mfn.get(i) for i in range(mfn.length()))
 

@@ -109,7 +109,7 @@ class Scene(object):
         return _cmds.file(rename=new_name)
 
     @staticmethod
-    def save(file_path: str = None, file_type: str = None, force:bool = False) -> str:
+    def save(file_path: Optional[str] = None, file_type: Optional[str] = None, force: Optional[bool] = False) -> str:
         file_path = file_path.replace(os.sep, '/')
 
         if file_path is not None:
@@ -312,7 +312,7 @@ class Workspace(object):
         return result
 
     @staticmethod
-    def __entry(cls: Type[_DictEntry], entry: str, key: str, default_value: str):
+    def __entry(cls: Type[_DictEntry], entry: str, key: str, default_value: Optional[str]):
         kwargs = {'{}Entry'.format(entry): key}
         value = _cmds.workspace(**kwargs) or default_value
         return cls(key, value)

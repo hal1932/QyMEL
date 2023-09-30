@@ -20,6 +20,7 @@ _graphs_eval_node = _graphs.eval_node
 _graphs_eval_plug = _graphs.eval_plug
 _graphs_to_node_instance = _graphs.to_node_instance
 _graphs_to_comp_instance = _graphs.to_comp_instance
+_factory_PlugFactory_create = _factory.PlugFactory.create
 
 
 TFnDependNode = TypeVar('TFnDependNode', bound=_om2.MFnDependencyNode)
@@ -118,7 +119,7 @@ class DependNode(_objects.MayaObject, Generic[TFnDependNode]):
         except RuntimeError:
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
 
-        plug = _general.Plug(mplug)
+        plug = _factory_PlugFactory_create(mplug)
         self._plugs[item] = plug
 
         return plug
@@ -632,7 +633,7 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
     def local_bounding_box(self) -> _om2.MBoundingBox:
         return self.mfn.boundingBox
 
-    def __init__(self, obj: Union[str, _om2.MObject]) -> None:
+    def __init__(self, obj: Optional[Union[str, _om2.MObject]]) -> None:
         if isinstance(obj, str):
             _, obj = _graphs_get_mobject(obj)
 
@@ -1158,7 +1159,7 @@ class Mesh(SurfaceShape[_om2.MFnMesh]):
             self,
             cls: type,
             indices: Optional[Sequence[Any]] = None,
-            complete_length: Optional[int] = None
+            complete_length: Optional[Union[int, List[int]]] = None
     ) -> Any:
         comp = cls._comp_mfn()
         mobj = comp.create(cls._comp_type)
@@ -1207,7 +1208,7 @@ class FileReference(DependNode[_om2.MFnReference]):
 
     def replace(
             self,
-            file_path: str,
+            file_path: Optional[str],
             depth: Optional[str] = None,
             return_new_nodes: bool = False
     ) -> Optional[List[DependNode]]:

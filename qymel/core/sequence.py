@@ -28,7 +28,7 @@ def first(
 def first_or_default(
         sequence: Sequence[_TItem],
         predicate: Optional[Callable[[_TItem], bool]] = None,
-        default: bool = None
+        default: Optional[_TItem] = None
 ) -> _TItem:
     for item in sequence:
         if predicate is None or predicate(item):
@@ -49,7 +49,7 @@ def last(
 def last_or_default(
         sequence: Sequence[_TItem],
         predicate: Optional[Callable[[_TItem], bool]] = None,
-        default: _TItem = None
+        default: Optional[_TItem] = None
 ) -> _TItem:
     for item in reversed(sequence):
         if predicate is None or predicate(item):

@@ -55,7 +55,7 @@ class TimeScope(Scope):
 
     def __init__(self, callback: Optional[Callable[[float], None]] = None) -> None:
         self.callback = callback
-        self.begin = 0
+        self.begin = 0.0
 
     def _on_enter(self) -> None:
         self.begin = time.time()

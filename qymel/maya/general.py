@@ -1,16 +1,17 @@
 # coding: utf-8
+from __future__ import annotations
 from typing import *
 import functools
 
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 
+from .internal.types import *
 from .internal import graphs as _graphs
 from .internal import factory as _factory
 from .internal import plug_impl as _plug_impl
 
 if TYPE_CHECKING:
-    from . import components as _components
     from . import nodetypes as _nodetypes
 
 
@@ -28,6 +29,7 @@ _graphs_eval = _graphs.eval
 _graphs_eval_node = _graphs.eval_node
 _graphs_eval_plug = _graphs.eval_plug
 _graphs_eval_component = _graphs.eval_component
+_factory_PlugFactory_create = _factory.PlugFactory.create
 
 
 def deprecated(message):
@@ -40,7 +42,7 @@ def deprecated(message):
     return _deprecated
 
 
-def ls(*args: str, **kwargs: Any) -> List[Union['Plug', '_components.Component', '_nodetypes.DependNode']]:
+def ls(*args: str, **kwargs: Any) -> List[Union[Plug, TComponent, TDependNode]]:
     return _graphs.ls(*args, **kwargs)
 
 
@@ -53,16 +55,16 @@ def eval(obj_name: Union[str, Iterable[str]]) -> Any:
         return [_graphs_eval(name, tmp_mfn_comp, tmp_mfn_node) for name in obj_name]
 
 
-def eval_node(node_name: str) -> '_nodetypes.DependNode':
+def eval_node(node_name: str) -> TDependNode:
     tmp_mfn = _om2_MFnDependencyNode()
     return _graphs_eval_node(node_name, tmp_mfn)
 
 
-def eval_plug(plug_name: str) -> 'Plug':
+def eval_plug(plug_name: str) -> Plug:
     return _graphs_eval_plug(plug_name)
 
 
-def eval_component(comp_name: str) -> '_components.Component':
+def eval_component(comp_name: str) -> TComponent:
     tmp_mfn = _om2_MFnComponent()
     return _graphs_eval_component(comp_name, tmp_mfn)
 
@@ -156,7 +158,7 @@ class Plug(object):
     def __repr__(self) -> str:
         return "{}('{}')".format(self.__class__.__name__, self.name)
 
-    def __getitem__(self, item: int) -> 'Plug':
+    def __getitem__(self, item: int) -> Plug:
         mplug = self._mplug
 
         if not mplug.isArray:
@@ -164,7 +166,7 @@ class Plug(object):
 
         return Plug(mplug.elementByLogicalIndex(item))
 
-    def node(self) -> '_nodetypes.DependNode':
+    def node(self) -> TDependNode:
         if self._node is None:
             mfn_node = self.mfn_node
             if isinstance(mfn_node, _om2_MFnDagNode):
@@ -191,14 +193,14 @@ class Plug(object):
     def connect(self, dest_plug, **kwargs) -> None:
         _cmds_connectAttr(self.mel_object, dest_plug.mel_object, **kwargs)
 
-    def disconnect(self, dest_plug: 'Plug', **kwargs) -> None:
+    def disconnect(self, dest_plug: Plug, **kwargs) -> None:
         _cmds_disconnectAttr(self.mel_object, dest_plug.mel_object, **kwargs)
 
-    def source(self) -> 'Plug':
-        return Plug(self._mplug.source())
+    def source(self) -> Plug:
+        return _factory_PlugFactory_create(self._mplug.source())
 
-    def destinations(self) -> List['Plug']:
-        return [Plug(mplug) for mplug in self._mplug.destinations()]
+    def destinations(self) -> List[Plug]:
+        return [_factory_PlugFactory_create(mplug) for mplug in self._mplug.destinations()]
 
 
 _factory.PlugFactory.register(Plug)
@@ -215,7 +217,7 @@ class ColorSet(object):
         return self.__name
 
     @property
-    def mesh(self) -> '_nodetypes.Mesh':
+    def mesh(self) -> _nodetypes.Mesh:
         return self.__mesh
 
     @property
@@ -230,7 +232,7 @@ class ColorSet(object):
     def is_per_instance(self) -> bool:
         return self.__mfn.isColorSetPerInstance(self.mel_object)
 
-    def __init__(self, name: str, mesh: '_nodetypes.Mesh') -> None:
+    def __init__(self, name: str, mesh: _nodetypes.Mesh) -> None:
         self.__name = name
         self.__mfn = mesh.mfn
         self.__mesh = mesh
@@ -265,10 +267,10 @@ class UvSet(object):
         return self.__name
 
     @property
-    def mesh(self) -> '_nodetypes.Mesh':
+    def mesh(self) -> _nodetypes.Mesh:
         return self.__mesh
 
-    def __init__(self, name: str, mesh: '_nodetypes.Mesh') -> None:
+    def __init__(self, name: str, mesh: _nodetypes.Mesh) -> None:
         self.__name = name
         self.__mesh = mesh
         self.__mfn = mesh.mfn

@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import annotations
 from typing import *
 
 if TYPE_CHECKING:
@@ -6,6 +7,7 @@ if TYPE_CHECKING:
     from .. import general as _general
     from .. import components as _components
 
-    TDependNode = TypeVar('TDependNode', bound=_nodetypes.DependNode)
-    TPlug = TypeVar('TPlug', bound=_general.Plug)
-    TComponent = TypeVar('TComponent', bound=_components.Component)
+TDependNode = TypeVar('TDependNode', bound='_nodetypes.DependNode')
+TDagNode = TypeVar('TDagNode', bound='_nodetypes.DagNode')
+TPlug = TypeVar('TPlug', bound='_general.Plug')
+TComponent = TypeVar('TComponent', bound='_components.Component')
