@@ -102,7 +102,7 @@ class Scene(object):
 
     @staticmethod
     def rename(new_name: str) -> str:
-        _, ext = os.path.splitext(new_name)
+        _, ext = Scene.normalize_path(new_name)
         file_type = FileTranslator.find_by_extension(ext)
         if file_type is not None:
             _cmds.file(type=file_type.name)
@@ -110,7 +110,7 @@ class Scene(object):
 
     @staticmethod
     def save(file_path: Optional[str] = None, file_type: Optional[str] = None, force: Optional[bool] = False) -> str:
-        file_path = file_path.replace(os.sep, '/')
+        file_path = Scene.normalize_path(file_path)
 
         if file_path is not None:
             Scene.rename(file_path)
