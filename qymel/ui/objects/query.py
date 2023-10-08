@@ -30,7 +30,7 @@ class ObjectQuery(object):
     >>> print(query.child(lambda obj: isinstance(obj, QVBoxLayout)), lambda obj: obj.objectName())
     >>> print(query.children(lambda obj: isinstance(obj, QLayout)))
     >>> print(query.descendant(lambda obj: isinstance(obj, QPushButton)))
-    >>> print(query.descendants(lambda obj: isinstance(obj, QLayout)))
+    >>> print(query.descendents(lambda obj: isinstance(obj, QLayout)))
     >>>
     >>> query1 = ObjectQuery(child_layout)
     >>> print(query1.parent(lambda obj: isinstance(obj, QVBoxLayout)))
@@ -120,17 +120,17 @@ class ObjectQuery(object):
             children.extend(child.children())
         return None
 
-    def descendants(self, predicate: _ObjectPredicate = None, selector: _ObjectSelector = None) -> List[_QueryResult]:
-        descendants = []
+    def descendents(self, predicate: _ObjectPredicate = None, selector: _ObjectSelector = None) -> List[_QueryResult]:
+        descendents = []
         children = self.object.children()
         while children:
             child = children.pop(-1)
             if not predicate or predicate(child):
-                descendants.append(selector(child) if selector else child)
+                descendents.append(selector(child) if selector else child)
             children.extend(child.children())
-        return descendants
+        return descendents
 
-    def idescendants(self, predicate: _ObjectPredicate = None, selector: _ObjectSelector = None) -> Iterable[_QueryResult]:
+    def idescendents(self, predicate: _ObjectPredicate = None, selector: _ObjectSelector = None) -> Iterable[_QueryResult]:
         children = self.object.children()
         while children:
             child = children.pop(-1)

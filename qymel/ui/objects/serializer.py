@@ -72,7 +72,7 @@ class ObjectSerializer(object):
         def _fetch_path(node: QObject) -> QObject:
             parent = node.parent()
             parent_path = paths[parent]
-            siblings = children.get(parent, _query.ObjectQuery(parent).descendants(_is_serializable))
+            siblings = children.get(parent, _query.ObjectQuery(parent).descendents(_is_serializable))
             node_path = '{}/{}_{}'.format(parent_path, node.__class__.__name__, siblings.index(node))
             paths[node] = node_path
             return node
@@ -81,5 +81,5 @@ class ObjectSerializer(object):
             callback(root, paths[root])
 
         query = _query.ObjectQuery(root)
-        for child in query.idescendants(predicate=_is_serializable, selector=_fetch_path):
+        for child in query.idescendents(predicate=_is_serializable, selector=_fetch_path):
             callback(child, paths[child])
