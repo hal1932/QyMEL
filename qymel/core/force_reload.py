@@ -11,8 +11,9 @@ import distutils.sysconfig
 
 
 IGNORED_MODULE_FILE_PATHS = [
-    distutils.sysconfig.get_python_lib(standard_lib=True),
-    os.environ.get('MAYA_LOCATION', '').replace('/', os.sep),
+    distutils.sysconfig.get_python_lib(standard_lib=True).lower(),
+    os.environ.get('MAYA_LOCATION', '').replace('/', os.sep).lower(),
+    __file__.lower(),
 ]
 IGNORED_MODULE_NAMES = []
 
@@ -191,6 +192,9 @@ def _is_reload_target_module(module: types.ModuleType) -> bool:
     if module is None:
         return False
 
+    if module.__name__ in sys.builtin_module_names:
+        return False
+
     if module.__name__ in IGNORED_MODULE_NAMES:
         return False
 
@@ -198,11 +202,10 @@ def _is_reload_target_module(module: types.ModuleType) -> bool:
     if module_file is None:
         return False
 
-    if module_file == __file__:
-        return False
+    module_file = module_file.lower()
 
     for ignored_path in IGNORED_MODULE_FILE_PATHS:
-        if module_file.startswith(ignored_path):
+        if ignored_path and module_file.startswith(ignored_path):
             return False
 
     return True
