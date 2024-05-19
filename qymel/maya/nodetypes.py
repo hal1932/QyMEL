@@ -823,14 +823,23 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
         return child
 
     def is_parent_of(self, node: 'DagNode') -> bool:
-        if self.mfn.isParentOf(node.mobject):
-            return True
-        return node.mfn.isChildOf(self.mobject)
+        if self.is_world:
+            children = _cmds.ls(assemblies=True, long=True)
+        else:
+            children = _cmds.listRelatives(self.mel_object, children=True, fullPath=True) or []
+        return node.mel_object in children
 
     def is_child_of(self, node: 'DagNode') -> bool:
-        if self.mfn.isChildOf(node.mobject):
+        return node.is_parent_of(self)
+
+    def is_ancestor_of(self, node: 'DagNode') -> bool:
+        if self.is_world:
             return True
-        return node.mfn.isParentOf(self.mobject)
+        ancestors = _cmds.listRelatives(node.mel_object, allParents=True, fullPath=True) or []
+        return self.mel_object in ancestors
+
+    def is_descendent_of(self, node: 'DagNode') -> bool:
+        return node.is_ancestor_of(self)
 
     def is_instance_of(self, node: 'DagNode') -> bool:
         return self.mobject == node.mobject
