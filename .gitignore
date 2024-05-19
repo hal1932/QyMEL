@@ -128,3 +128,5 @@ dmypy.json
 .vs/
 x64/
 *.user
+tools/qymel.pkg
+tools/test_package
