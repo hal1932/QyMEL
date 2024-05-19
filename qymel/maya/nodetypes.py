@@ -722,57 +722,12 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
         return None
 
     def children(self, **kwargs) -> List['DagNode']:
-        if not self.is_world:
-            kwargs['children'] = True
-            return self.relatives(**kwargs)
+        if self.is_world:
+            kwargs['assemblies'] = True
+            return _graphs.ls_nodes(**kwargs)
 
-        result = []
-
-        tmp_mfn = _om2.MFnDependencyNode()
-        tmp_mfn_dag = _om2.MFnDagNode()
-
-        self_hash = self.mobject_handle.hashCode()
-        tmp_mobj_handle = _om2.MObjectHandle()
-
-        no_intermediate = kwargs.get('noIntermediate', False)
-        type_name = kwargs.get('type', None)
-
-        ite = _om2.MItDependencyNodes()
-        while not ite.isDone():
-            mobj = ite.thisNode()
-            if mobj.hasFn(_om2.MFn.kWorld):
-                ite.next()
-                continue
-
-            tmp_mobj_handle.assign(mobj)
-            if tmp_mobj_handle.hashCode() == self_hash:
-                ite.next()
-                continue
-
-            if mobj.hasFn(_om2.MFn.kDagNode):
-                tmp_mfn_dag.setObject(mobj)
-
-                is_ignored = no_intermediate and tmp_mfn_dag.isIntermediateObject
-                if not is_ignored:
-                    is_ignored = type_name is not None and tmp_mfn_dag.typeName != type_name
-
-                if not is_ignored:
-                    if tmp_mfn_dag.parent(0).hasFn(_om2.MFn.kWorld):
-                        tmp_mfn.setObject(ite.thisNode())
-                        node = _graphs_to_node_instance(tmp_mfn, tmp_mfn_dag.getPath())
-                        result.append(node)
-            else:
-                tmp_mfn.setObject(ite.thisNode())
-
-                is_ignored = type_name is not None and tmp_mfn.typeName != type_name
-
-                if not is_ignored:
-                    node = _graphs_to_node_instance(tmp_mfn)
-                    result.append(node)
-
-            ite.next()
-
-        return result
+        kwargs['children'] = True
+        return self.relatives(**kwargs)
 
     def ancestors(self, **kwargs) -> List['DagNode']:
         if self.is_world:
