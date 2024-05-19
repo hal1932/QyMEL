@@ -647,6 +647,11 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
         super(DagNode, self).__init__(obj.node())
         self._mdagpath = obj
 
+    def __repr__(self) -> str:
+        if self.is_world:
+            return f'{self.__class__.__name__}(world)'
+        return super().__repr__()
+
     def relatives(self, **kwargs) -> List['DagNode']:
         if self.is_world:
             raise NotImplementedError('World.relatives() is not implemented')
@@ -764,7 +769,9 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
 
     def descendents(self, **kwargs) -> List['DagNode']:
         if self.is_world:
-            return _graphs.ls_nodes(noIntermediate='noIntermediate' not in kwargs)
+            kwargs['dagObjects'] = True
+            return _graphs.ls_nodes(**kwargs)
+
         kwargs['allDescendents'] = True
         return self.relatives(**kwargs)
 
