@@ -133,7 +133,7 @@ class ItemsModel(QAbstractItemModel, Generic[TItem, TBindDef]):
         return self._items[index]
 
     def items(self, indices: Optional[Sequence[TItemIndex]] = None) -> List[TItem]:
-        if not indices:
+        if indices is None:
             return self._items
         return [self.item(index) for index in indices]
 
