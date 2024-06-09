@@ -2,6 +2,7 @@
 from typing import *
 
 import itertools
+import functools
 
 import maya.cmds as _cmds
 
@@ -111,12 +112,13 @@ class DescriptionWidget(QWidget):
             self.__description.setText(item.description)
 
             if len(results) == 1 and results[0].status == _items.CheckResultStatus.SUCCESS:
-                self.__result_items.append('OK', [])
+                self.__result_items.append('OK', [], _items.CheckResultStatus.SUCCESS)
             else:
                 for result in results:
-                    self.__result_items.append(result.message, result.nodes)
-                    for node in result.nodes:
-                        self.__nodes.append(node, [node])
+                    self.__result_items.append(result.message, result.nodes, result.status)
+                nodes = set(itertools.chain.from_iterable(result.nodes for result in results))
+                for node in sorted(nodes):
+                    self.__nodes.append(node, [node], _items.CheckResultStatus.NONE)
 
             if len(results) > 0:
                 if all(r.is_success for r in results):
@@ -164,9 +166,51 @@ class DescriptionWidget(QWidget):
 
 class _ResultItem(object):
 
-    def __init__(self, label: str, nodes: List[str]):
+    def __init__(self, label: str, nodes: List[str], status: _items.CheckResultStatus):
         self.label = label
         self.nodes = nodes
+        self.status = status
+
+
+class _ResultItemDelegate(QStyledItemDelegate):
+
+    _pixmaps: Dict[_items.CheckResultStatus, QPixmap] = {}
+
+    def __init__(self):
+        super().__init__()
+
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
+        item = index.model().item(index)
+
+        is_warning = item.status & _items.CheckResultStatus.WARNING == _items.CheckResultStatus.WARNING
+        is_error = item.status & _items.CheckResultStatus.ERROR == _items.CheckResultStatus.ERROR
+        if not is_warning and not is_error:
+            super().paint(painter, option, index)
+            return
+
+        is_modifiable = item.status & _items.CheckResultStatus.MODIFIABLE == _items.CheckResultStatus.MODIFIABLE
+        icon_creator = functools.partial(_icons.warning if is_warning else _icons.error, is_modifiable)
+        status_pix = self.__get_status_pixmap(item.status, icon_creator)
+
+        x = option.rect.left()
+        y = option.rect.top()
+        w = option.rect.width()
+        h = option.rect.height()
+        x_offset = status_pix.width() + 2
+
+        if option.state & QStyle.State_Selected:
+            painter.fillRect(option.rect, option.palette.highlight())
+            painter.setPen(option.palette.highlightedText().color())
+
+        painter.drawPixmap(QPoint(x, y), status_pix)
+        painter.drawText(QRect(x + x_offset, y, w - x_offset, h), Qt.AlignLeft | Qt.AlignVCenter, item.label)
+
+    def __get_status_pixmap(self, status: _items.CheckResultStatus, creator: Callable[[bool], QIcon]):
+        pix = self._pixmaps.get(status)
+        if not pix:
+            pix = creator().pixmap(QSize(12, 12))
+            self._pixmaps[status] = pix
+        return pix
 
 
 class _ResultItemWidget(QWidget):
@@ -182,10 +226,13 @@ class _ResultItemWidget(QWidget):
 
         self.__view = QListView()
         self.__view.setModel(self.__model)
+        self.__view.setItemDelegate(_ResultItemDelegate())
         self.__view.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.__view.selectionModel().selectionChanged.connect(self.__select_nodes)
-        self.__view.selectionModel().selectionChanged.connect(lambda _1, _2: self.selection_changed.emit(self.selected_items()))
         self.__view.setEnabled(True)
+
+        self.__selection_model = self.__view.selectionModel()
+        self.__selection_model.selectionChanged.connect(self.__select_nodes)
+        self.__selection_model.selectionChanged.connect(lambda _1, _2: self.selection_changed.emit(self.selected_items()))
 
         self.setLayout(_layouts.vbox(
             self.__view,
@@ -195,8 +242,8 @@ class _ResultItemWidget(QWidget):
     def clear(self):
         self.__model.clear()
 
-    def append(self, label: str, nodes: List[str]):
-        self.__model.append(_ResultItem(label, nodes))
+    def append(self, label: str, nodes: List[str], status: _items.CheckResultStatus):
+        self.__model.append(_ResultItem(label, nodes, status))
 
     def items(self) -> List[_ResultItem]:
         return self.__model.items()
@@ -209,14 +256,14 @@ class _ResultItemWidget(QWidget):
             selection.merge(QItemSelection(index, index), QItemSelectionModel.Select)
 
         command = QItemSelectionModel.ClearAndSelect if replace else QItemSelectionModel.Select
-        self.__view.selectionModel().select(selection, command)
+        self.__selection_model.select(selection, command)
 
     def selected_items(self) -> List[_ResultItem]:
-        indices = self.__view.selectionModel().selectedIndexes()
+        indices = self.__selection_model.selectedIndexes()
         return self.__model.items(indices)
 
     def __select_nodes(self):
-        indices = self.__view.selectionModel().selectedIndexes()
+        indices = self.__selection_model.selectedIndexes()
         items = self.__model.items(indices)
         nodes = list(itertools.chain.from_iterable(item.nodes for item in items))
         _cmds.select(nodes, replace=True)

@@ -9,32 +9,46 @@ from qymel.ui.pyside_module import *
 _icons: Dict[str, QIcon] = {}
 
 
+class IconType(object):
+
+    EXECUTE = 'execute'
+    MODIFY = 'modify'
+    SUCCESS = 'success'
+    INVALID = 'invalid'
+    WARNING = 'warning'
+    WARNING_MODIFIABLE = 'warning-modifiable'
+    ERROR = 'error'
+    ERROR_MODIFIABLE = 'error-modifiable'
+
+
+# region icon()のショートカット
 def execute() -> QIcon:
-    return icon('execute')
+    return icon(IconType.EXECUTE)
 
 
 def modify() -> QIcon:
-    return icon('modify')
+    return icon(IconType.MODIFY)
 
 
 def success() -> QIcon:
-    return icon('success')
+    return icon(IconType.SUCCESS)
 
 
 def invalid() -> QIcon:
-    return icon('invalid')
+    return icon(IconType.INVALID)
 
 
 def warning(is_modifiable: bool) -> QIcon:
     if is_modifiable:
-        return icon('warning-modifiable')
-    return icon('warning')
+        return icon(IconType.WARNING_MODIFIABLE)
+    return icon(IconType.WARNING)
 
 
 def error(is_modifiable: bool) -> QIcon:
     if is_modifiable:
-        return icon('error-modifiable')
-    return icon('error')
+        return icon(IconType.ERROR_MODIFIABLE)
+    return icon(IconType.ERROR)
+# endregion
 
 
 def icon(name: str) -> QIcon:
