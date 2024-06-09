@@ -9,6 +9,7 @@ class _Stretch(object):
 
 
 TLayoutItem = Union[QWidget, QLayout, _Stretch]
+TBoxLayout = Union[QHBoxLayout, QVBoxLayout]
 
 _stretch_instance = _Stretch()
 
@@ -18,15 +19,15 @@ def stretch():
     return _stretch_instance
 
 
-def hbox(*items: *TLayoutItem, **kwargs) -> QHBoxLayout:
+def hbox(*items: TLayoutItem, **kwargs) -> QHBoxLayout:
     return _box(QHBoxLayout, items, kwargs)
 
 
-def vbox(*items: *TLayoutItem, **kwargs) -> QVBoxLayout:
+def vbox(*items: TLayoutItem, **kwargs) -> QVBoxLayout:
     return _box(QVBoxLayout, items, kwargs)
 
 
-def _box(cls: Type[QVBoxLayout, QHBoxLayout], items: Iterable[TLayoutItem], kwargs: Dict[str, Any]) -> QBoxLayout:
+def _box(cls: Type[TBoxLayout], items: Iterable[TLayoutItem], kwargs: Dict[str, Any]) -> QBoxLayout:
     box = cls()
     for item in items:
         if isinstance(item, QWidget):
