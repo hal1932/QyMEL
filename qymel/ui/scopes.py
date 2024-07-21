@@ -26,7 +26,7 @@ def wait_cursor_scope(func):
 class KeepRowSelectionScope(_scopes.Scope):
 
     def __init__(self, view: QAbstractItemView) -> None:
-        super(KeepRowSelectionScope, self).__init__()
+        super().__init__()
         self.__view = view
         self.__selection: List[QModelIndex] = None
 
@@ -58,3 +58,31 @@ class KeepRowSelectionScope(_scopes.Scope):
             view.selectRow(index.row())
 
         view.setSelectionMode(mode)
+
+
+class SignalConnectionScope(_scopes.Scope):
+
+    def __init__(self, signal: Signal, slot: Callable) -> None:
+        super().__init__()
+        self.__signal = signal
+        self.__slot = slot
+
+    def _on_enter(self) -> None:
+        self.__signal.connect(self.__slot)
+
+    def _on_exit(self) -> None:
+        self.__signal.disconnect(self.__slot)
+
+
+class SignalDisconnectionScope(_scopes.Scope):
+
+    def __init__(self, signal: Signal, slot: Callable) -> None:
+        super().__init__()
+        self.__signal = signal
+        self.__slot = slot
+
+    def _on_enter(self) -> None:
+        self.__signal.disconnect(self.__slot)
+
+    def _on_exit(self) -> None:
+        self.__signal.connect(self.__slot)
