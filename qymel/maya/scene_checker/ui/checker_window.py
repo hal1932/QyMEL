@@ -50,6 +50,7 @@ class CheckerWindow(_app.MainWindowBase):
         self._groups.selection_changed.connect(self.__reload_group)
         self._items.selection_changed.connect(self.__reload_description)
         self._items.execute_requested.connect(self.execute_items)
+        self._description.modify_requested.connect(self.modify_items)
         self._controls.execute_all_requested.connect(self.execute_all)
         self._controls.modify_all_requested.connect(self.__modify_all)
 
@@ -156,4 +157,11 @@ class CheckerWindow(_app.MainWindowBase):
     def __modify_all(self):
         group = self._groups.selected_group
         group.modify_all()
+        self.execute_all()
+
+    @_ui_scopes.wait_cursor_scope
+    def modify_items(self, items: List[_items.CheckResult]):
+        group = self._groups.selected_group
+        for item in items:
+            group.modify(item)
         self.execute_all()

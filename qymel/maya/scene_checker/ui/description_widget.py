@@ -3,6 +3,7 @@ from typing import *
 
 import itertools
 import functools
+import dataclasses
 
 import maya.cmds as _cmds
 
@@ -16,6 +17,8 @@ from . import icons as _icons
 
 class DescriptionWidget(QWidget):
 
+    modify_requested = Signal(list)
+
     def __init__(self):
         super().__init__()
 
@@ -26,10 +29,7 @@ class DescriptionWidget(QWidget):
         self.__icon = QLabel()
 
         self.__label = QLabel()
-        font = self.__label.font()
-        font.setBold(True)
-        font.setPointSize(10)
-        self.__label.setFont(font)
+        self.__label.setStyleSheet('font-weight: bold; font-size: 10pt;')
 
         self.__description = QLabel()
         self.__description.setWordWrap(True)
@@ -46,26 +46,29 @@ class DescriptionWidget(QWidget):
             self.__result_items,
         ))
 
-        self.__nodes = _ResultItemWidget()
-        self.__nodes.selection_changed.connect(
+        self.__node_items = _ResultItemWidget()
+        self.__node_items.selection_changed.connect(
             lambda items: self.__sync_result_selection(items, False, True)
         )
 
         self.__nodes_group_title = '対象オブジェクト（$COUNT個）'
         self.__nodes_group = QGroupBox(self.__nodes_group_title)
         self.__nodes_group.setLayout(_layouts.vbox(
-            self.__nodes,
+            self.__node_items,
         ))
 
-        self.__modify_selected = QPushButton('選択したノードを自動修正')
-        self.__modify_all = QPushButton('すべてのノードを自動修正')
+        self.__modify_selected = QPushButton('選択した項目を自動修正')
+        self.__modify_selected.clicked.connect(self.__modify_selected_items)
+
+        self.__modify_all = QPushButton('すべての項目を自動修正')
+        self.__modify_all.clicked.connect(self.__modify_all_items)
 
         controls = QWidget()
-        # controls.setLayout(_layouts.hbox(
-        #     self.__modify_selected,
-        #     self.__modify_all,
-        #     contents_margins=0
-        # ))
+        controls.setLayout(_layouts.hbox(
+            self.__modify_selected,
+            self.__modify_all,
+            contents_margins=0
+        ))
 
         self.setLayout(_layouts.vbox(
             _layouts.hbox(
@@ -85,7 +88,7 @@ class DescriptionWidget(QWidget):
         self.__label.setText('')
         self.__description.setText('')
         self.__result_items.clear()
-        self.__nodes.clear()
+        self.__node_items.clear()
         self.setEnabled(False)
 
         self.__result_group.setTitle(self.__result_group_title.replace('$COUNT', '0'))
@@ -111,14 +114,14 @@ class DescriptionWidget(QWidget):
             self.__label.setText(f'{header} {item.label}')
             self.__description.setText(item.description)
 
-            if len(results) == 1 and results[0].status == _items.CheckResultStatus.SUCCESS:
-                self.__result_items.append('OK', [], _items.CheckResultStatus.SUCCESS)
+            if len(results) == 1 and results[0].is_success:
+                self.__result_items.append(results[0], 'OK', [], _items.CheckResultStatus.SUCCESS)
             else:
                 for result in results:
-                    self.__result_items.append(result.message, result.nodes, result.status)
+                    self.__result_items.append(result)
                 nodes = set(itertools.chain.from_iterable(result.nodes for result in results))
                 for node in sorted(nodes):
-                    self.__nodes.append(node, [node], _items.CheckResultStatus.NONE)
+                    self.__node_items.append(None, node, [node], _items.CheckResultStatus.NONE)
 
             if len(results) > 0:
                 if all(r.is_success for r in results):
@@ -143,8 +146,10 @@ class DescriptionWidget(QWidget):
         nodes_count = sum(len(r.nodes) for r in results)
         self.__nodes_group.setTitle(self.__nodes_group_title.replace('$COUNT', str(nodes_count)))
 
-        self.__modify_selected.setEnabled(enable_modification)
         self.__modify_all.setEnabled(enable_modification)
+
+        enable_modification = any(r.is_modifiable for r in self.__result_items.selected_items())
+        self.__modify_selected.setEnabled(enable_modification)
 
     def refresh(self):
         self.load_from(self.__category, self.__item, self.__results)
@@ -154,22 +159,39 @@ class DescriptionWidget(QWidget):
             # results -> nodes
             node_items = []
             selected_nodes = list(itertools.chain.from_iterable(item.nodes for item in selection))
-            for item in self.__nodes.items():
+            for item in self.__node_items.items():
                 if item.nodes[0] in selected_nodes:
                     node_items.append(item)
-            self.__nodes.select(node_items, True)
+            self.__node_items.select(node_items, True)
 
         if from_nodes:
             # nodes -> results
             pass
 
+        selected_results = self.__result_items.selected_items()
+        has_modifiables = any(r.result.is_modifiable for r in selected_results)
+        self.__modify_selected.setEnabled(has_modifiables)
 
-class _ResultItem(object):
+        has_modifiables = any(r.result.is_modifiable for r in self.__result_items.items())
+        self.__modify_all.setEnabled(has_modifiables)
 
-    def __init__(self, label: str, nodes: List[str], status: _items.CheckResultStatus):
-        self.label = label
-        self.nodes = nodes
-        self.status = status
+    def __modify_selected_items(self):
+        selected_results = self.__result_items.selected_items()
+        modifiable_results = [r.result for r in selected_results if r.result.is_modifiable]
+        self.modify_requested.emit(modifiable_results)
+
+    def __modify_all_items(self):
+        results = self.__result_items.items()
+        modifiable_results = [r.result for r in results if r.result.is_modifiable]
+        self.modify_requested.emit(modifiable_results)
+
+
+@dataclasses.dataclass(frozen=True)
+class _ResultItem:
+    label: str
+    nodes: List[str]
+    status: _items.CheckResultStatus
+    result: _items.CheckResult
 
 
 class _ResultItemDelegate(QStyledItemDelegate):
@@ -242,8 +264,16 @@ class _ResultItemWidget(QWidget):
     def clear(self):
         self.__model.clear()
 
-    def append(self, label: str, nodes: List[str], status: _items.CheckResultStatus):
-        self.__model.append(_ResultItem(label, nodes, status))
+    def append(self,
+               result: _items.CheckResult,
+               label: Optional[str] = None,
+               nodes: Optional[List[str]] = None,
+               status: Optional[_items.CheckResultStatus] = None
+               ):
+        label = label or result.message
+        nodes = nodes or result.nodes
+        status = status or result.status
+        self.__model.append(_ResultItem(label, nodes, status, result))
 
     def items(self) -> List[_ResultItem]:
         return self.__model.items()
