@@ -55,7 +55,7 @@ class CubeNotRotated(CheckItem):
 
     _label = 'pCube.r'
     _category = 'layout'
-    _description = 'pCubeが回転していない'
+    _description = 'pCubeが回転していないいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいいい'
 
     def _execute(self) -> None:
         if not cmds.objExists('pCube1'):
@@ -64,7 +64,7 @@ class CubeNotRotated(CheckItem):
         cube: qm.Transform = qm.eval('pCube1')
         if not self.float_seq_equals(cube.r.get(), (0, 0, 0)):
             self.append_error([cube.mel_object], f'rが(0,0,0)ではありません: {cube.r.get()}', True)
-            self.append_error([cube.shape().mel_object], 'aaa', False)
+            self.append_error([cube.mel_object], 'aaa', False)
 
     def _modify(self, error: CheckResult) -> None:
         if not cmds.objExists('pCube1'):
