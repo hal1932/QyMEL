@@ -64,9 +64,8 @@ def image_button(pixmap_or_filepath: Union[QPixmap, str], parent: Optional[QObje
     return button
 
 
-def desktop() -> QDesktopWidget:
-    app = QApplication.instance()
-    return app.desktop()
+def desktop() -> QScreen:
+    return QGuiApplication.primaryScreen()
 
 
 from .clickable import *

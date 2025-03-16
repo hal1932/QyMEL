@@ -84,7 +84,7 @@ class DescriptionWidget(QWidget):
         ))
 
     def clear(self):
-        self.__icon.setPixmap(None)
+        self.__icon.setPixmap(QPixmap())
         self.__label.setText('')
         self.__description.setText('')
         self.__result_items.clear()
