@@ -7,11 +7,11 @@ import inspect
 import types
 import codecs
 import importlib
-import distutils.sysconfig
+import sysconfig
 
 
 IGNORED_MODULE_FILE_PATHS = [
-    distutils.sysconfig.get_python_lib(standard_lib=True).lower(),
+    sysconfig.get_path('stdlib').lower(),
     os.environ.get('MAYA_LOCATION', '').replace('/', os.sep).lower(),
     __file__.lower(),
 ]
