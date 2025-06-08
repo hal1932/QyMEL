@@ -1,3 +1,4 @@
+import collections.abc as abc
 
 from qymel.ui.pyside_module import *
 from qymel.ui import layouts as _layouts
@@ -10,7 +11,7 @@ from . import icons as _icons
 
 class ItemListItem(_models.TreeItem):
 
-    def __init__(self, group: _groups.CheckItemGroup, category: str|None, items: list[_items.CheckItem]):
+    def __init__(self, group: _groups.CheckItemGroup, category: str|None, items: abc.Sequence[_items.CheckItem]):
         super().__init__()
         self.group = group
         if category is None:

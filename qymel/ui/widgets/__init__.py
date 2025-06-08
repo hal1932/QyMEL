@@ -15,19 +15,6 @@ def vline(parent: QObject|None = None) -> QFrame:
     return frame
 
 
-def hseparator(parent: QObject|None = None) -> QFrame:
-    frame = QFrame(parent)
-    frame.setFrameShape(QFrame.Shape.HLine)
-    frame.setFrameShadow(QFrame.Shadow.Sunken)
-    return frame
-
-
-def vseparator(parent: QObject|None = None) -> QFrame:
-    frame = QFrame(parent)
-    frame.setFrameShape(QFrame.Shape.VLine)
-    frame.setFrameShadow(QFrame.Shadow.Sunken)
-    return frame
-
 
 def groupbox(title: str, layout: QLayout, parent: QObject|None = None) -> QGroupBox:
     box = QGroupBox(title, parent)

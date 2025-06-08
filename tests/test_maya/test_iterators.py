@@ -190,7 +190,7 @@ class TestMeshEdgeIter(TestCase):
             self.assertSequenceEqual(list(edge.connected_edge_indices), list(miter.getConnectedEdges()))
             self.assertSequenceEqual(list(edge.connected_face_indices), list(miter.getConnectedFaces()))
             self.assertSequenceEqual(list(edge.vertex_indices), [miter.vertexId(0), miter.vertexId(1)])
-            self.assertEqual(edge.on_boudary, miter.onBoundary())
+            self.assertEqual(edge.on_boundary, miter.onBoundary())
             self.assertEqual(edge.is_smooth, miter.isSmooth)
             miter.next()
 

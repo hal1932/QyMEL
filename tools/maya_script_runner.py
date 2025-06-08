@@ -1,3 +1,4 @@
+import typing
 
 import maya.cmds as cmds
 import maya.mel as mel
@@ -8,7 +9,7 @@ from qymel.ui.app import AppBase, MainWindowBase
 from qymel.ui import layouts
 
 
-_TQObject = TypeVar('_TQObject', bound=QObject)
+_TQObject = typing.TypeVar('_TQObject', bound=QObject)
 
 
 def _get_script_editor_panel() -> QWidget|None:
@@ -20,7 +21,7 @@ def _get_script_editor_panel() -> QWidget|None:
     return None
 
 
-def _find_children(widget: QWidget, qobject_type: Type[_TQObject]) -> list[_TQObject]:
+def _find_children(widget: QWidget, qobject_type: typing.Type[_TQObject]) -> list[_TQObject]:
     results: list[_TQObject] = []
     nodes = [widget]
     while len(nodes) > 0:
@@ -84,7 +85,6 @@ class ScriptRunnerWindow(MainWindowBase):
         editor_panel = _get_script_editor_panel()
         for editor in _find_children(editor_panel, QPlainTextEdit):
             script = editor.toPlainText()
-            lang = None
             if script.startswith('#'):
                 lang = 'python'
             elif script.startswith('//'):

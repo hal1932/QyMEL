@@ -6,11 +6,11 @@ import threading
 from .pyside_module import *
 
 
-TLoadedCallback = abc.Callable[[QImage], QImage]
-TCompletedCallback = abc.Callable[[QImage], None]
-TErrorCallback = abc.Callable[[BaseException], None]
+LoadedCallback = abc.Callable[[QImage], QImage]
+CompletedCallback = abc.Callable[[QImage], None]
+ErrorCallback = abc.Callable[[BaseException], None]
 
-TCallback = typing.TypeVar('TCallback', TLoadedCallback, TCompletedCallback, TErrorCallback)
+TCallback = typing.TypeVar('TCallback', LoadedCallback, CompletedCallback, ErrorCallback)
 
 
 class ImageLoadingCallback(object):
@@ -28,9 +28,9 @@ class BatchImageLoader(QObject):
     def __init__(self, parent: QObject|None = None) -> None:
         super(BatchImageLoader, self).__init__(parent)
         self.__file_paths: dict[int, str] = {}
-        self.__images: dict[int, QImage]|None = {}
+        self.__images: dict[int, QImage|None] = {}
         self.__images_lock = threading.Lock()
-        self.__callbacksdict[str, list[abc.Callable[[QImage], QImage]]] = {}
+        self.__callbacks: dict[str, list[abc.Callable[[QImage], QImage]]] = {}
         self.__pool = multiprocessing.pool.ThreadPool()
 
     def clear(self) -> None:
@@ -77,7 +77,7 @@ class BatchImageLoader(QObject):
             error_callback=_error_callback
         )
 
-    def __load_image(self, index: int, file_path: str, on_loaded_callbacks: TLoadedCallback) -> None:
+    def __load_image(self, index: int, file_path: str, on_loaded_callbacks: abc.Iterable[LoadedCallback]) -> None:
         image = QImage(file_path)
         with self.__images_lock:
             self.__images[index] = image

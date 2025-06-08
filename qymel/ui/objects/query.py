@@ -51,7 +51,7 @@ class ObjectQuery(object):
 
     def child(self, predicate: _ObjectPredicate = None, selector: _ObjectSelector = None) -> _QueryResult:
         if not predicate:
-            return self.object.findChild()
+            return self.object.findChild(QObject)
         for child in self.object.children():
             if not predicate or predicate(child):
                 return selector(child) if selector else child
@@ -66,7 +66,7 @@ class ObjectQuery(object):
                 children.append(selector(child) if selector else child)
         return children
 
-    def ichildren(self, predicate: _ObjectPredicate = None, selector: _ObjectSelector = None) -> Iterable[_QueryResult]:
+    def ichildren(self, predicate: _ObjectPredicate = None, selector: _ObjectSelector = None) -> abc.Iterable[_QueryResult]:
         if not predicate:
             for child in self.object.children():
                 yield child
@@ -99,7 +99,7 @@ class ObjectQuery(object):
             parents.append(parent.parent())
         return ancestors
 
-    def iancestors(self, predicate: _ObjectPredicate = None, selector: _ObjectSelector = None) -> Iterable[_QueryResult]:
+    def iancestors(self, predicate: _ObjectPredicate = None, selector: _ObjectSelector = None) -> abc.Iterable[_QueryResult]:
         parents = [self.object.parent()]
         while parents:
             parent = parents.pop(-1)
@@ -128,7 +128,7 @@ class ObjectQuery(object):
             children.extend(child.children())
         return descendents
 
-    def idescendents(self, predicate: _ObjectPredicate = None, selector: _ObjectSelector = None) -> Iterable[_QueryResult]:
+    def idescendents(self, predicate: _ObjectPredicate = None, selector: _ObjectSelector = None) -> abc.Iterable[_QueryResult]:
         children = self.object.children()
         while children:
             child = children.pop(-1)

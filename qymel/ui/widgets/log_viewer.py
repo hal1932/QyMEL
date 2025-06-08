@@ -104,7 +104,7 @@ class LogViewer(QWidget):
     def append_critical_line(self, text: str) -> None:
         self._append(u'{}\n'.format(text), self.critical_format)
 
-    def _append(self, text: str, char_format: str) -> None:
+    def _append(self, text: str, char_format: QTextCharFormat) -> None:
         if len(text) == 0:
             return
 

@@ -1,5 +1,5 @@
 import typing
-import collections.abc as abc
+import abc
 
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
@@ -12,11 +12,11 @@ if typing.TYPE_CHECKING:
     from . import general as _general
 
 TMItComp = typing.TypeVar('TMItComp', _om2.MItMeshVertex, _om2.MItMeshEdge, _om2.MItMeshPolygon, _om2.MItMeshFaceVertex)
-TColorSet = typing.TypeVar('TColorSet', '_general.ColorSet', str)
-TUvSet = typing.TypeVar('TUvSet', '_general.UvSet', str)
+TColorSet = typing.TypeVar('TColorSet', _general.ColorSet, str)
+TUvSet = typing.TypeVar('TUvSet', _general.UvSet, str)
 
 
-class _ComponentIter(typing.Generic[TMItComp]):
+class ComponentIter(typing.Generic[TMItComp]):
 
     @property
     def miter(self) -> TMItComp:
@@ -58,7 +58,7 @@ class _ComponentIter(typing.Generic[TMItComp]):
         return self
 
 
-class MeshVertexIter(_ComponentIter[_om2.MItMeshVertex]):
+class MeshVertexIter(ComponentIter[_om2.MItMeshVertex]):
 
     @property
     def mel_object(self) -> str:
@@ -157,7 +157,7 @@ class MeshVertexIter(_ComponentIter[_om2.MItMeshVertex]):
         return self._miter.position(space)
 
 
-class MeshFaceIter(_ComponentIter[_om2.MItMeshPolygon]):
+class MeshFaceIter(ComponentIter[_om2.MItMeshPolygon]):
 
     @property
     def mel_object(self) -> str:
@@ -264,7 +264,7 @@ class MeshFaceIter(_ComponentIter[_om2.MItMeshPolygon]):
         return result
 
 
-class MeshEdgeIter(_ComponentIter[_om2.MItMeshEdge]):
+class MeshEdgeIter(ComponentIter[_om2.MItMeshEdge]):
 
     @property
     def mel_object(self) -> str:
@@ -287,7 +287,7 @@ class MeshEdgeIter(_ComponentIter[_om2.MItMeshEdge]):
         return _om2.MIntArray([self._miter.vertexId(0), self._miter.vertexId(1)])
 
     @property
-    def on_boudary(self) -> bool:
+    def on_boundary(self) -> bool:
         return self._miter.onBoundary()
 
     @property
@@ -308,7 +308,7 @@ class MeshEdgeIter(_ComponentIter[_om2.MItMeshEdge]):
         return _om2.MPointArray([self._miter.point(0, space), self._miter.point(1, space)])
 
 
-class MeshFaceVertexIter(_ComponentIter[_om2.MItMeshFaceVertex]):
+class MeshFaceVertexIter(ComponentIter[_om2.MItMeshFaceVertex]):
 
     @property
     def mel_object(self) -> str:

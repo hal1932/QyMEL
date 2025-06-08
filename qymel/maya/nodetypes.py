@@ -440,7 +440,7 @@ class AnimCurve(DependNode[_om2anim.MFnAnimCurve]):
             return value
         return input_type(value, input_type.uiUnit())
 
-    def _from_input(self, value: _om2.MTime|_om2.MAngle|_om2.MDistance, float) -> float:
+    def _from_input(self, value: _om2.MTime|_om2.MAngle|_om2.MDistance|float) -> float:
         if isinstance(value, float):
             return value
         return value.asUnits(self.__class__._input_type.uiUnit())
@@ -663,7 +663,7 @@ class DagNode(Entity[TFnDagNode], typing.Generic[TFnDagNode]):
         tmp_mfn = _om2.MFnDependencyNode()
         return [_graphs_eval_node(name, tmp_mfn) for name in others]
 
-    def parent(self, index: int = 0) -> 'DagNode'|None:
+    def parent(self, index: int = 0) -> typing['DagNode', None]:
         if self.is_world:
             return None
 
@@ -679,7 +679,7 @@ class DagNode(Entity[TFnDagNode], typing.Generic[TFnDagNode]):
         kwargs['allParents'] = True
         return self.relatives(**kwargs)
 
-    def child(self, index: int = 0) -> 'DagNode'|None:
+    def child(self, index: int = 0) -> typing.Optional['DagNode']:
         if self.is_world:
             return self.children()[index]
 
@@ -691,7 +691,7 @@ class DagNode(Entity[TFnDagNode], typing.Generic[TFnDagNode]):
         child_mfn = _om2.MFnDagNode(child_mobj)
         return _graphs_to_node_instance(child_mfn, _om2.MFnDagNode(child_mobj).getPath())
 
-    def first_child(self, **kwargs) -> 'DagNode'|None:
+    def first_child(self, **kwargs) -> typing.Optional['DagNode']:
         if 'name' not in kwargs:
             return self.child(0)
 
@@ -707,7 +707,7 @@ class DagNode(Entity[TFnDagNode], typing.Generic[TFnDagNode]):
 
         return None
 
-    def last_child(self, **kwargs) -> 'DagNode'|None:
+    def last_child(self, **kwargs) -> typing.Optional['DagNode']:
         if 'name' not in kwargs:
             return self.child(0)
 
@@ -902,7 +902,7 @@ class Transform(DagNode[_om2.MFnTransform]):
                 count += 1
         return count
 
-    def shape(self) -> 'Shape'|None:
+    def shape(self) -> typing.Optional['Shape']:
         mdagpath = _om2.MDagPath(self.mdagpath)
         try:
             mdagpath.extendToShape()
@@ -960,7 +960,7 @@ class Shape(DagNode[TFnShape], typing.Generic[TFnShape]):
         transform = _cmds.instance(self.mel_object, **kwargs)
         return _graphs_eval_node(transform, _om2.MFnDependencyNode())
 
-    def skin_cluster(self) -> 'SkinCluster'|None:
+    def skin_cluster(self) -> typing.Optional['SkinCluster']:
         names = _cmds.ls(_cmds.listHistory(self.mel_object), type='skinCluster')
         if len(names) == 0:
             return None
@@ -1130,7 +1130,7 @@ class Mesh(SurfaceShape[_om2.MFnMesh]):
             cls: type,
             indices: abc.Sequence[object]|None = None,
             complete_length: int|list[int]|None = None
-    ) -> object:
+    ) -> _components.Component:
         comp = cls._comp_mfn()
         mobj = comp.create(cls._comp_type)
         if indices is not None:

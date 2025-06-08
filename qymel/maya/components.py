@@ -1,5 +1,6 @@
-import collections.abc as abc
-import typing
+import collections.abc
+
+import abc
 
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
@@ -11,7 +12,7 @@ from . import objects as _objects
 from . import iterators as _iterators
 
 
-TCompIter = typing.TypeVar('TCompIter', bound=_iterators._ComponentIter)
+TCompIter = typing.TypeVar('TCompIter', bound=_iterators.ComponentIter)
 TCompFn = typing.TypeVar('TCompFn', bound=_om2.MFnComponent)
 TCompElem = typing.TypeVar('TCompElem')
 
@@ -50,7 +51,7 @@ class Component(_objects.MayaObject, typing.Generic[TCompFn, TCompElem, TCompIte
         return self._mfn
 
     @property
-    def elements(self) -> abc.Sequence[TCompElem]:
+    def elements(self) -> collections.abc.Sequence[TCompElem]:
         return self.mfn.getElements()
 
     def __init__(self, obj: _om2.MObject|str, mdagpath: _om2.MDagPath) -> None:
@@ -111,14 +112,14 @@ class Component(_objects.MayaObject, typing.Generic[TCompFn, TCompElem, TCompIte
     def append(self, element: TCompElem) -> None:
         self.mfn.addElement(element)
 
-    def extend(self, elements: abc.Sequence[TCompElem]) -> None:
+    def extend(self, elements: collections.abc.Sequence[TCompElem]) -> None:
         self.mfn.addElements(elements)
 
     def set_complete(self, count: int) -> None:
         self.mfn.setCompleteData(count)
 
     @classmethod
-    def _create_api_comp(cls: TComponent, elements: abc.Sequence[TCompElem]|None = None) -> TCompFn:
+    def _create_api_comp(cls: TComponent, elements: collections.abc.Sequence[TCompElem]|None = None) -> TCompFn:
         comp = cls._comp_mfn()
         comp.create(cls._comp_type)
         if elements:

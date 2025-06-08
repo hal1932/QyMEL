@@ -1,8 +1,5 @@
-
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
-
-from .types import *
 
 
 def plug_get_impl(mplug: _om2.MPlug) -> object:

@@ -12,58 +12,6 @@ from . import layouts as _layouts
 from .objects import serializer as _serializer
 
 
-class AppBase(object):
-
-    @property
-    def window(self) -> QMainWindow:
-        return self._window
-
-    def __init__(self) -> None:
-        self._app: QApplication|None = None
-        self._window: QMainWindow|None = None
-
-    def execute(self) -> None:
-        self._app = self._setup_application()
-
-        self._initialize(self._app)
-        self._window = self._create_window()
-        if self._window is not None:
-            self._on_before_setup_ui()
-            self._window.setup_ui()
-            self._on_after_setup_ui()
-            self._window.show()
-
-        self._exec_application_main_loop(self._app)
-
-    def _setup_application(self) -> QApplication:
-        app = QApplication.instance()
-        if not _MAYA:
-            if app is None:
-                app = QApplication(sys.argv)
-        return app
-
-    def _exec_application_main_loop(self, app: QApplication) -> None:
-        ret = app.exec_()
-        self._finalize()
-        if not _MAYA:
-            sys.exit(ret)
-
-    def _initialize(self, app: QApplication) -> None:
-        pass
-
-    def _create_window(self) -> QMainWindow:
-        pass
-
-    def _on_before_setup_ui(self) -> None:
-        pass
-
-    def _on_after_setup_ui(self) -> None:
-        pass
-
-    def _finalize(self) -> None:
-        pass
-
-
 class _MainWindowBase(QMainWindow, _serializer.SerializableObjectMixin):
 
     before_setup_ui = Signal()
@@ -112,7 +60,7 @@ class _MainWindowBase(QMainWindow, _serializer.SerializableObjectMixin):
     def default_geometry(self) -> QRect:
         return QRect(self.screen().geometry().center(), QSize(0, 0))
 
-    def enable_serialzie(self, settings: QSettings) -> None:
+    def enable_serialize(self, settings: QSettings) -> None:
         serializer = _serializer.ObjectSerializer()
 
         def _restore_ui():
@@ -231,3 +179,55 @@ class ToolMainWindowBase(MainWindowBase):
 
     def _close(self) -> None:
         self.close()
+
+
+class AppBase(object):
+
+    @property
+    def window(self) -> QMainWindow:
+        return self._window
+
+    def __init__(self) -> None:
+        self._app: QApplication|None = None
+        self._window: _MainWindowBase|None = None
+
+    def execute(self) -> None:
+        self._app = self._setup_application()
+
+        self._initialize(self._app)
+        self._window = self._create_window()
+        if self._window is not None:
+            self._on_before_setup_ui()
+            self._window.setup_ui()
+            self._on_after_setup_ui()
+            self._window.show()
+
+        self._exec_application_main_loop(self._app)
+
+    def _setup_application(self) -> QApplication:
+        app = QApplication.instance()
+        if not _MAYA:
+            if app is None:
+                app = QApplication(sys.argv)
+        return app
+
+    def _exec_application_main_loop(self, app: QApplication) -> None:
+        ret = app.exec_()
+        self._finalize()
+        if not _MAYA:
+            sys.exit(ret)
+
+    def _initialize(self, app: QApplication) -> None:
+        pass
+
+    def _create_window(self) -> QMainWindow:
+        pass
+
+    def _on_before_setup_ui(self) -> None:
+        pass
+
+    def _on_after_setup_ui(self) -> None:
+        pass
+
+    def _finalize(self) -> None:
+        pass

@@ -46,7 +46,7 @@ class FileInfo(_DictEntry):
         return infos
 
     @staticmethod
-    def query(key: str) -> 'FileInfo'|None:
+    def query(key: str) -> typing.Optional['FileInfo']:
         value = _cmds.fileInfo(key, query=True)
         if len(value) == 0:
             return None
@@ -122,7 +122,7 @@ class Scene(object):
         return _cmds.file(**kwargs)
 
     @staticmethod
-    def is_mofieied() -> bool:
+    def is_modified() -> bool:
         return _cmds.file(query=True, modified=True)
 
     @staticmethod
@@ -187,7 +187,7 @@ class FileRule(_DictEntry):
         return rules
 
     @staticmethod
-    def query(key: str) -> 'FileRule'|None:
+    def query(key: str) -> typing.Optional['FileRule']:
         value = _cmds.workspace(fileRuleEntry=key)
         if len(value) == 0:
             return None
@@ -224,7 +224,7 @@ class WorkspaceVariable(_DictEntry):
         return rules
 
     @staticmethod
-    def query(key: str) -> 'WorkspaceVariable'|None:
+    def query(key: str) -> typing.Optional['WorkspaceVariable']:
         value = _cmds.workspace(variableEntry=key)
         if len(value) == 0:
             return None
@@ -312,7 +312,7 @@ class Workspace(object):
         return result
 
     @staticmethod
-    def __entry(cls: typing.Type[_DictEntry], entry: str, key: str, default_value: str|None):
+    def __entry(cls: typing.Type[_DictEntry], entry: str, key: str, default_value: str|None) -> object:
         kwargs = {'{}Entry'.format(entry): key}
         value = _cmds.workspace(**kwargs) or default_value
         return cls(key, value)
@@ -325,7 +325,7 @@ class FileTranslator(object):
         return [FileTranslator(name) for name in _cmds.translator(query=True, list=True)]
 
     @staticmethod
-    def find_by_extension(extension: str) -> 'FileTranslator'|None:
+    def find_by_extension(extension: str) -> typing.Optional['FileTranslator']:
         extension = extension.lstrip('.')
         for name in _cmds.translator(query=True, list=True):
             ext = _cmds.translator(name, query=True, extension=True)
@@ -368,7 +368,7 @@ class Namespace(object):
         return [Namespace(ns) for ns in _om2.MNamespace.getNamespaces(recurse=recurse)]
 
     @staticmethod
-    def create(name: str, parent: 'Namespace'|None = None) -> 'Namespace':
+    def create(name: str, parent: typing.Optional['Namespace'] = None) -> 'Namespace':
         kwargs = {'addNamespace': name}
         if parent is not None:
             kwargs['parent'] = parent.mel_object

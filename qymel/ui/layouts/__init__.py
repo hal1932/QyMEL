@@ -8,8 +8,8 @@ class _Stretch(object):
     pass
 
 
-TLayoutItem = QWidget|QLayout|_Stretch
-TBoxLayout = QHBoxLayout|QVBoxLayout
+TLayoutItem = typing.TypeVar('TLayoutItem', QWidget, QLayout, _Stretch)
+TBoxLayout = typing.TypeVar('TBoxLayout', bound=QBoxLayout)
 
 _stretch_instance = _Stretch()
 
@@ -27,7 +27,7 @@ def vbox(*items: TLayoutItem, **kwargs) -> QVBoxLayout:
     return _box(QVBoxLayout, items, kwargs)
 
 
-def _box(cls: typing.Type[TBoxLayout], items: abc.Iterable[TLayoutItem], kwargs: dict[str, object]) -> QBoxLayout:
+def _box(cls: typing.Type[TBoxLayout], items: abc.Iterable[TLayoutItem], kwargs: dict[str, object]) -> TBoxLayout:
     box = cls()
     for item in items:
         if isinstance(item, QWidget):

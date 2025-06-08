@@ -191,6 +191,10 @@ class _ResultItem:
     status: _items.CheckResultStatus
     result: _items.CheckResult
 
+    @property
+    def is_modifiable(self) -> bool:
+        return self.status & _items.CheckResultStatus.MODIFIABLE == _items.CheckResultStatus.MODIFIABLE
+
 
 class _ResultItemDelegate(QStyledItemDelegate):
 
@@ -225,7 +229,7 @@ class _ResultItemDelegate(QStyledItemDelegate):
         painter.drawPixmap(QPoint(x, y), status_pix)
         painter.drawText(QRect(x + x_offset, y, w - x_offset, h), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, item.label)
 
-    def __get_status_pixmap(self, status: _items.CheckResultStatus, creator: abc.Callable[[bool], QIcon]):
+    def __get_status_pixmap(self, status: _items.CheckResultStatus, creator: abc.Callable[[], QIcon]):
         pix = self._pixmaps.get(status)
         if not pix:
             pix = creator().pixmap(QSize(12, 12))
@@ -263,7 +267,7 @@ class _ResultItemWidget(QWidget):
         self.__model.clear()
 
     def append(self,
-               result: _items.CheckResult,
+               result: _items.CheckResult|None,
                label: str|None = None,
                nodes: list[str]|None = None,
                status: _items.CheckResultStatus|None = None

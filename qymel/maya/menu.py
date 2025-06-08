@@ -1,4 +1,4 @@
-
+import typing
 import maya.cmds as _cmds
 import maya.mel as _mel
 
@@ -40,7 +40,7 @@ class Menu(object):
         return [Menu(menu) for menu in menus]
 
     @staticmethod
-    def find_by_label(label: str) -> 'Menu'|None:
+    def find_by_label(label: str) -> typing.Optional['Menu']:
         for menu in Menu.root_menus():
             if menu.label == label:
                 return menu

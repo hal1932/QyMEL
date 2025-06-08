@@ -1,3 +1,5 @@
+import collections.abc as abc
+
 from ..pyside_module import *
 from . import query as _query
 

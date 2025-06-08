@@ -1,4 +1,5 @@
-import collections.abc as abc
+import collections.abc
+import abc
 import enum
 import math
 
@@ -11,7 +12,7 @@ class CheckItem(object):
     _eps = 1e-4
 
     @staticmethod
-    def find_from_module(module) -> abc.Sequence['CheckItem']:
+    def find_from_module(module) -> collections.abc.Sequence['CheckItem']:
         items: list[CheckItem] = []
         for key in dir(module):
             value = getattr(module, key)
@@ -34,7 +35,7 @@ class CheckItem(object):
     def __str__(self) -> str:
         return f'[{self.category}][{self.label}] {self.description}'
 
-    def execute(self) -> abc.Sequence['CheckResult']:
+    def execute(self) -> collections.abc.Sequence['CheckResult']:
         self.__results: list[CheckResult] = []
         self._execute()
         return self.__results or [CheckResult.success(self)]
@@ -62,7 +63,7 @@ class CheckItem(object):
     def float_equals(self, lhs: float, rhs: float) -> bool:
         return math.fabs(lhs - rhs) < self.__class__._eps
 
-    def float_seq_equals(self, lhs: abc.Sequence[float], rhs: abc.Sequence[float]) -> bool:
+    def float_seq_equals(self, lhs: collections.abc.Sequence[float], rhs: collections.abc.Sequence[float]) -> bool:
         if len(lhs) != len(lhs):
             return False
         return all(self.float_equals(l, r) for l, r in zip(lhs, rhs))

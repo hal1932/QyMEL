@@ -1,4 +1,3 @@
-
 import os
 
 import maya.cmds as cmds
@@ -8,6 +7,7 @@ from qymel.maya.scene_checker.checker import Checker
 from qymel.maya.scene_checker.items import CheckItem, CheckResult
 from qymel.maya.scene_checker.ui.checker_window import CheckerWindow
 
+from qymel.ui.pyside_module import *
 from qymel.ui.pyside_module import QSettings
 from qymel.ui.app import AppBase
 from qymel.ui.objects.serializer import ObjectSerializer
@@ -100,7 +100,7 @@ class App(AppBase):
     def _create_window(self):  # type: () -> QMainWindow
         window = CheckerWindow(self.checker)
 
-        settings = QSettings(os.path.join(os.environ['TEMP'], window.absolute_name), QSettings.IniFormat)
+        settings = QSettings(os.path.join(os.environ['TEMP'], window.absolute_name), QSettings.Format.IniFormat)
         serializer = ObjectSerializer()
 
         def _restore_ui():

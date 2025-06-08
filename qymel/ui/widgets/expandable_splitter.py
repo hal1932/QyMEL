@@ -36,7 +36,7 @@ class ExpandableSplitterHandle(QSplitterHandle):
 
         self.__expanders: list[Expander] = []
         self.__last_pos: int|None = None
-        self.__range: tuple[int, int] = tuple()
+        self.__range: tuple[int, int] = (-1, -1)
 
         self.setOrientation(orientation)
 

@@ -83,7 +83,7 @@ class Binder(typing.Generic[TItem, TBindDef]):
 # common items model
 #
 
-TItemIndex = typing.TypeVar('TElemIndex', int, QModelIndex)
+TItemIndex = typing.TypeVar('TItemIndex', int, QModelIndex)
 
 
 class ItemsModel(QAbstractItemModel, typing.Generic[TItem, TBindDef]):
@@ -313,7 +313,7 @@ class TableModel(ItemsModel[TTableItem, TableColumnDefinition]):
     def define_column(self, index: int, column: TableColumnDefinition) -> None:
         self._define_column(index, column)
 
-    def headerData(self, section: int, orientation: Qt.Orientation, role: int) -> str|None:
+    def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole) -> str|None:
         if self._binder.is_enabled:
             if orientation == Qt.Orientation.Horizontal:
                 header = self._binder.column(section).header
@@ -331,7 +331,7 @@ class TableModel(ItemsModel[TTableItem, TableColumnDefinition]):
 # TreeView
 #
 
-TTreeItem = typing.TypeVar('TTreeItem', bound=TItem)
+TTreeItem = typing.TypeVar('TTreeItem')
 
 
 class TreeDefinition(BindDefinition):
@@ -374,13 +374,13 @@ class TreeItem(object):
         return self._parent
 
     @property
-    def children(self) -> abc.Sequence[TTreeItem]:
+    def children(self) -> list[TTreeItem]:
         return self._children
 
     def __init__(self) -> None:
         self._parent: TTreeItem|None = None
         self._children: list[TTreeItem] = []
-        self._model: QAbstractItemModel = None
+        self._model: TreeModel|None = None
 
     def child(self, index: int) -> TTreeItem|None:
         if 0 <= index < len(self.children):
@@ -420,9 +420,6 @@ class TreeItem(object):
         model.beginRemoveRows(model.index_from_item(self), 0, self.child_count)
         self._children = []
         model.endRemoveRows()
-
-
-TTreeItem = typing.TypeVar('TTreeItem', bound=TreeItem)
 
 
 class TreeModel(QAbstractItemModel, typing.Generic[TTreeItem]):

@@ -1,3 +1,4 @@
+import collections.abc
 import sys
 import os
 import io
@@ -35,7 +36,7 @@ class _EncryptedImporter(_PackageImporter):
         self.__module_script_dict = module_script_dict
         self.__module_abs_paths_dict = module_abs_paths_dict
 
-    def find_spec(self, fullname: str, _1, _2) -> importlib.machinery.ModuleSpec|None:
+    def find_spec(self, fullname: str, *args) -> importlib.machinery.ModuleSpec|None:
         loader = self
         origin = self.__module_abs_paths_dict.get(fullname)
         if not origin:
@@ -99,29 +100,29 @@ class ScriptItem:
 class ScriptPackager(object):
 
     @abc.abstractmethod
-    def compose(self, scripts: Sequence[ScriptItem]) -> bytes:
+    def compose(self, scripts: collections.abc.Sequence[ScriptItem]) -> bytes:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def decompose(self, package: bytes) -> Sequence[ScriptItem]:
+    def decompose(self, package: bytes) -> collections.abc.Sequence[ScriptItem]:
         raise NotImplementedError()
 
 
 class ZipScriptPackager(ScriptPackager):
 
-    def compose(self, scripts: Sequence[ScriptItem]) -> bytes:
+    def compose(self, scripts: collections.abc.Sequence[ScriptItem]) -> bytes:
         buffer = io.BytesIO()
-        with zipfile.ZipFile(buffer, 'w') as zip:
+        with zipfile.ZipFile(buffer, 'w') as file:
             for script in scripts:
-                zip.writestr(script.path, script.source)
+                file.writestr(script.path, script.source)
         return buffer.getvalue()
 
-    def decompose(self, package: bytes) -> Sequence[ScriptItem]:
+    def decompose(self, package: bytes) -> collections.abc.Sequence[ScriptItem]:
         scripts: list[ScriptItem] = []
         stream = io.BytesIO(package)
-        with zipfile.ZipFile(stream, 'r') as zip:
-            for name in zip.namelist():
-                with zip.open(name) as f:
+        with zipfile.ZipFile(stream, 'r') as file:
+            for name in file.namelist():
+                with file.open(name) as f:
                     source = f.read()
                 scripts.append(ScriptItem(name, source))
         return scripts
@@ -130,19 +131,19 @@ class ZipScriptPackager(ScriptPackager):
 class ScriptSelector(object):
 
     @abc.abstractmethod
-    def select(self, directory: str) -> Sequence[str]:
+    def select(self, directory: str) -> collections.abc.Sequence[str]:
         raise NotImplementedError()
 
 
 class PythonScriptSelector(ScriptSelector):
 
-    def select(self, directory: str) -> Sequence[str]:
+    def select(self, directory: str) -> collections.abc.Sequence[str]:
         return glob.glob(f'{directory}/*.py')
 
 
 @dataclasses.dataclass
 class _PackageData:
-    scripts: Sequence[ScriptItem]
+    scripts: collections.abc.Sequence[ScriptItem]
     module_abs_paths: dict[str, str]
 
 
@@ -176,7 +177,7 @@ class EncryptedPackage(object):
         for root, dirs, _ in os.walk(package_root_dir):
             script_dirs.extend(os.path.join(root, dir) for dir in dirs)
 
-        script_paths: Set[str] = set()
+        script_paths: set[str] = set()
         for script_dir in script_dirs:
             for script_path in selector.select(script_dir):
                 script_paths.add(os.path.normpath(script_path))

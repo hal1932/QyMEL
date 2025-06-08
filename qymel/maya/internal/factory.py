@@ -114,7 +114,7 @@ class ComponentFactory(object):
         for name, symbol in module.__dict__.items():
             if not inspect.isclass(symbol) or not hasattr(symbol, '_comp_type'):
                 continue
-            comp_type = symbol._comp_type
+            comp_type = getattr(symbol, '_comp_type')
             ComponentFactory._cls_dict[comp_type] = symbol
 
     @staticmethod

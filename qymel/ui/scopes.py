@@ -8,7 +8,7 @@ from .pyside_module import *
 class WaitCursorScope(_scopes.Scope):
 
     def _on_enter(self) -> None:
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
 
     def _on_exit(self) -> None:
         QApplication.restoreOverrideCursor()
@@ -45,7 +45,7 @@ class KeepRowSelectionScope(_scopes.Scope):
         view = self.__view
 
         mode = view.selectionMode()
-        view.setSelectionMode(QAbstractItemView.MultiSelection)
+        view.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
 
         indices = self.__selection
 
@@ -54,7 +54,7 @@ class KeepRowSelectionScope(_scopes.Scope):
             indices = [model.mapFromSource(index) for index in indices]
 
         for index in indices:
-            view.selectRow(index.row())
+            view.selectionModel().select(index, QItemSelectionModel.SelectionFlag.Select | QItemSelectionModel.SelectionFlag.Rows)
 
         view.setSelectionMode(mode)
 

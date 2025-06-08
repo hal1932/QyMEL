@@ -110,9 +110,9 @@ class TestScene(unittest.TestCase):
         os.remove(tmp_scene_path_1)
 
     def test_modify(self):
-        self.assertFalse(qm.Scene.is_mofieied())
+        self.assertFalse(qm.Scene.is_modified())
         cmds.polyCube()
-        self.assertTrue(qm.Scene.is_mofieied())
+        self.assertTrue(qm.Scene.is_modified())
 
     def test_import(self):
         tmp_scene_path = 'C:/tmp/test.ma'
