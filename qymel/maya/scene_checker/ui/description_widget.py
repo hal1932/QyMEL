@@ -1,6 +1,4 @@
-# coding: utf-8
-from typing import *
-
+import collections.abc as abc
 import itertools
 import functools
 import dataclasses
@@ -94,12 +92,12 @@ class DescriptionWidget(QWidget):
         self.__result_group.setTitle(self.__result_group_title.replace('$COUNT', '0'))
         self.__nodes_group.setTitle(self.__nodes_group_title.replace('$COUNT', '0'))
 
-    def load_from(self, category: Optional[str], item: Optional[_items.CheckItem], results: Sequence[_items.CheckResult] = []):
+    def load_from(self, category: str|None, item: _items.CheckItem|None, results: abc.Sequence[_items.CheckResult|None] = None):
         self.clear()
 
         self.__category = category
         self.__item = item
-        self.__results = results
+        self.__results = results or []
 
         header = ''
         if category:
@@ -154,7 +152,7 @@ class DescriptionWidget(QWidget):
     def refresh(self):
         self.load_from(self.__category, self.__item, self.__results)
 
-    def __sync_result_selection(self, selection: List['_ResultItem'], from_results: bool, from_nodes: bool):
+    def __sync_result_selection(self, selection: list['_ResultItem'], from_results: bool, from_nodes: bool):
         if from_results:
             # results -> nodes
             node_items = []
@@ -189,14 +187,14 @@ class DescriptionWidget(QWidget):
 @dataclasses.dataclass(frozen=True)
 class _ResultItem:
     label: str
-    nodes: List[str]
+    nodes: list[str]
     status: _items.CheckResultStatus
     result: _items.CheckResult
 
 
 class _ResultItemDelegate(QStyledItemDelegate):
 
-    _pixmaps: Dict[_items.CheckResultStatus, QPixmap] = {}
+    _pixmaps: dict[_items.CheckResultStatus, QPixmap] = {}
 
     def __init__(self):
         super().__init__()
@@ -220,14 +218,14 @@ class _ResultItemDelegate(QStyledItemDelegate):
         h = option.rect.height()
         x_offset = status_pix.width() + 2
 
-        if option.state & QStyle.State_Selected:
+        if option.state & QStyle.StateFlag.State_Selected:
             painter.fillRect(option.rect, option.palette.highlight())
             painter.setPen(option.palette.highlightedText().color())
 
         painter.drawPixmap(QPoint(x, y), status_pix)
-        painter.drawText(QRect(x + x_offset, y, w - x_offset, h), Qt.AlignLeft | Qt.AlignVCenter, item.label)
+        painter.drawText(QRect(x + x_offset, y, w - x_offset, h), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, item.label)
 
-    def __get_status_pixmap(self, status: _items.CheckResultStatus, creator: Callable[[bool], QIcon]):
+    def __get_status_pixmap(self, status: _items.CheckResultStatus, creator: abc.Callable[[bool], QIcon]):
         pix = self._pixmaps.get(status)
         if not pix:
             pix = creator().pixmap(QSize(12, 12))
@@ -243,13 +241,13 @@ class _ResultItemWidget(QWidget):
         super().__init__()
         self.__model = _models.ListModel()
         self.__model.define(_models.ListDefinition(bindings={
-            Qt.DisplayRole: 'label'
+            Qt.ItemDataRole.DisplayRole: 'label'
         }))
 
         self.__view = QListView()
         self.__view.setModel(self.__model)
         self.__view.setItemDelegate(_ResultItemDelegate())
-        self.__view.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.__view.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.__view.setEnabled(True)
 
         self.__selection_model = self.__view.selectionModel()
@@ -266,29 +264,29 @@ class _ResultItemWidget(QWidget):
 
     def append(self,
                result: _items.CheckResult,
-               label: Optional[str] = None,
-               nodes: Optional[List[str]] = None,
-               status: Optional[_items.CheckResultStatus] = None
+               label: str|None = None,
+               nodes: list[str]|None = None,
+               status: _items.CheckResultStatus|None = None
                ):
         label = label or result.message
         nodes = nodes or result.nodes
         status = status or result.status
         self.__model.append(_ResultItem(label, nodes, status, result))
 
-    def items(self) -> List[_ResultItem]:
+    def items(self) -> list[_ResultItem]:
         return self.__model.items()
 
-    def select(self, items: Iterable[_ResultItem], replace: bool = False):
+    def select(self, items: abc.Iterable[_ResultItem], replace: bool = False):
         selection = QItemSelection()
         for item in items:
             item_index = self.__model.item_index_of(item)
             index = self.__model.index(item_index, 0)
-            selection.merge(QItemSelection(index, index), QItemSelectionModel.Select)
+            selection.merge(QItemSelection(index, index), QItemSelectionModel.SelectionFlag.Select)
 
-        command = QItemSelectionModel.ClearAndSelect if replace else QItemSelectionModel.Select
+        command = QItemSelectionModel.SelectionFlag.ClearAndSelect if replace else QItemSelectionModel.SelectionFlag.Select
         self.__selection_model.select(selection, command)
 
-    def selected_items(self) -> List[_ResultItem]:
+    def selected_items(self) -> list[_ResultItem]:
         indices = self.__selection_model.selectedIndexes()
         return self.__model.items(indices)
 

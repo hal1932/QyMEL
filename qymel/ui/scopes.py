@@ -1,5 +1,4 @@
-# coding: utf-8
-from typing import *
+import collections.abc as abc
 import functools
 
 from ..core import scopes as _scopes
@@ -28,7 +27,7 @@ class KeepRowSelectionScope(_scopes.Scope):
     def __init__(self, view: QAbstractItemView) -> None:
         super().__init__()
         self.__view = view
-        self.__selection: List[QModelIndex] = None
+        self.__selection: list[QModelIndex]|None = None
 
     def _on_enter(self) -> None:
         indices = self.__view.selectedIndexes()
@@ -62,7 +61,7 @@ class KeepRowSelectionScope(_scopes.Scope):
 
 class SignalConnectionScope(_scopes.Scope):
 
-    def __init__(self, signal: Signal, slot: Callable) -> None:
+    def __init__(self, signal: Signal, slot: abc.Callable) -> None:
         super().__init__()
         self.__signal = signal
         self.__slot = slot
@@ -76,7 +75,7 @@ class SignalConnectionScope(_scopes.Scope):
 
 class SignalDisconnectionScope(_scopes.Scope):
 
-    def __init__(self, signal: Signal, slot: Callable) -> None:
+    def __init__(self, signal: Signal, slot: abc.Callable) -> None:
         super().__init__()
         self.__signal = signal
         self.__slot = slot

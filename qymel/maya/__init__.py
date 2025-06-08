@@ -1,4 +1,3 @@
-# coding: utf-8
 from .objects import *
 from .general import *
 from .components import *

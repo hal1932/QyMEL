@@ -1,17 +1,15 @@
-# coding: utf-8
-from typing import *
-
+import collections.abc as abc
 from . import groups as _groups
 
 
 class Checker(object):
 
     @property
-    def groups(self) -> Sequence[_groups.CheckItemGroup]:
+    def groups(self) -> abc.Sequence[_groups.CheckItemGroup]:
         return self.__groups
 
     def __init__(self):
-        self.__groups: List[_groups.CheckItemGroup] = []
+        self.__groups: list[_groups.CheckItemGroup] = []
 
     def append(self, label: str) -> _groups.CheckItemGroup:
         group = _groups.CheckItemGroup(label)
@@ -26,7 +24,7 @@ class Checker(object):
         for group in self.__groups:
             group.execute_all()
 
-    def execute_group(self, group_name: str) -> Optional[_groups.CheckItemGroup]:
+    def execute_group(self, group_name: str) -> _groups.CheckItemGroup|None:
         for group in self.__groups:
             if group == group_name:
                 group.execute_all()

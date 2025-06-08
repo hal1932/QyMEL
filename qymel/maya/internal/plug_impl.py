@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import *
 
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
@@ -7,7 +5,7 @@ import maya.api.OpenMaya as _om2
 from .types import *
 
 
-def plug_get_impl(mplug: _om2.MPlug) -> Any:
+def plug_get_impl(mplug: _om2.MPlug) -> object:
     mobj = mplug.attribute()
     api_type = mobj.apiType()
 
@@ -41,7 +39,7 @@ def plug_get_impl(mplug: _om2.MPlug) -> Any:
         return _cmds.getAttr(mplug.name())
 
 
-def _get_component_list_data(mplug: _om2.MPlug) -> Tuple[Any, ...]:
+def _get_component_list_data(mplug: _om2.MPlug) -> tuple[object, ...]:
     mfn = _om2.MFnComponentListData(mplug.asMObject())
     return tuple(mfn.get(i) for i in range(mfn.length()))
 

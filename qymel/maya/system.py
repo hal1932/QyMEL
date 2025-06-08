@@ -1,5 +1,5 @@
-# coding: utf-8
-from typing import *
+import collections.abc as abc
+import typing
 import os
 
 import maya.cmds as _cmds
@@ -26,7 +26,7 @@ class _DictEntry(object):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}('{self.key}', '{self.value}')"
 
-    def _update(self, new_value: Optional[str]) -> None:
+    def _update(self, new_value: str|None) -> None:
         self.__value = new_value
 
     def _remove(self) -> None:
@@ -36,7 +36,7 @@ class _DictEntry(object):
 class FileInfo(_DictEntry):
 
     @staticmethod
-    def ls() -> List['FileInfo']:
+    def ls() -> list['FileInfo']:
         infos = []
         flatten_items = _cmds.fileInfo(query=True)
         for i in range(0, len(flatten_items), 2):
@@ -46,7 +46,7 @@ class FileInfo(_DictEntry):
         return infos
 
     @staticmethod
-    def query(key: str) -> Optional['FileInfo']:
+    def query(key: str) -> 'FileInfo'|None:
         value = _cmds.fileInfo(key, query=True)
         if len(value) == 0:
             return None
@@ -89,7 +89,7 @@ class Scene(object):
         return _cmds.file(new=True, force=force)
 
     @staticmethod
-    def open(file_path: str, **kwargs) -> Union[str, List[_nodetypes.DependNode]]:
+    def open(file_path: str, **kwargs) -> str|list[_nodetypes.DependNode]:
         file_path = Scene.normalize_path(file_path)
         kwargs['open'] = True
         result = _cmds.file(file_path, **kwargs)
@@ -109,7 +109,7 @@ class Scene(object):
         return _cmds.file(rename=new_name)
 
     @staticmethod
-    def save(file_path: Optional[str] = None, file_type: Optional[str] = None, force: Optional[bool] = False) -> str:
+    def save(file_path: str|None = None, file_type: str|None = None, force: bool|None = False) -> str:
         file_path = Scene.normalize_path(file_path)
 
         if file_path is not None:
@@ -130,7 +130,7 @@ class Scene(object):
         _cmds.file(modified=True)
 
     @staticmethod
-    def import_file(file_path: str, **kwargs) -> Union[str, List[_nodetypes.DependNode]]:
+    def import_file(file_path: str, **kwargs) -> str|list[_nodetypes.DependNode]:
         file_path = Scene.normalize_path(file_path)
         kwargs['i'] = True
         result = _cmds.file(file_path, **kwargs)
@@ -142,7 +142,7 @@ class Scene(object):
         return file_path
 
     @staticmethod
-    def reference_file(file_path: str, **kwargs) -> Union[_nodetypes.FileReference, List[_nodetypes.DependNode]]:
+    def reference_file(file_path: str, **kwargs) -> _nodetypes.FileReference|list[_nodetypes.DependNode]:
         file_path = Scene.normalize_path(file_path)
         kwargs['reference'] = True
         result = _cmds.file(file_path, **kwargs)
@@ -155,9 +155,9 @@ class Scene(object):
         return _nodetypes.FileReference(node)
 
     @staticmethod
-    def file_infos() -> List[FileInfo]:
+    def file_infos() -> list[FileInfo]:
         infos = _cmds.fileInfo(query=True)
-        result = []  # type: List[FileInfo]
+        result = []  # type: list[FileInfo]
         for i in range(0, len(infos), 2):
             key = infos[i]
             value = infos[i + 1]
@@ -165,7 +165,7 @@ class Scene(object):
         return result
 
     @staticmethod
-    def file_info(key: str, default_value: Optional[str] = None) -> FileInfo:
+    def file_info(key: str, default_value: str|None = None) -> FileInfo:
         value = _cmds.fileInfo(key, query=True)
         if len(value) == 0:
             value = default_value
@@ -177,7 +177,7 @@ class Scene(object):
 class FileRule(_DictEntry):
 
     @staticmethod
-    def ls() -> List['FileRule']:
+    def ls() -> list['FileRule']:
         rules = []
         flatten_items = _cmds.workspace(query=True, fileRule=True)
         for i in range(0, len(flatten_items), 2):
@@ -187,7 +187,7 @@ class FileRule(_DictEntry):
         return rules
 
     @staticmethod
-    def query(key: str) -> Optional['FileRule']:
+    def query(key: str) -> 'FileRule'|None:
         value = _cmds.workspace(fileRuleEntry=key)
         if len(value) == 0:
             return None
@@ -214,7 +214,7 @@ class FileRule(_DictEntry):
 class WorkspaceVariable(_DictEntry):
 
     @staticmethod
-    def ls() -> List['WorkspaceVariable']:
+    def ls() -> list['WorkspaceVariable']:
         rules = []
         flatten_items = _cmds.workspace(query=True, variable=True)
         for i in range(0, len(flatten_items), 2):
@@ -224,7 +224,7 @@ class WorkspaceVariable(_DictEntry):
         return rules
 
     @staticmethod
-    def query(key: str) -> Optional['WorkspaceVariable']:
+    def query(key: str) -> 'WorkspaceVariable'|None:
         value = _cmds.workspace(variableEntry=key)
         if len(value) == 0:
             return None
@@ -271,19 +271,19 @@ class Workspace(object):
         _cmds.workspace(update=True)
 
     @staticmethod
-    def file_rules() -> List[FileRule]:
+    def file_rules() -> list[FileRule]:
         return Workspace.__entries(FileRule, 'fileRule')
 
     @staticmethod
-    def file_rule(key: str, default_value: Optional[str] = None) -> FileRule:
+    def file_rule(key: str, default_value: str|None = None) -> FileRule:
         return Workspace.__entry(FileRule, 'fileRule', key, default_value)
 
     @staticmethod
-    def variables() -> List[WorkspaceVariable]:
+    def variables() -> list[WorkspaceVariable]:
         return Workspace.__entries(WorkspaceVariable, 'variable')
 
     @staticmethod
-    def variable(key: str, default_value: Optional[str] = None) -> WorkspaceVariable:
+    def variable(key: str, default_value: str|None = None) -> WorkspaceVariable:
         return Workspace.__entry(WorkspaceVariable, 'variable', key, default_value)
 
     @staticmethod
@@ -291,7 +291,7 @@ class Workspace(object):
         return _cmds.workspace(expandName=path)
 
     @staticmethod
-    def path_by_file_rule(rule_key: str) -> Optional[str]:
+    def path_by_file_rule(rule_key: str) -> str|None:
         rule = Workspace.file_rule(rule_key)
         if rule is None:
             return None
@@ -301,7 +301,7 @@ class Workspace(object):
         ).replace(os.sep, '/')
 
     @staticmethod
-    def __entries(cls: Type[_DictEntry], entry: str) -> List[Any]:
+    def __entries(cls: typing.Type[_DictEntry], entry: str) -> list[object]:
         kwargs = {'query': True, entry: True}
         entries = _cmds.workspace(**kwargs)
         result = []
@@ -312,7 +312,7 @@ class Workspace(object):
         return result
 
     @staticmethod
-    def __entry(cls: Type[_DictEntry], entry: str, key: str, default_value: Optional[str]):
+    def __entry(cls: typing.Type[_DictEntry], entry: str, key: str, default_value: str|None):
         kwargs = {'{}Entry'.format(entry): key}
         value = _cmds.workspace(**kwargs) or default_value
         return cls(key, value)
@@ -321,11 +321,11 @@ class Workspace(object):
 class FileTranslator(object):
 
     @staticmethod
-    def ls() -> List['FileTranslator']:
+    def ls() -> list['FileTranslator']:
         return [FileTranslator(name) for name in _cmds.translator(query=True, list=True)]
 
     @staticmethod
-    def find_by_extension(extension: str) -> Optional['FileTranslator']:
+    def find_by_extension(extension: str) -> 'FileTranslator'|None:
         extension = extension.lstrip('.')
         for name in _cmds.translator(query=True, list=True):
             ext = _cmds.translator(name, query=True, extension=True)
@@ -364,11 +364,11 @@ class Namespace(object):
     root: 'Namespace' = None
 
     @staticmethod
-    def ls(recurse: bool = False) -> List['Namespace']:
+    def ls(recurse: bool = False) -> list['Namespace']:
         return [Namespace(ns) for ns in _om2.MNamespace.getNamespaces(recurse=recurse)]
 
     @staticmethod
-    def create(name: str, parent: Optional['Namespace'] = None) -> 'Namespace':
+    def create(name: str, parent: 'Namespace'|None = None) -> 'Namespace':
         kwargs = {'addNamespace': name}
         if parent is not None:
             kwargs['parent'] = parent.mel_object
@@ -407,7 +407,7 @@ class Namespace(object):
     def __repr__(self) -> str:
         return "{}('{}')".format(self.__class__.__name__, self.name)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, str):
             if not _om2.MNamespace.namespaceExists(other):
                 return False
@@ -432,14 +432,14 @@ class Namespace(object):
     def add(self, node: _nodetypes.DependNode) -> None:
         node.rename('{}:{}'.format(self.name, node.full_name.lstrip('|')))
 
-    def extend(self, nodes: Iterable[_nodetypes.DependNode]) -> None:
+    def extend(self, nodes: abc.Iterable[_nodetypes.DependNode]) -> None:
         for node in nodes:
             self.add(node)
 
     def move_contents(self, destination: 'Namespace') -> None:
         _cmds.namespace(moveNamespace=(self.mel_object, destination.mel_object))
 
-    def nodes(self, internal: bool = False) -> List[_nodetypes.DependNode]:
+    def nodes(self, internal: bool = False) -> list[_nodetypes.DependNode]:
         node_names = _cmds.namespaceInfo(self.mel_object, listOnlyDependencyNodes=True, internal=internal)
         if node_names is None:
             return []
@@ -447,7 +447,7 @@ class Namespace(object):
         tmp_mfn = _om2.MFnDependencyNode()
         return [_graphs.eval_node(name, tmp_mfn) for name in node_names]
 
-    def children(self) -> List['Namespace']:
+    def children(self) -> list['Namespace']:
         ns_names = _cmds.namespaceInfo(self.mel_object, listOnlyNamespaces=True)
         if ns_names is None:
             return []

@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import *
 import sys
 
 try:
@@ -21,8 +19,8 @@ class AppBase(object):
         return self._window
 
     def __init__(self) -> None:
-        self._app: Optional[QApplication] = None
-        self._window: Optional[QMainWindow] = None
+        self._app: QApplication|None = None
+        self._window: QMainWindow|None = None
 
     def execute(self) -> None:
         self._app = self._setup_application()
@@ -79,10 +77,10 @@ class _MainWindowBase(QMainWindow, _serializer.SerializableObjectMixin):
     def absolute_name(self) -> str:
         return f'{self.__module__}.{self.__class__.__name__}'
 
-    def __init__(self, parent: Optional[QObject] = None) -> None:
+    def __init__(self, parent: QObject|None = None) -> None:
         super(_MainWindowBase, self).__init__(parent)
         self.setObjectName(self.absolute_name)
-        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
     def setup_ui(self) -> 'MainWindowBase':
         widget = self.centralWidget()
@@ -158,7 +156,7 @@ if _MAYA:
 
     class MainWindowBase(_MainWindowBase, _MayaWidgetBaseMixin):
 
-        def __init__(self, parent: Optional[QObject] = None) -> None:
+        def __init__(self, parent: QObject|None = None) -> None:
             maya_window = get_maya_window()
 
             for child in maya_window.children():
@@ -186,7 +184,7 @@ class ToolMainWindowBase(MainWindowBase):
     def close_label(self) -> str:
         return u'閉じる'
 
-    def __init__(self, parent: Optional[QObject] = None) -> None:
+    def __init__(self, parent: QObject|None = None) -> None:
         super(ToolMainWindowBase, self).__init__(parent=parent)
 
     def setup_ui(self) -> 'ToolMainWindowBase':

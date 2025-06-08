@@ -1,6 +1,5 @@
-# coding: utf-8
-from __future__ import annotations
-from typing import *
+import collections.abc as abc
+import typing
 import functools
 
 import maya.cmds as _cmds
@@ -11,7 +10,7 @@ from .internal import graphs as _graphs
 from .internal import factory as _factory
 from .internal import plug_impl as _plug_impl
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from . import nodetypes as _nodetypes
 
 
@@ -42,11 +41,11 @@ def deprecated(message):
     return _deprecated
 
 
-def ls(*args: str, **kwargs: Any) -> List[Union[Plug, TComponent, TDependNode]]:
+def ls(*args: str, **kwargs: object) -> list[TComponent|TDependNode|'Plug']:
     return _graphs.ls(*args, **kwargs)
 
 
-def eval(obj_name: Union[str, Iterable[str]]) -> Any:
+def eval(obj_name: str|abc.Iterable[str]) -> object:
     tmp_mfn_comp = _om2_MFnComponent()
     tmp_mfn_node = _om2_MFnDependencyNode()
     if isinstance(obj_name, str):
@@ -60,7 +59,7 @@ def eval_node(node_name: str) -> TDependNode:
     return _graphs_eval_node(node_name, tmp_mfn)
 
 
-def eval_plug(plug_name: str) -> Plug:
+def eval_plug(plug_name: str) -> 'Plug':
     return _graphs_eval_plug(plug_name)
 
 
@@ -87,7 +86,7 @@ class Plug(object):
         return self._mplug.attribute()
 
     @property
-    def mfn_node(self) -> Union[_om2.MFnDependencyNode, _om2.MFnDagNode]:
+    def mfn_node(self) -> _om2.MFnDependencyNode|_om2.MFnDagNode:
         if self._mfn_node is None:
             node = self._mplug.node()
             if node.hasFn(_om2_MFn_kDagNode):
@@ -145,12 +144,12 @@ class Plug(object):
     def exists(self) -> bool:
         return _cmds.objExists(self.mel_object)
 
-    def __init__(self, plug: Union[_om2.MPlug, str]) -> None:
+    def __init__(self, plug: _om2.MPlug|str) -> None:
         if isinstance(plug, str):
             plug = _graphs.get_mplug(plug)
         self._mplug = _graphs.keep_mplug(plug)
-        self._mfn_node: Optional[_om2.MFnDependencyNode] = None
-        self._node: Optional[_nodetypes.DependNode] = None
+        self._mfn_node: _om2.MFnDependencyNode|None = None
+        self._node: _nodetypes.DependNode|None = None
 
     def __str__(self) -> str:
         return repr(self)
@@ -158,7 +157,7 @@ class Plug(object):
     def __repr__(self) -> str:
         return "{}('{}')".format(self.__class__.__name__, self.name)
 
-    def __getitem__(self, item: int) -> Plug:
+    def __getitem__(self, item: int) -> 'Plug':
         mplug = self._mplug
 
         if not mplug.isArray:
@@ -176,7 +175,7 @@ class Plug(object):
                 self._node = _graphs.to_node_instance(mfn_node)
         return self._node
 
-    def get(self) -> Any:
+    def get(self) -> object:
         mplug = self._mplug
 
         if mplug.isNetworked:
@@ -184,22 +183,22 @@ class Plug(object):
 
         return _plug_impl.plug_get_impl(mplug)
 
-    def get_attr(self, **kwargs) -> Any:
+    def get_attr(self, **kwargs) -> object:
         return _cmds_getAttr(self.mel_object, **kwargs)
 
-    def set_attr(self, *args, **kwargs) -> Any:
+    def set_attr(self, *args, **kwargs) -> object:
         return _cmds_setAttr(self.mel_object, *args, **kwargs)
 
     def connect(self, dest_plug, **kwargs) -> None:
         _cmds_connectAttr(self.mel_object, dest_plug.mel_object, **kwargs)
 
-    def disconnect(self, dest_plug: Plug, **kwargs) -> None:
+    def disconnect(self, dest_plug: 'Plug', **kwargs) -> None:
         _cmds_disconnectAttr(self.mel_object, dest_plug.mel_object, **kwargs)
 
-    def source(self) -> Plug:
+    def source(self) -> 'Plug':
         return _factory_PlugFactory_create(self._mplug.source())
 
-    def destinations(self) -> List[Plug]:
+    def destinations(self) -> list['Plug']:
         return [_factory_PlugFactory_create(mplug) for mplug in self._mplug.destinations()]
 
 

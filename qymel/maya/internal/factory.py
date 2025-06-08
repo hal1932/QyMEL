@@ -1,6 +1,4 @@
-# coding: utf-8
-from __future__ import annotations
-from typing import *
+import typing
 import sys
 import inspect
 
@@ -12,9 +10,9 @@ from .types import *
 
 class NodeFactory(object):
 
-    _cls_dict: Dict[str, Type[TDependNode]] = {}
-    _default_cls_dict: Dict[str, Type[TDependNode]] = {}
-    _dynamic_cls_cache: Dict[str, Type[TDependNode]] = {}
+    _cls_dict: dict[str, typing.Type[TDependNode]] = {}
+    _default_cls_dict: dict[str, typing.Type[TDependNode]] = {}
+    _dynamic_cls_cache: dict[str, typing.Type[TDependNode]] = {}
 
     @staticmethod
     def register(module_name: str) -> None:
@@ -28,12 +26,12 @@ class NodeFactory(object):
             NodeFactory._cls_dict[mel_type] = symbol
 
     @staticmethod
-    def register_default(node_cls: Type[TDependNode], dag_node_cls: Type[TDependNode]) -> None:
+    def register_default(node_cls: typing.Type[TDependNode], dag_node_cls: typing.Type[TDependNode]) -> None:
         NodeFactory._default_cls_dict['node'] = node_cls
         NodeFactory._default_cls_dict['dag_node'] = dag_node_cls
 
     @staticmethod
-    def create(mel_type: str, mobject: _om2.MObject, mdagpath: Optional[_om2.MDagPath] = None) -> Optional[TDependNode]:
+    def create(mel_type: str, mobject: _om2.MObject, mdagpath: _om2.MDagPath|None = None) -> TDependNode|None:
         if mel_type not in NodeFactory._cls_dict:
             return None
 
@@ -43,7 +41,7 @@ class NodeFactory(object):
         return cls(mobject)
 
     @staticmethod
-    def create_default(mfn: _om2.MFnDependencyNode, mdagpath: Optional[_om2.MDagPath] = None) -> TDependNode:
+    def create_default(mfn: _om2.MFnDependencyNode, mdagpath: _om2.MDagPath|None = None) -> TDependNode:
         mobject = mfn.object()
         cls = NodeFactory.__create_dynamic_node_type(mfn, mobject, mdagpath)
 
@@ -56,8 +54,8 @@ class NodeFactory(object):
     def __create_dynamic_node_type(
             mfn: _om2.MFnDependencyNode,
             mobject: _om2.MObject,
-            mdagpath: Optional[_om2.MDagPath] = None
-    ) -> Type[TDependNode]:
+            mdagpath: _om2.MDagPath|None = None
+    ) -> typing.Type[TDependNode]:
         type_name = mfn.typeName
         cls = NodeFactory._dynamic_cls_cache.get(type_name, None)
         if cls is not None:
@@ -94,10 +92,10 @@ class NodeFactory(object):
 
 class PlugFactory(object):
 
-    _cls: Optional[Type[TPlug]] = None
+    _cls: typing.Type[TPlug]|None = None
 
     @staticmethod
-    def register(cls: Type[TPlug]) -> None:
+    def register(cls: typing.Type[TPlug]) -> None:
         PlugFactory._cls = cls
 
     @staticmethod
@@ -107,8 +105,8 @@ class PlugFactory(object):
 
 class ComponentFactory(object):
 
-    _cls_dict: Dict[_om2.MFn, Type[TComponent]] = {}
-    _default_cls: Optional[Type[TComponent]] = None
+    _cls_dict: dict[_om2.MFn, typing.Type[TComponent]] = {}
+    _default_cls: typing.Type[TComponent]|None = None
 
     @staticmethod
     def register(module_name: str) -> None:
@@ -120,11 +118,11 @@ class ComponentFactory(object):
             ComponentFactory._cls_dict[comp_type] = symbol
 
     @staticmethod
-    def register_default(cls: Type[TComponent]) -> None:
+    def register_default(cls: typing.Type[TComponent]) -> None:
         ComponentFactory._default_cls = cls
 
     @staticmethod
-    def create(comp_type: _om2.MFn, mdagpath: _om2.MDagPath, mobject: _om2.MObject) -> Optional[TComponent]:
+    def create(comp_type: _om2.MFn, mdagpath: _om2.MDagPath, mobject: _om2.MObject) -> TComponent|None:
         if comp_type not in ComponentFactory._cls_dict:
             return None
 

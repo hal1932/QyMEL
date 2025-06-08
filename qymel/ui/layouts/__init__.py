@@ -1,5 +1,5 @@
-# coding: utf-8
-from typing import *
+import typing
+import collections.abc as abc
 
 from ..pyside_module import *
 
@@ -8,8 +8,8 @@ class _Stretch(object):
     pass
 
 
-TLayoutItem = Union[QWidget, QLayout, _Stretch]
-TBoxLayout = Union[QHBoxLayout, QVBoxLayout]
+TLayoutItem = QWidget|QLayout|_Stretch
+TBoxLayout = QHBoxLayout|QVBoxLayout
 
 _stretch_instance = _Stretch()
 
@@ -27,7 +27,7 @@ def vbox(*items: TLayoutItem, **kwargs) -> QVBoxLayout:
     return _box(QVBoxLayout, items, kwargs)
 
 
-def _box(cls: Type[TBoxLayout], items: Iterable[TLayoutItem], kwargs: Dict[str, Any]) -> QBoxLayout:
+def _box(cls: typing.Type[TBoxLayout], items: abc.Iterable[TLayoutItem], kwargs: dict[str, object]) -> QBoxLayout:
     box = cls()
     for item in items:
         if isinstance(item, QWidget):
@@ -81,7 +81,7 @@ def delete_layout_item_by_index(layout: QLayout, index: int) -> bool:
     return True
 
 
-def delete_layout_item(layout: QLayout, predicate: Callable[[QObject], bool]) -> bool:
+def delete_layout_item(layout: QLayout, predicate: abc.Callable[[QObject], bool]) -> bool:
     delete_index = -1
     for i in range(layout.count()):
         child = layout.itemAt(i)

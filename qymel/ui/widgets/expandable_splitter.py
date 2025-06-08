@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import *
 import enum
 
 from ..pyside_module import *
@@ -32,13 +30,13 @@ class ExpandableSplitter(QSplitter):
 
 class ExpandableSplitterHandle(QSplitterHandle):
 
-    def __init__(self, orientation: Qt.Orientation, parent: Optional[QSplitter] = None) -> None:
+    def __init__(self, orientation: Qt.Orientation, parent: QSplitter|None = None) -> None:
         super(ExpandableSplitterHandle, self).__init__(orientation, parent)
         self.setMouseTracking(True)
 
-        self.__expanders: List[Expander] = []
-        self.__last_pos: Optional[int] = None
-        self.__range: Tuple[int, int] = tuple()
+        self.__expanders: list[Expander] = []
+        self.__last_pos: int|None = None
+        self.__range: tuple[int, int] = tuple()
 
         self.setOrientation(orientation)
 
@@ -58,7 +56,7 @@ class ExpandableSplitterHandle(QSplitterHandle):
     def setOrientation(self, orientation: Qt.Orientation) -> None:
         super(ExpandableSplitterHandle, self).setOrientation(orientation)
 
-        if orientation == Qt.Horizontal:
+        if orientation == Qt.Orientation.Horizontal:
             self.__expanders = [Expander(ExpandDirection.RIGHT), Expander(ExpandDirection.LEFT)]
         else:
             self.__expanders = [Expander(ExpandDirection.LOWER), Expander(ExpandDirection.UPPER)]
@@ -76,9 +74,9 @@ class ExpandableSplitterHandle(QSplitterHandle):
         painter = QPainter(self)
         for expander in self.__expanders:
             option = QStyleOptionButton()
-            option.state = QStyle.State_Enabled
+            option.state = QStyle.StateFlag.State_Enabled
             expander.apply_to(option)
-            self.style().drawControl(QStyle.CE_PushButton, option, painter, self)
+            self.style().drawControl(QStyle.ControlElement.CE_PushButton, option, painter, self)
         painter.end()
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
@@ -91,7 +89,7 @@ class ExpandableSplitterHandle(QSplitterHandle):
             activated = expander.contains(event.pos())
             need_to_repainted |= expander.activate(activated)
             if activated:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
         if need_to_repainted:
             self.repaint()
@@ -164,9 +162,9 @@ class ExpandableSplitterHandle(QSplitterHandle):
 
                 expander.enable(enabled)
 
-    def __current_position(self) -> None:
+    def __current_position(self) -> int:
         pos = self.pos()
-        if self.orientation() == Qt.Horizontal:
+        if self.orientation() == Qt.Orientation.Horizontal:
             return pos.x()
         return pos.y()
 
@@ -181,7 +179,7 @@ class ExpandDirection(enum.Enum):
 
 class Expander(object):
 
-    ARROW_PIXMAP: Optional[QPixmap] = None
+    ARROW_PIXMAP: QPixmap|None = None
     ARROW_SIZE = QSize(16, 16)
 
     @property
@@ -194,16 +192,16 @@ class Expander(object):
 
     def __init__(self, direction: ExpandDirection) -> None:
         if not Expander.ARROW_PIXMAP:
-            Expander.ARROW_PIXMAP = QApplication.style().standardIcon(QStyle.SP_MediaPlay).pixmap(Expander.ARROW_SIZE)
+            Expander.ARROW_PIXMAP = QApplication.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay).pixmap(Expander.ARROW_SIZE)
 
         if direction == ExpandDirection.RIGHT:
             icon_pix = Expander.ARROW_PIXMAP
         elif direction == ExpandDirection.LEFT:
-            icon_pix = Expander.ARROW_PIXMAP.transformed(QMatrix().rotate(180))
+            icon_pix = Expander.ARROW_PIXMAP.transformed(QTransform.rotate(180))
         elif direction == ExpandDirection.UPPER:
-            icon_pix = Expander.ARROW_PIXMAP.transformed(QMatrix().rotate(-90))
+            icon_pix = Expander.ARROW_PIXMAP.transformed(QTransform.rotate(-90))
         elif direction == ExpandDirection.LOWER:
-            icon_pix = Expander.ARROW_PIXMAP.transformed(QMatrix().rotate(90))
+            icon_pix = Expander.ARROW_PIXMAP.transformed(QTransform.rotate(90))
         else:
             raise RuntimeError('invalid direction: {}'.format(repr(direction)))
 
@@ -258,7 +256,7 @@ class Expander(object):
         option.iconSize = self.__icon_size
 
         if self.__activated:
-            option.state |= QStyle.State_MouseOver
+            option.state |= QStyle.StateFlag.State_MouseOver
 
         if not self.__enabled:
-            option.state ^= QStyle.State_Enabled
+            option.state ^= QStyle.StateFlag.State_Enabled

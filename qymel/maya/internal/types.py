@@ -1,13 +1,13 @@
-# coding: utf-8
-from __future__ import annotations
-from typing import *
+import typing
 
-if TYPE_CHECKING:
+
+if typing.TYPE_CHECKING:
     from .. import nodetypes as _nodetypes
     from .. import general as _general
     from .. import components as _components
 
-TDependNode = TypeVar('TDependNode', bound='_nodetypes.DependNode')
-TDagNode = TypeVar('TDagNode', bound='_nodetypes.DagNode')
-TPlug = TypeVar('TPlug', bound='_general.Plug')
-TComponent = TypeVar('TComponent', bound='_components.Component')
+
+TDependNode = typing.TypeVar('TDependNode', bound='_nodetypes.DependNode')
+TDagNode = typing.TypeVar('TDagNode', bound='_nodetypes.DagNode')
+TPlug = typing.TypeVar('TPlug', bound='_general.Plug')
+TComponent = typing.TypeVar('TComponent', bound='_components.Component')

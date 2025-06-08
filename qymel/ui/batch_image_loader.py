@@ -1,16 +1,16 @@
-# coding: utf-8
-from typing import *
+import collections.abc as abc
+import typing
 import multiprocessing.pool
 import threading
 
 from .pyside_module import *
 
 
-TLoadedCallback = Callable[[QImage], QImage]
-TCompletedCallback = Callable[[QImage], None]
-TErrorCallback = Callable[[BaseException], None]
+TLoadedCallback = abc.Callable[[QImage], QImage]
+TCompletedCallback = abc.Callable[[QImage], None]
+TErrorCallback = abc.Callable[[BaseException], None]
 
-TCallback = TypeVar('TCallback', TLoadedCallback, TCompletedCallback, TErrorCallback)
+TCallback = typing.TypeVar('TCallback', TLoadedCallback, TCompletedCallback, TErrorCallback)
 
 
 class ImageLoadingCallback(object):
@@ -25,12 +25,12 @@ class BatchImageLoader(QObject):
     loaded = Signal(int)
     completed = Signal()
 
-    def __init__(self, parent: Optional[QObject] = None) -> None:
+    def __init__(self, parent: QObject|None = None) -> None:
         super(BatchImageLoader, self).__init__(parent)
-        self.__file_paths: Dict[int, str] = {}
-        self.__images: Dict[int, Optional[QImage]] = {}
+        self.__file_paths: dict[int, str] = {}
+        self.__images: dict[int, QImage]|None = {}
         self.__images_lock = threading.Lock()
-        self.__callbacksDict[str, List[Callable[[QImage], QImage]]] = {}
+        self.__callbacksdict[str, list[abc.Callable[[QImage], QImage]]] = {}
         self.__pool = multiprocessing.pool.ThreadPool()
 
     def clear(self) -> None:
@@ -49,7 +49,7 @@ class BatchImageLoader(QObject):
         callbacks.append(callback)
         self.__callbacks[callback_id] = callbacks
 
-    def image(self, task_id: int) -> Optional[QImage]:
+    def image(self, task_id: int) -> QImage|None:
         return self.__images.get(task_id)
 
     def load_async(self) -> multiprocessing.pool.AsyncResult:
@@ -57,7 +57,7 @@ class BatchImageLoader(QObject):
         completed_callbacks = self.__callbacks.get(ImageLoadingCallback.COMPLETED, [])
         error_callbacks = self.__callbacks.get(ImageLoadingCallback.ERROR, [])
 
-        def _task_callback(_args: Tuple[int, str]) -> None:
+        def _task_callback(_args: tuple[int, str]) -> None:
             _index, _filePath = _args
             self.__load_image(_index, _filePath, loaded_callbacks)
 

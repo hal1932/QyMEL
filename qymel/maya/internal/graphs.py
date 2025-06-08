@@ -1,7 +1,3 @@
-# coding: utf-8
-from __future__ import annotations
-from typing import *
-
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
 
@@ -18,7 +14,7 @@ _factory_ComponentFactory_create = _factory.ComponentFactory.create
 _factory_ComponentFactory_create_default = _factory.ComponentFactory.create_default
 
 
-def ls(*args: str, **kwargs: Any) -> List[Union[TDependNode, TPlug, TComponent]]:
+def ls(*args: str, **kwargs: object) -> list[TDependNode|TPlug|TComponent]:
     if kwargs.get('objectsOnly', False):
         return ls_nodes(*args, **kwargs)
 
@@ -28,7 +24,7 @@ def ls(*args: str, **kwargs: Any) -> List[Union[TDependNode, TPlug, TComponent]]
     return [eval(name, tmp_mfn_comp, tmp_mfn_node) for name in _cmds.ls(*args, **kwargs)]
 
 
-def ls_nodes(*args: str, **kwargs: Any) -> List[TComponent]:
+def ls_nodes(*args: str, **kwargs: object) -> list[TComponent]:
     result = []
 
     kwargs['long'] = True
@@ -47,7 +43,7 @@ def eval(
         obj_name: str,
         tmp_mfn_comp: _om2.MFnComponent,
         tmp_mfn_node: _om2.MFnDependencyNode
-) -> Optional[Union[TDependNode, TPlug, TComponent]]:
+) -> TDependNode|TPlug|TComponent|None:
     if '.' in obj_name:
         plug = eval_plug(obj_name)
         if plug is not None:
@@ -65,7 +61,7 @@ def eval(
     raise RuntimeError('unknown object type: {}'.format(obj_name))
 
 
-def eval_plug(plug_name: str) -> Optional[TPlug]:
+def eval_plug(plug_name: str) -> TPlug|None:
     mplug = None
     try:
         mplug = get_mplug(plug_name)
@@ -79,7 +75,7 @@ def eval_plug(plug_name: str) -> Optional[TPlug]:
     return None
 
 
-def eval_component(comp_name: str, tmp_mfn_comp: _om2.MFnComponent) -> Optional[TComponent]:
+def eval_component(comp_name: str, tmp_mfn_comp: _om2.MFnComponent) -> TComponent|None:
     mdagpath = None
     mobj = None
     try:
@@ -95,7 +91,7 @@ def eval_component(comp_name: str, tmp_mfn_comp: _om2.MFnComponent) -> Optional[
     return None
 
 
-def eval_node(node_name: str, tmp_mfn_node: _om2.MFnDependencyNode) -> Optional[TDependNode]:
+def eval_node(node_name: str, tmp_mfn_node: _om2.MFnDependencyNode) -> TDependNode|None:
     if '.' in node_name:
         raise TypeError('invalid node: {}'.format(node_name))
 
@@ -109,13 +105,13 @@ def eval_node(node_name: str, tmp_mfn_node: _om2.MFnDependencyNode) -> Optional[
     return None
 
 
-def create_node(*args: str, **kwargs: Any) -> TDependNode:
+def create_node(*args: str, **kwargs: object) -> TDependNode:
     node_name = _cmds.createNode(*args, **kwargs)
     mobj, mdagpath = get_mobject(node_name)
     return to_node_instance(_om2.MFnDependencyNode(mobj), mdagpath)
 
 
-def to_node_instance(mfn: _om2.MFnDependencyNode, mdagpath: Optional[_om2.MDagPath] = None) -> TDependNode:
+def to_node_instance(mfn: _om2.MFnDependencyNode, mdagpath: _om2.MDagPath|None = None) -> TDependNode:
     type_name = mfn.typeName
     mobj = mfn.object()
 
@@ -126,7 +122,7 @@ def to_node_instance(mfn: _om2.MFnDependencyNode, mdagpath: Optional[_om2.MDagPa
     return _factory_NodeFactory_create_default(mfn, mdagpath)
 
 
-def get_mobject(node_name: str) -> Tuple[_om2.MObject, Optional[_om2.MDagPath]]:
+def get_mobject(node_name: str) -> tuple[_om2.MObject, _om2.MDagPath|None]:
     sel = _om2_MGlobal_getSelectionListByName(node_name)
     mobj = sel.getDependNode(0)
 
@@ -197,12 +193,12 @@ def keep_mplug(mplug: _om2.MPlug) -> _om2.MPlug:
     return mplug
 
 
-def get_comp_mobject(name: str) -> Tuple[_om2.MDagPath, _om2.MObject]:
+def get_comp_mobject(name: str) -> tuple[_om2.MDagPath, _om2.MObject]:
     sel = _om2_MGlobal_getSelectionListByName(name)
     return sel.getComponent(0)
 
 
-def connections(mfn: _om2.MFnDependencyNode) -> List[_om2.MObject]:
+def connections(mfn: _om2.MFnDependencyNode) -> list[_om2.MObject]:
     result = []
 
     for i in range(mfn.attributeCount()):

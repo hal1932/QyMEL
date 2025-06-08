@@ -1,6 +1,3 @@
-# coding: utf-8
-from typing import *
-
 from qymel.ui.pyside_module import *
 from qymel.ui import app as _app
 from qymel.ui import layouts as _layouts
@@ -44,8 +41,8 @@ class CheckerWindow(_app.MainWindowBase):
         self._controls = _control.ControlWidget()
         self._main_splitter = QSplitter()
 
-        self._custom_top_shelf: Optional[QWidget] = None
-        self._custom_group_shelf: Optional[QWidget] = None
+        self._custom_top_shelf: QWidget | None = None
+        self._custom_group_shelf: QWidget | None = None
 
         self._groups.selection_changed.connect(self.__reload_group)
         self._items.selection_changed.connect(self.__reload_description)
@@ -88,7 +85,7 @@ class CheckerWindow(_app.MainWindowBase):
     def _deserialize(self, settings: QSettings):
         self._main_splitter.setSizes([int(x) for x in (settings.value('split') or [])] or [])
 
-    def set_custom_shelf(self, top_shelf: Optional[QWidget], group_shelf: Optional[QWidget]):
+    def set_custom_shelf(self, top_shelf: QWidget | None, group_shelf: QWidget | None):
         self._custom_top_shelf = top_shelf
         self._custom_group_shelf = group_shelf
 
@@ -107,7 +104,7 @@ class CheckerWindow(_app.MainWindowBase):
         self._description.load_from(None, None)
         self.group_selection_changed.emit(group)
 
-    def __reload_description(self, selection: Optional[_item_list.ItemListItem]):
+    def __reload_description(self, selection: _item_list.ItemListItem | None):
         if not selection:
             self._description.load_from(None, None)
         else:
@@ -140,7 +137,7 @@ class CheckerWindow(_app.MainWindowBase):
             self.close()
 
     @_ui_scopes.wait_cursor_scope
-    def execute_items(self, items: List[_items.CheckItem]):
+    def execute_items(self, items: list[_items.CheckItem]):
         group = self._groups.selected_group
         for item in items:
             group.execute(item)
@@ -160,7 +157,7 @@ class CheckerWindow(_app.MainWindowBase):
         self.execute_all()
 
     @_ui_scopes.wait_cursor_scope
-    def modify_items(self, items: List[_items.CheckResult]):
+    def modify_items(self, items: list[_items.CheckResult]):
         group = self._groups.selected_group
         for item in items:
             group.modify(item)

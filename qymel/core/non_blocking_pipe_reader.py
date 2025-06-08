@@ -1,5 +1,4 @@
-# coding: utf-8
-from typing import IO, Optional, List
+import typing
 import subprocess
 import ctypes
 import ctypes.wintypes
@@ -11,9 +10,9 @@ _kernel32 = ctypes.windll.kernel32
 
 class NonBlockingPipeReader(object):
 
-    def __init__(self, pipe: IO) -> None:
+    def __init__(self, pipe: typing.IO) -> None:
         self.__handle = msvcrt.get_osfhandle(pipe.fileno())
-        self.__stocked_lines: List[str] = []
+        self.__stocked_lines: list[str] = []
         self.__unstocked_str = ''
 
     def read(self, size: int = 0) -> bytes:
@@ -33,7 +32,7 @@ class NonBlockingPipeReader(object):
 
         return buffer.value
 
-    def readline(self, encoding: Optional[str] = None) -> str:
+    def readline(self, encoding: str|None = None) -> str:
         if self.__stocked_lines:
             line = self.__stocked_lines.pop(0)
         else:

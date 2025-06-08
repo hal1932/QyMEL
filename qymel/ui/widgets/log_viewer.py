@@ -1,6 +1,3 @@
-# coding: utf-8
-from typing import *
-
 import logging
 import datetime
 
@@ -51,7 +48,7 @@ class LogViewer(QWidget):
     >>> viewer.show()
     """
 
-    def __init__(self, max_blocks: int = 1000, parent: Optional[QObject] = None) -> None:
+    def __init__(self, max_blocks: int = 1000, parent: QObject | None = None) -> None:
         super(LogViewer, self).__init__(parent)
 
         self.debug_format = QTextCharFormat()
@@ -116,7 +113,7 @@ class LogViewer(QWidget):
             text = u'[{}] {}'.format(ts, text)
 
         cursor = self._editor.textCursor()
-        cursor.movePosition(QTextCursor.End)
+        cursor.movePosition(QTextCursor.MoveOperation.End)
         cursor.setCharFormat(char_format)
 
         cursor.insertText(text)
@@ -127,7 +124,7 @@ class LogViewer(QWidget):
 
 class LogTextEdit(QTextEdit):
 
-    def __init__(self, max_blocks: int = 0, parent: Optional[QObject] = None) -> None:
+    def __init__(self, max_blocks: int = 0, parent: QObject | None = None) -> None:
         super(LogTextEdit, self).__init__(parent)
         self.setReadOnly(True)
         self.textChanged.connect(self.__scroll_to_end)

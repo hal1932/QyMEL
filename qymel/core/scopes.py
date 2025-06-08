@@ -1,10 +1,14 @@
-# coding: utf-8
-from typing import *
+import collections.abc as abc
+import typing
 import time
 import functools
 import types
 import pstats
 import cProfile
+
+
+OutputStatCallback = typing.TypeVar('OutputStatCallback', bound=abc.Callable[[pstats.Stats], None])
+OutputTimeCallback = typing.TypeVar('OutputTimeCallback', bound=abc.Callable[[float], None])
 
 
 class Scope(object):
@@ -13,7 +17,7 @@ class Scope(object):
         self._on_enter()
         return self
 
-    def __exit__(self, exc_type: Type, exc_val: Exception, exc_tb: types.TracebackType) -> bool:
+    def __exit__(self, exc_type: type, exc_val: Exception, exc_tb: types.TracebackType) -> bool:
         self._on_exit()
         return False  # 例外伝搬を止めない
 
@@ -26,7 +30,7 @@ class Scope(object):
 
 class ProfileScope(Scope):
 
-    def __init__(self, callback: Optional[Callable[[pstats.Stats], None]] = None) -> None:
+    def __init__(self, callback: OutputStatCallback|None = None) -> None:
         super(ProfileScope, self).__init__()
         self.profile = cProfile.Profile()
         self.callback = callback
@@ -53,7 +57,7 @@ def profile_scope(func):
 
 class TimeScope(Scope):
 
-    def __init__(self, callback: Optional[Callable[[float], None]] = None) -> None:
+    def __init__(self, callback: OutputTimeCallback|None = None) -> None:
         self.callback = callback
         self.begin = 0.0
 
@@ -63,7 +67,7 @@ class TimeScope(Scope):
     def _on_exit(self) -> None:
         elapsed = time.time() - self.begin
         if self.callback is not None:
-            callable(elapsed)
+            abc.Callable(elapsed)
         else:
             print(elapsed)
 
@@ -78,7 +82,7 @@ def time_scope(func):
 
 class ProcessTimeScope(Scope):
 
-    def __init__(self, callback: Optional[Callable[[float], None]] = None) -> None:
+    def __init__(self, callback: OutputTimeCallback|None = None) -> None:
         self.callback = callback
         self.begin = 0
 
@@ -88,7 +92,7 @@ class ProcessTimeScope(Scope):
     def _on_exit(self) -> None:
         elapsed = time.process_time() - self.begin
         if self.callback is not None:
-            callable(elapsed)
+            abc.Callable(elapsed)
         else:
             print(elapsed)
 

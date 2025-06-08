@@ -1,13 +1,13 @@
-# coding: utf-8
-from typing import *
+import collections.abc as abc
+import typing
 
 
-_TItem = TypeVar('_TItem')
+_TItem = typing.TypeVar('_TItem')
 
 
 def any(
-        sequence: Sequence[_TItem],
-        predicate: Optional[Callable[[_TItem], bool]] = None
+        sequence: abc.Sequence[_TItem],
+        predicate: abc.Callable[[_TItem], bool]|None = None
 ) -> bool:
     for item in sequence:
         if predicate is None or predicate(item):
@@ -16,8 +16,8 @@ def any(
 
 
 def first(
-        sequence: Sequence[_TItem],
-        predicate: Optional[Callable[[_TItem], bool]] = None
+        sequence: abc.Sequence[_TItem],
+        predicate: abc.Callable[[_TItem], bool]|None = None
 ) -> _TItem:
     for item in sequence:
         if predicate is None or predicate(item):
@@ -26,9 +26,9 @@ def first(
 
 
 def first_or_default(
-        sequence: Sequence[_TItem],
-        predicate: Optional[Callable[[_TItem], bool]] = None,
-        default: Optional[_TItem] = None
+        sequence: abc.Sequence[_TItem],
+        predicate: abc.Callable[[_TItem], bool]|None = None,
+        default: _TItem|None = None
 ) -> _TItem:
     for item in sequence:
         if predicate is None or predicate(item):
@@ -37,8 +37,8 @@ def first_or_default(
 
 
 def last(
-        sequence: Sequence[_TItem],
-        predicate: Optional[Callable[[_TItem], bool]] = None
+        sequence: abc.Sequence[_TItem],
+        predicate: abc.Callable[[_TItem], bool]|None = None
 ) -> _TItem:
     for item in reversed(sequence):
         if predicate is None or predicate(item):
@@ -47,9 +47,9 @@ def last(
 
 
 def last_or_default(
-        sequence: Sequence[_TItem],
-        predicate: Optional[Callable[[_TItem], bool]] = None,
-        default: Optional[_TItem] = None
+        sequence: abc.Sequence[_TItem],
+        predicate: abc.Callable[[_TItem], bool]|None = None,
+        default: _TItem|None = None
 ) -> _TItem:
     for item in reversed(sequence):
         if predicate is None or predicate(item):

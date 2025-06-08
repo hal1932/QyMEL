@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import *
 
 import maya.utils as _utils
 import maya.mel as _mel

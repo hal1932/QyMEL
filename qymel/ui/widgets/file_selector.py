@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import *
 import os
 
 from ..pyside_module import *
@@ -19,12 +17,12 @@ class FileSelector(QWidget):
     selection_changed = Signal()
 
     @property
-    def selected_paths(self) -> List[str]:
+    def selected_paths(self) -> list[str]:
         text = self.__file_path.text()
         return text.split(os.pathsep) if os.pathsep in text else [text]
 
     @selected_paths.setter
-    def selected_paths(self, value: List[str]) -> None:
+    def selected_paths(self, value: list[str]) -> None:
         self.__file_path.setText(os.pathsep.join(value))
 
     @property
@@ -35,7 +33,7 @@ class FileSelector(QWidget):
     def readonly(self, value: bool) -> None:
         self.__file_path.setReadOnly(value)
 
-    def __init__(self, parent: Optional[QObject] = None) -> None:
+    def __init__(self, parent: QObject|None = None) -> None:
         super(FileSelector, self).__init__(parent)
 
         self.accept_mode = FileSelector.ACCEPT_OPEN
@@ -49,7 +47,7 @@ class FileSelector(QWidget):
         self.__file_path = QLineEdit()
 
         button = QPushButton()
-        icon = self.style().standardIcon(QStyle.SP_DirOpenIcon)
+        icon = self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon)
         button.setIcon(icon)
         button.setIconSize(QSize(12, 12))
         button.clicked.connect(self.__select_path)
@@ -64,23 +62,23 @@ class FileSelector(QWidget):
         dialog = QFileDialog(self)
 
         if self.accept_mode == FileSelector.ACCEPT_OPEN:
-            dialog.setAcceptMode(QFileDialog.AcceptOpen)
+            dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
         elif self.accept_mode == FileSelector.ACCEPT_SAVE:
-            dialog.setAcceptMode(QFileDialog.AcceptSave)
+            dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
         else:
             raise RuntimeError('invalid accept_mode: {}'.format(self.accept_mode))
 
         if self.target == FileSelector.TARGET_FILE:
             if self.accept_mode == FileSelector.ACCEPT_SAVE:
-                dialog.setFileMode(QFileDialog.AnyFile)
+                dialog.setFileMode(QFileDialog.FileMode.AnyFile)
             else:
                 if self.allow_multiple_selection:
-                    dialog.setFileMode(QFileDialog.ExistingFiles)
+                    dialog.setFileMode(QFileDialog.FileMode.ExistingFiles)
                 else:
-                    dialog.setFileMode(QFileDialog.ExistingFile)
+                    dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
         elif self.target == FileSelector.TARGET_DIRECTORY:
-            dialog.setFileMode(QFileDialog.Directory)
-            dialog.setOption(QFileDialog.ShowDirsOnly, True)
+            dialog.setFileMode(QFileDialog.FileMode.Directory)
+            dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
         else:
             raise RuntimeError('invalid target: {}'.format(self.target))
 
@@ -92,11 +90,11 @@ class FileSelector(QWidget):
             if os.path.isdir(self.initial_directory or ''):
                 dialog.setDirectory(self.initial_directory)
             else:
-                default_directory = QStandardPaths.standardLocations(QStandardPaths.DesktopLocation)[0]
+                default_directory = QStandardPaths.standardLocations(QStandardPaths.StandardLocation.DesktopLocation)[0]
                 dialog.setDirectory(default_directory)
 
         if not self.use_native_dialog:
-            dialog.setOption(QFileDialog.DontUseNativeDialog, True)
+            dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
 
         dialog.setNameFilters(self.name_filters)
         dialog.setWindowTitle(self.caption)

@@ -1,6 +1,3 @@
-# coding: utf-8
-from typing import *
-
 from .pyside_module import *
 
 

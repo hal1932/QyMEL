@@ -1,6 +1,4 @@
-# coding: utf-8
 import unittest
-from typing import *
 
 import maya.standalone
 maya.standalone.initialize(name='python')
@@ -101,7 +99,7 @@ class TestPlugPlug(unittest.TestCase):
         self.assertEqual(plug.destinations()[0].full_name, full_name2)
 
     def __get_plug(self, name):
-        # type: (str) -> Tuple[qm.Plug, str, om2.MPlug, om2.MObject]
+        # type: (str) -> tuple[qm.Plug, str, om2.MPlug, om2.MObject]
         full_name = cmds.ls(name, long=True)[0]
         plug = qm.Plug(full_name)
         mplug = om2.MGlobal.getSelectionListByName(name).getPlug(0)  # type: om2.MPlug

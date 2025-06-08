@@ -1,44 +1,41 @@
-# coding: utf-8
-from typing import *
-
 from ..pyside_module import *
 
 
-def hline(parent: Optional[QObject] = None) -> QFrame:
+def hline(parent: QObject|None = None) -> QFrame:
     frame = QFrame(parent)
-    frame.setFrameShape(QFrame.HLine)
-    frame.setFrameShadow(QFrame.Sunken)
+    frame.setFrameShape(QFrame.Shape.HLine)
+    frame.setFrameShadow(QFrame.Shadow.Sunken)
     return frame
 
 
-def vline(parent: Optional[QObject] = None) -> QFrame:
+def vline(parent: QObject|None = None) -> QFrame:
     frame = QFrame(parent)
-    frame.setFrameShape(QFrame.VLine)
-    frame.setFrameShadow(QFrame.Sunken)
+    frame.setFrameShape(QFrame.Shape.VLine)
+    frame.setFrameShadow(QFrame.Shadow.Sunken)
     return frame
 
 
-def hseparator(parent: Optional[QObject] = None) -> QFrame:
+def hseparator(parent: QObject|None = None) -> QFrame:
     frame = QFrame(parent)
-    frame.setFrameShape(QFrame.HLine)
-    frame.setFrameShadow(QFrame.Sunken)
+    frame.setFrameShape(QFrame.Shape.HLine)
+    frame.setFrameShadow(QFrame.Shadow.Sunken)
     return frame
 
 
-def vseparator(parent: Optional[QObject] = None) -> QFrame:
+def vseparator(parent: QObject|None = None) -> QFrame:
     frame = QFrame(parent)
-    frame.setFrameShape(QFrame.VLine)
-    frame.setFrameShadow(QFrame.Sunken)
+    frame.setFrameShape(QFrame.Shape.VLine)
+    frame.setFrameShadow(QFrame.Shadow.Sunken)
     return frame
 
 
-def groupbox(title: str, layout: QLayout, parent: Optional[QObject] = None) -> QGroupBox:
+def groupbox(title: str, layout: QLayout, parent: QObject|None = None) -> QGroupBox:
     box = QGroupBox(title, parent)
     box.setLayout(layout)
     return box
 
 
-def scroll_area(layout: QLayout, parent: Optional[QObject] = None) -> QScrollArea:
+def scroll_area(layout: QLayout, parent: QObject|None = None) -> QScrollArea:
     area = QScrollArea(parent)
     widget = QWidget(area)
     widget.setLayout(layout)
@@ -47,14 +44,14 @@ def scroll_area(layout: QLayout, parent: Optional[QObject] = None) -> QScrollAre
     return area
 
 
-def image(pixmap_or_filepath: Union[QPixmap, str], parent: Optional[QObject] = None) -> QLabel:
+def image(pixmap_or_filepath: QPixmap|str, parent: QObject|None = None) -> QLabel:
     label = QLabel(parent)
     pix = pixmap_or_filepath if isinstance(pixmap_or_filepath, QPixmap) else QPixmap(pixmap_or_filepath)
     label.setPixmap(pix)
     return label
 
 
-def image_button(pixmap_or_filepath: Union[QPixmap, str], parent: Optional[QObject] = None) -> QPushButton:
+def image_button(pixmap_or_filepath: QPixmap|str, parent: QObject|None = None) -> QPushButton:
     button = QPushButton(parent)
     pix = pixmap_or_filepath if isinstance(pixmap_or_filepath, QPixmap) else QPixmap(pixmap_or_filepath)
     icon = QIcon(pix)

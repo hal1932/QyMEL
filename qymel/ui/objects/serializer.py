@@ -1,6 +1,3 @@
-# coding: utf-8
-from typing import *
-
 from ..pyside_module import *
 from . import query as _query
 
@@ -62,9 +59,9 @@ class ObjectSerializer(object):
             settings.endGroup()
         self._walk_serializables(destination, _deserialize)
 
-    def _walk_serializables(self, root: QObject, callback: Callable[[QObject, str], None]) -> None:
+    def _walk_serializables(self, root: QObject, callback: abc.Callable[[QObject, str], None]) -> None:
         paths = {root: root.__class__.__name__}
-        children = {}  # type: Dict[QObject, List[QObject]]
+        children = {}  # type: dict[QObject, list[QObject]]
 
         def _is_serializable(node: QObject) -> bool:
             return isinstance(node, SerializableObjectMixin)

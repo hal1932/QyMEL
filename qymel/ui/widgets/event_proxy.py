@@ -1,12 +1,10 @@
-# coding: utf-8
-from typing import *
-
+import typing
 import functools
 
 from ..pyside_module import *
 
 
-_TObject = TypeVar('_TObject', bound=QObject)
+_TObject = typing.TypeVar('_TObject', bound=QObject)
 
 
 class EventProxy(object):
@@ -28,17 +26,17 @@ class EventProxy(object):
     w.show()
     """
 
-    __cls_indices: Dict[str, int] = {}
+    __cls_indices: dict[str, int] = {}
 
     @staticmethod
-    def create(cls: Type[_TObject]) -> Type[_TObject]:
+    def create(cls: typing.Type[_TObject]) -> typing.Type[_TObject]:
         cls_name = EventProxy.__get_new_cls_name(cls)
         proxy = type(cls_name, tuple([EventProxy, cls]), {})
         setattr(proxy, '__target_cls', cls)
         return proxy
 
     @staticmethod
-    def instantiate(cls: Type[_TObject], *args, **kwargs) -> _TObject:
+    def instantiate(cls: typing.Type[_TObject], *args, **kwargs) -> _TObject:
         proxy = EventProxy.create(cls)
         return proxy(*args, **kwargs)
 
@@ -53,7 +51,7 @@ class EventProxy(object):
     def __init__(self, *_args, **_kwargs):
         super(EventProxy, self).__init__(*_args, **_kwargs)
 
-    def __getattr__(self, signal_name: str) -> Optional[Signal]:
+    def __getattr__(self, signal_name: str) -> Signal|None:
         if signal_name in self.__dict__:
             return self.__dict__[signal_name]
 

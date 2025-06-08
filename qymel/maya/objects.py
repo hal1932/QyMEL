@@ -1,6 +1,4 @@
-# coding: utf-8
-from typing import *
-
+import typing
 import maya.api.OpenMaya as _om2
 
 
@@ -8,7 +6,7 @@ import maya.api.OpenMaya as _om2
 _om2_MObjectHandle = _om2.MObjectHandle
 
 
-_TObj = TypeVar('_TObj', bound='MayaObject')
+_TObj = typing.TypeVar('_TObj', bound='MayaObject')
 
 
 class MayaObject(object):
@@ -26,7 +24,7 @@ class MayaObject(object):
         return self.mobject.isNull()
 
     @property
-    def mel_object(self) -> Union[str, Tuple[str]]:
+    def mel_object(self) -> str|tuple[str]:
         raise NotImplementedError()
 
     @property
@@ -47,14 +45,14 @@ class MayaObject(object):
         else:
             self._mobj_handle = None
 
-    def __eq__(self, other: Union[_TObj, Any]) -> bool:
+    def __eq__(self, other: _TObj|object) -> bool:
         if other is None or not isinstance(other, MayaObject):
             return False
         if not other._mobj_handle.isValid():
             return False
         return self._mobj_handle.hashCode() == other._mobj_handle.hashCode()
 
-    def __ne__(self, other: Union[_TObj, Any]) -> bool:
+    def __ne__(self, other: _TObj|object) -> bool:
         return not self.__eq__(other)
 
     def __hash__(self) -> int:

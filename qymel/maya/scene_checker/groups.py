@@ -1,6 +1,4 @@
-# coding: utf-8
-from typing import *
-
+import collections.abc as abc
 import functools
 import itertools
 
@@ -15,20 +13,20 @@ class CheckItemGroup(object):
 
     def __init__(self, label: str):
         self.__label = label
-        self.__items: Dict[str, List[_items.CheckItem]] = {}
-        self.__category_orders: Dict[str, int] = {}
-        self.__results: Dict[_items.CheckItem, Optional[Sequence[_items.CheckResult]]] = {}
+        self.__items: dict[str, list[_items.CheckItem]] = {}
+        self.__category_orders: dict[str, int] = {}
+        self.__results: dict[_items.CheckItem, abc.Sequence[_items.CheckResult]]|None = {}
 
     def append(self, item: _items.CheckItem):
         if item.category not in self.__items:
             self.__items[item.category] = []
         self.__items[item.category].append(item)
 
-    def extend(self, items: Sequence[_items.CheckItem]):
+    def extend(self, items: abc.Sequence[_items.CheckItem]):
         for item in items:
             self.append(item)
 
-    def categories(self) -> Sequence[str]:
+    def categories(self) -> abc.Sequence[str]:
         def _compare(lhs: str, rhs: str):
             # まずcategory_orderで比較
             lhs_id = self.__category_orders.get(lhs, -1)
@@ -52,10 +50,10 @@ class CheckItemGroup(object):
 
         return sorted(self.__items.keys(), key=functools.cmp_to_key(_compare))
 
-    def set_category_order(self, categories: Sequence[str]):
+    def set_category_order(self, categories: abc.Sequence[str]):
         self.__category_orders = {category: i for i, category in enumerate(categories)}
 
-    def items(self, category: str = None) -> Sequence[_items.CheckItem]:
+    def items(self, category: str = None) -> abc.Sequence[_items.CheckItem]:
         if category is not None:
             return self.__items[category]
 
@@ -70,7 +68,7 @@ class CheckItemGroup(object):
     def is_executed(self, item: _items.CheckItem) -> bool:
         return item in self.__results
 
-    def execute(self, item: _items.CheckItem) -> Sequence[_items.CheckResult]:
+    def execute(self, item: _items.CheckItem) -> abc.Sequence[_items.CheckResult]:
         results = item.execute()
         self.__results[item] = results
         return results
@@ -88,7 +86,7 @@ class CheckItemGroup(object):
             if isinstance(result, _items.CheckResult) and result.is_modifiable:
                 self.modify(result)
 
-    def results(self, item: Optional[_items.CheckItem] = None) -> Sequence[_items.CheckResult]:
+    def results(self, item: _items.CheckItem|None = None) -> abc.Sequence[_items.CheckResult]:
         if item is not None:
             return self.__results.get(item, [])
 
@@ -97,10 +95,10 @@ class CheckItemGroup(object):
             results.extend(itertools.chain.from_iterable(self.__results.get(item, []) for item in items))
         return results
 
-    def warnings(self) -> Sequence[_items.CheckResult]:
+    def warnings(self) -> abc.Sequence[_items.CheckResult]:
         return [result for result in self.results() if result.status & _items.CheckResultStatus.WARNING]
 
-    def errors(self) -> Sequence[_items.CheckResult]:
+    def errors(self) -> abc.Sequence[_items.CheckResult]:
         return [result for result in self.results() if result.status & _items.CheckResultStatus.ERROR]
 
     def is_success(self) -> bool:

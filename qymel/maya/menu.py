@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import *
 
 import maya.cmds as _cmds
 import maya.mel as _mel
@@ -28,7 +26,7 @@ class MenuItem(object):
     def __str__(self):
         return f'<MenuItem {self.mel_object} label="{self.label}">'
 
-    def children(self) -> List['MenuItem']:
+    def children(self) -> list['MenuItem']:
         items = _cmds.menu(self.mel_object, query=True, itemArray=True) or []
         return [MenuItem(item) for item in items]
 
@@ -36,13 +34,13 @@ class MenuItem(object):
 class Menu(object):
 
     @staticmethod
-    def root_menus() -> List['Menu']:
+    def root_menus() -> list['Menu']:
         main_window = _mel.eval('$_ = $gMainWindow')
         menus = _cmds.window(main_window, query=True, menuArray=True)
         return [Menu(menu) for menu in menus]
 
     @staticmethod
-    def find_by_label(label: str) -> Optional['Menu']:
+    def find_by_label(label: str) -> 'Menu'|None:
         for menu in Menu.root_menus():
             if menu.label == label:
                 return menu
@@ -56,9 +54,9 @@ class Menu(object):
     def has_items(self) -> bool:
         return _cmds.menu(self.mel_object, query=True, numberOfItems=True) > 0
 
-    def __init__(self, name: Optional[str] = None):
+    def __init__(self, name: str|None = None):
         self.__mel_object = name
-        self.__updated_properties: Dict[str, Any] = {}
+        self.__updated_properties: dict[str, object] = {}
 
     def __repr__(self):
         return f'Menu(\'{self.mel_object}\')'
@@ -72,7 +70,7 @@ class Menu(object):
             raise RuntimeError('cannot get property from non-existing menu')
         return _cmds.menu(mel_object, query=True, **{item: True})
 
-    def __setattr__(self, key: str, value: Any):
+    def __setattr__(self, key: str, value: object):
         def called_from_self_init():
             import inspect
             caller_frame = inspect.currentframe().f_back
@@ -86,7 +84,7 @@ class Menu(object):
         else:
             self.__updated_properties[key] = value
 
-    def items(self) -> List[MenuItem]:
+    def items(self) -> list[MenuItem]:
         items = _cmds.menu(self.mel_object, query=True, itemArray=True) or []
         return [MenuItem(item) for item in items]
 

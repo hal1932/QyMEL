@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import *
 
 import maya.cmds as cmds
 import maya.mel as mel
@@ -13,7 +11,7 @@ from qymel.ui import layouts
 _TQObject = TypeVar('_TQObject', bound=QObject)
 
 
-def _get_script_editor_panel() -> Optional[QWidget]:
+def _get_script_editor_panel() -> QWidget|None:
     label = mel.eval('localizedPanelLabel("Script Editor")')
     for panel in cmds.getPanel(type='scriptedPanel') or []:
         if cmds.scriptedPanel(panel, query=True, label=True) == label:
@@ -22,8 +20,8 @@ def _get_script_editor_panel() -> Optional[QWidget]:
     return None
 
 
-def _find_children(widget: QWidget, qobject_type: Type[_TQObject]) -> List[_TQObject]:
-    results: List[_TQObject] = []
+def _find_children(widget: QWidget, qobject_type: Type[_TQObject]) -> list[_TQObject]:
+    results: list[_TQObject] = []
     nodes = [widget]
     while len(nodes) > 0:
         node = nodes.pop(-1)
@@ -58,7 +56,7 @@ class ScriptRunnerWindow(MainWindowBase):
 
     def __init__(self):
         super().__init__()
-        self.__script_items: List[_ScriptItemWidget] = []
+        self.__script_items: list[_ScriptItemWidget] = []
 
     def _setup_ui(self, central_widget: QWidget) -> None:
         self.setWindowTitle('Script Runner')

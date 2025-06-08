@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import *
 import sys
 import os
 import io
@@ -19,25 +17,25 @@ import importlib.util
 class _PackageImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
 
     @abc.abstractmethod
-    def find_spec(self, fullname: str, path: Optional[str] = None, target: Optional[types.ModuleType] = None) -> Optional[importlib.machinery.ModuleSpec]:
+    def find_spec(self, fullname: str, path: str|None = None, target: types.ModuleType|None = None) -> importlib.machinery.ModuleSpec|None:
         raise NotImplementedError()
 
     @abc.abstractmethod    
     def exec_module(self, module: types.ModuleType):
         raise NotImplementedError()
 
-    def create_module(self, spec: importlib.machinery.ModuleSpec) -> Optional[types.ModuleType]:
+    def create_module(self, spec: importlib.machinery.ModuleSpec) -> types.ModuleType|None:
         # print(f'create_module: {spec.name}')
         return None  # モジュール本体はexec_module内で生成するからここではNoneを返して空のモジュールを作成する
 
 
 class _EncryptedImporter(_PackageImporter):
 
-    def __init__(self, module_script_dict: Dict[str, str], module_abs_paths_dict: Dict[str, str]):
+    def __init__(self, module_script_dict: dict[str, str], module_abs_paths_dict: dict[str, str]):
         self.__module_script_dict = module_script_dict
         self.__module_abs_paths_dict = module_abs_paths_dict
 
-    def find_spec(self, fullname: str, _1, _2) -> Optional[importlib.machinery.ModuleSpec]:
+    def find_spec(self, fullname: str, _1, _2) -> importlib.machinery.ModuleSpec|None:
         loader = self
         origin = self.__module_abs_paths_dict.get(fullname)
         if not origin:
@@ -119,7 +117,7 @@ class ZipScriptPackager(ScriptPackager):
         return buffer.getvalue()
 
     def decompose(self, package: bytes) -> Sequence[ScriptItem]:
-        scripts: List[ScriptItem] = []
+        scripts: list[ScriptItem] = []
         stream = io.BytesIO(package)
         with zipfile.ZipFile(stream, 'r') as zip:
             for name in zip.namelist():
@@ -145,7 +143,7 @@ class PythonScriptSelector(ScriptSelector):
 @dataclasses.dataclass
 class _PackageData:
     scripts: Sequence[ScriptItem]
-    module_abs_paths: Dict[str, str]
+    module_abs_paths: dict[str, str]
 
 
 class EncryptedPackage(object):
@@ -163,7 +161,7 @@ class EncryptedPackage(object):
             f.write(package_buffer)
         return os.path.isfile(package_dest_path)
 
-    def load(self, package_path: str) -> List[str]:
+    def load(self, package_path: str) -> list[str]:
         with open(package_path, 'rb') as f:
             package_buffer = f.read()
         package = self.__decompose_package(package_buffer)
@@ -173,7 +171,7 @@ class EncryptedPackage(object):
 
         return list(package.module_abs_paths.keys())
     
-    def __enumerate_scripts(self, package_root_dir: str, selector: ScriptSelector) -> List[str]:
+    def __enumerate_scripts(self, package_root_dir: str, selector: ScriptSelector) -> list[str]:
         script_dirs = [package_root_dir]
         for root, dirs, _ in os.walk(package_root_dir):
             script_dirs.extend(os.path.join(root, dir) for dir in dirs)
@@ -185,9 +183,9 @@ class EncryptedPackage(object):
         
         return list(script_paths)
     
-    def __create_package(self, script_paths: List[str], package_root_dir: str) -> _PackageData:
-        scripts: List[ScriptItem] = []
-        module_abs_paths: Dict[str, str] = {}
+    def __create_package(self, script_paths: list[str], package_root_dir: str) -> _PackageData:
+        scripts: list[ScriptItem] = []
+        module_abs_paths: dict[str, str] = {}
 
         package_parent_dir = os.path.dirname(package_root_dir)
         for abs_path in script_paths:
@@ -225,7 +223,7 @@ class EncryptedPackage(object):
         return _PackageData(scripts, module_abs_paths)
 
     def __create_importer(self, package: _PackageData) -> _PackageImporter:
-        module_scripts_dict: Dict[str, str] = {}
+        module_scripts_dict: dict[str, str] = {}
         for script in package.scripts:
             module_name = os.path.splitext(script.path)[0].replace('/', '.')
             module_scripts_dict[module_name] = self.__encrypter.decrypt(script.source)

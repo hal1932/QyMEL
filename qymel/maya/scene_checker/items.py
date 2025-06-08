@@ -1,7 +1,5 @@
-# coding: utf-8
-from typing import *
-from enum import Flag, auto
-from abc import abstractmethod
+import collections.abc as abc
+import enum
 import math
 
 
@@ -13,7 +11,7 @@ class CheckItem(object):
     _eps = 1e-4
 
     @staticmethod
-    def find_from_module(module) -> Sequence['CheckItem']:
+    def find_from_module(module) -> abc.Sequence['CheckItem']:
         items: list[CheckItem] = []
         for key in dir(module):
             value = getattr(module, key)
@@ -36,7 +34,7 @@ class CheckItem(object):
     def __str__(self) -> str:
         return f'[{self.category}][{self.label}] {self.description}'
 
-    def execute(self) -> Sequence['CheckResult']:
+    def execute(self) -> abc.Sequence['CheckResult']:
         self.__results: list[CheckResult] = []
         self._execute()
         return self.__results or [CheckResult.success(self)]
@@ -44,19 +42,19 @@ class CheckItem(object):
     def modify(self, error: 'CheckResult') -> None:
         self._modify(error)
 
-    @abstractmethod
+    @abc.abstractmethod
     def _execute(self) -> None:
         raise NotImplementedError()
 
     def _modify(self, error: 'CheckResult') -> None:
         pass
 
-    def append_warning(self, nodes: Optional[Union[str, List[str]]], message: str, modifiable: bool = False):
+    def append_warning(self, nodes: str | list[str] | None, message: str, modifiable: bool = False):
         if nodes is not None:
             nodes = [nodes] if isinstance(nodes, str) else nodes
         self.__results.append(CheckResult.warning(self, message, modifiable, nodes))
 
-    def append_error(self, nodes: Optional[Union[str, List[str]]], message: str, modifiable: bool = False):
+    def append_error(self, nodes: str | list[str] | None, message: str, modifiable: bool = False):
         if nodes is not None:
             nodes = [nodes] if isinstance(nodes, str) else nodes
         self.__results.append(CheckResult.error(self, message, modifiable, nodes))
@@ -64,18 +62,18 @@ class CheckItem(object):
     def float_equals(self, lhs: float, rhs: float) -> bool:
         return math.fabs(lhs - rhs) < self.__class__._eps
 
-    def float_seq_equals(self, lhs: Sequence[float], rhs: Sequence[float]) -> bool:
+    def float_seq_equals(self, lhs: abc.Sequence[float], rhs: abc.Sequence[float]) -> bool:
         if len(lhs) != len(lhs):
             return False
         return all(self.float_equals(l, r) for l, r in zip(lhs, rhs))
 
 
-class CheckResultStatus(Flag):
-    NONE = auto()
-    SUCCESS = auto()
-    MODIFIABLE = auto()
-    WARNING = auto()
-    ERROR = auto()
+class CheckResultStatus(enum.Flag):
+    NONE = enum.auto()
+    SUCCESS = enum.auto()
+    MODIFIABLE = enum.auto()
+    WARNING = enum.auto()
+    ERROR = enum.auto()
 
     def __str__(self) -> str:
         return super().__str__().split('.')[-1]
@@ -88,14 +86,14 @@ class CheckResult(object):
         return CheckResult(item, CheckResultStatus.SUCCESS, '', [])
 
     @staticmethod
-    def warning(item: CheckItem, message: str, modifiable: bool, nodes: Optional[List[str]] = None) -> 'CheckResult':
+    def warning(item: CheckItem, message: str, modifiable: bool, nodes: list[str] | None = None) -> 'CheckResult':
         status = CheckResultStatus.WARNING
         if modifiable:
             status |= CheckResultStatus.MODIFIABLE
         return CheckResult(item, status, message, nodes or [])
 
     @staticmethod
-    def error(item: CheckItem, message: str, modifiable: bool, nodes: Optional[List[str]] = None) -> 'CheckResult':
+    def error(item: CheckItem, message: str, modifiable: bool, nodes: list[str] | None = None) -> 'CheckResult':
         status = CheckResultStatus.ERROR
         if modifiable:
             status |= CheckResultStatus.MODIFIABLE
@@ -114,7 +112,7 @@ class CheckResult(object):
         return self.__message
 
     @property
-    def nodes(self) -> List[str]:
+    def nodes(self) -> list[str]:
         return self.__nodes
 
     @property
@@ -133,7 +131,7 @@ class CheckResult(object):
     def is_modifiable(self) -> bool:
         return self.status & CheckResultStatus.MODIFIABLE == CheckResultStatus.MODIFIABLE
 
-    def __init__(self, item: CheckItem, status: CheckResultStatus, message: str, nodes: List[str]):
+    def __init__(self, item: CheckItem, status: CheckResultStatus, message: str, nodes: list[str]):
         self.__item = item
         self.__status = status
         self.__message = message

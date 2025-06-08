@@ -1,12 +1,10 @@
-# coding: utf-8
-from typing import *
-
+import collections.abc as abc
 from ..pyside_module import *
 
 
-_ObjectPredicate = Optional[Callable[[QObject], bool]]
-_ObjectSelector = Optional[Callable[[QObject], Any]]
-_QueryResult = Optional[Union[QObject, Any]]
+_ObjectPredicate = abc.Callable[[QObject], bool] | None
+_ObjectSelector = abc.Callable[[QObject], object]  | None
+_QueryResult = QObject | object | None
 
 
 class ObjectQuery(object):
@@ -89,7 +87,7 @@ class ObjectQuery(object):
             parents.append(parent.parent())
         return None
 
-    def ancestors(self, predicate: _ObjectPredicate = None, selector: _ObjectSelector = None) -> List[_QueryResult]:
+    def ancestors(self, predicate: _ObjectPredicate = None, selector: _ObjectSelector = None) -> list[_QueryResult]:
         ancestors = []
         parents = [self.object.parent()]
         while parents:
@@ -120,7 +118,7 @@ class ObjectQuery(object):
             children.extend(child.children())
         return None
 
-    def descendents(self, predicate: _ObjectPredicate = None, selector: _ObjectSelector = None) -> List[_QueryResult]:
+    def descendents(self, predicate: _ObjectPredicate = None, selector: _ObjectSelector = None) -> list[_QueryResult]:
         descendents = []
         children = self.object.children()
         while children:

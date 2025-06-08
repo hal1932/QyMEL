@@ -1,4 +1,3 @@
-# coding: utf-8
 from qymel.ui.app import *
 from qymel.ui.layouts import *
 from qymel.ui.widgets.models import *

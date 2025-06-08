@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import *
 import sys
 import os
 import ast
@@ -26,7 +24,7 @@ def force_reload(module_obj):
 
 class _ImportSymbol(object):
 
-    def __init__(self, name: Union[str, ast.alias]) -> None:
+    def __init__(self, name: str | ast.alias) -> None:
         if isinstance(name, str):
             self.name = name
             self.alias = None
@@ -45,8 +43,8 @@ class _ImportItem(object):
 
     def __init__(self,
                  module: types.ModuleType,
-                 alias: Optional[str],
-                 symbols: Optional[List[_ImportSymbol]] = None
+                 alias: str | None,
+                 symbols: list[_ImportSymbol] | None = None
      ) -> None:
         self.module = module
         self.alias = alias
@@ -60,16 +58,16 @@ class _ImportItem(object):
 
 class _ModuleItem(object):
 
-    def __init__(self, module: types.ModuleType, items: List[_ImportItem]) -> None:
+    def __init__(self, module: types.ModuleType, items: list[_ImportItem]) -> None:
         self.module = module
         self.items = items
 
 
-def _get_import_items(root_module: types.ModuleType) -> List[_ModuleItem]:
+def _get_import_items(root_module: types.ModuleType) -> list[_ModuleItem]:
     return _get_import_items_rec(root_module, set())
 
 
-def _get_import_items_rec(module: types.ModuleType, found_modules: Set[types.ModuleType]) -> List[_ModuleItem]:
+def _get_import_items_rec(module: types.ModuleType, found_modules: set[types.ModuleType]) -> list[_ModuleItem]:
     if not _is_reload_target_module(module) or module in found_modules:
         return []
 
@@ -79,7 +77,7 @@ def _get_import_items_rec(module: types.ModuleType, found_modules: Set[types.Mod
     if tree is None:
         return []
 
-    result = []  # type: List[_ModuleItem]
+    result: list[_ModuleItem] = []
 
     children = _walk_ast_tree(tree, module)
 
@@ -93,13 +91,13 @@ def _get_import_items_rec(module: types.ModuleType, found_modules: Set[types.Mod
     return result
 
 
-def _reload_modules(items: List[_ModuleItem]) -> None:
+def _reload_modules(items: list[_ModuleItem]) -> None:
     for item in items:
         print('reload: {}'.format(item.module.__name__))
         importlib.reload(item.module)
 
 
-def _apply_updates(updated_items: List[_ModuleItem]) -> None:
+def _apply_updates(updated_items: list[_ModuleItem]) -> None:
     for item in updated_items:
         module = item.module
         items = item.items
@@ -127,7 +125,7 @@ def _apply_updates(updated_items: List[_ModuleItem]) -> None:
                 module.__dict__[symbol_name] = new_symbol_obj
 
 
-def _walk_ast_tree(tree: ast.Module, module: types.ModuleType) -> List[_ImportItem]:
+def _walk_ast_tree(tree: ast.Module, module: types.ModuleType) -> list[_ImportItem]:
     result = []
 
     for node in tree.body:
@@ -173,7 +171,7 @@ def _walk_ast_tree(tree: ast.Module, module: types.ModuleType) -> List[_ImportIt
     return result
 
 
-def _parse_module_source(module: types.ModuleType) -> Optional[ast.Module]:
+def _parse_module_source(module: types.ModuleType) -> ast.Module | None:
     try:
         # inspect.getsource() は内部でキャッシュが効いてるから、必ず最新のソースを取得するために自前で read() する
         # source = inspect.getsource(module)
@@ -198,7 +196,7 @@ def _is_reload_target_module(module: types.ModuleType) -> bool:
     if module.__name__ in IGNORED_MODULE_NAMES:
         return False
 
-    module_file = module.__dict__.get('__file__', None)
+    module_file: str|None = module.__dict__.get('__file__', None)
     if module_file is None:
         return False
 
@@ -215,7 +213,7 @@ def _find_from_sys_modules(
         module: types.ModuleType,
         node_name: str,
         relative_ref_level: int = 0
-) -> Optional[types.ModuleType]:
+) -> types.ModuleType | None:
     # absolute import?
     if node_name in sys.modules:
         return sys.modules[node_name]

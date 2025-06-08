@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import *
 
 from qymel.ui.pyside_module import *
 from qymel.ui import layouts as _layouts
@@ -13,7 +11,7 @@ class GroupSelectorWidget(QWidget):
     selection_changed = Signal(_groups.CheckItemGroup)
 
     @property
-    def selected_group(self) -> Optional[_groups.CheckItemGroup]:
+    def selected_group(self) -> _groups.CheckItemGroup|None:
         index = self.__combo.currentIndex()
         return self.__groups[index] if index >= 0 else None
 
@@ -21,7 +19,7 @@ class GroupSelectorWidget(QWidget):
         super().__init__()
         self.__combo = QComboBox()
         self.__combo.setCurrentIndex(0)
-        self.__groups: List[_groups.CheckItemGroup] = []
+        self.__groups: list[_groups.CheckItemGroup] = []
         self.setLayout(_layouts.hbox(
             self.__combo,
             contents_margins=0

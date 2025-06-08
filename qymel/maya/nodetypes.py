@@ -1,6 +1,5 @@
-# coding: utf-8
-from typing import *
-import collections
+import collections.abc as abc
+import typing
 
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
@@ -23,17 +22,17 @@ _graphs_to_comp_instance = _graphs.to_comp_instance
 _factory_PlugFactory_create = _factory.PlugFactory.create
 
 
-TFnDependNode = TypeVar('TFnDependNode', bound=_om2.MFnDependencyNode)
+TFnDependNode = typing.TypeVar('TFnDependNode', bound=_om2.MFnDependencyNode)
 
 
-class DependNode(_objects.MayaObject, Generic[TFnDependNode]):
+class DependNode(_objects.MayaObject, typing.Generic[TFnDependNode]):
 
     _mfn_type: int = _om2.MFn.kDependencyNode
-    _mfn_set: Type[TFnDependNode] = _om2.MFnDependencyNode
+    _mfn_set: typing.Type[TFnDependNode] = _om2.MFnDependencyNode
     _mel_type: str = None
 
     @classmethod
-    def ls(cls, *args, **kwargs) -> List['DependNode']:
+    def ls(cls, *args, **kwargs) -> list['DependNode']:
         mel_type = cls._mel_type
         if 'typ' in kwargs:
             del kwargs['type']
@@ -50,7 +49,7 @@ class DependNode(_objects.MayaObject, Generic[TFnDependNode]):
         return self.full_name
 
     @property
-    def mfn(self) -> Optional[TFnDependNode]:
+    def mfn(self) -> TFnDependNode|None:
         mfn_set = self.__class__._mfn_set
 
         if mfn_set is None:
@@ -95,13 +94,13 @@ class DependNode(_objects.MayaObject, Generic[TFnDependNode]):
     def is_from_referenced_file(self) -> bool:
         return self.mfn.isFromReferencedFile
 
-    def __init__(self, obj: Union[_om2.MObject, str]) -> None:
+    def __init__(self, obj: _om2.MObject|str) -> None:
         if isinstance(obj, str):
             obj, _ = _graphs_get_mobject(obj)
 
         super(DependNode, self).__init__(obj)
-        self._mfn: Optional[_om2.MFnDependencyNode] = None
-        self._plugs: Dict[str, _general.Plug] = {}
+        self._mfn: _om2.MFnDependencyNode|None = None
+        self._plugs: dict[str, _general.Plug] = {}
 
     def __str__(self) -> str:
         return repr(self)
@@ -124,7 +123,7 @@ class DependNode(_objects.MayaObject, Generic[TFnDependNode]):
 
         return plug
 
-    def connections(self, **kwargs) -> List[Union['DependNode', _general.Plug]]:
+    def connections(self, **kwargs) -> list['DependNode'|_general.Plug]:
         # 自前でプラグを辿るより listConnections のほうが速い
         others = _cmds.listConnections(self.mel_object, **kwargs) or []
 
@@ -134,21 +133,21 @@ class DependNode(_objects.MayaObject, Generic[TFnDependNode]):
         tmp_mfn = _om2.MFnDependencyNode()
         return [_graphs_eval_node(name, tmp_mfn) for name in others]
 
-    def sources(self, **kwargs) -> List[Union['DependNode', _general.Plug]]:
+    def sources(self, **kwargs) -> list['DependNode'|_general.Plug]:
         kwargs.pop('s', None)
         kwargs.pop('d', None)
         kwargs['source'] = True
         kwargs['destination'] = False
         return self.connections(**kwargs)
 
-    def destinations(self, **kwargs) -> List[Union['DependNode', _general.Plug]]:
+    def destinations(self, **kwargs) -> list['DependNode'|_general.Plug]:
         kwargs.pop('s', None)
         kwargs.pop('d', None)
         kwargs['source'] = False
         kwargs['destination'] = True
         return self.connections(**kwargs)
 
-    def history(self, **kwargs) -> List['DependNode']:
+    def history(self, **kwargs) -> list['DependNode']:
         nodes = _cmds.listHistory(self.mel_object, **kwargs)
         tmp_mfn = _om2.MFnDependencyNode()
         return [_graphs_eval_node(name, tmp_mfn) for name in nodes]
@@ -170,13 +169,13 @@ class DependNode(_objects.MayaObject, Generic[TFnDependNode]):
         _cmds.delete(self.mel_object)
 
 
-class ContainerBase(DependNode[TFnDependNode], Generic[TFnDependNode]):
+class ContainerBase(DependNode[TFnDependNode], typing.Generic[TFnDependNode]):
 
     _mfn_type = _om2.MFn.kContainerBase
     _mel_type = 'containerBase'
 
 
-class DisplayLayer(DependNode[TFnDependNode], Generic[TFnDependNode]):
+class DisplayLayer(DependNode[TFnDependNode], typing.Generic[TFnDependNode]):
 
     _mfn_type = _om2.MFn.kDisplayLayer
     _mel_type = 'displayLayer'
@@ -193,7 +192,7 @@ class DisplayLayer(DependNode[TFnDependNode], Generic[TFnDependNode]):
     def display_type(self) -> int:
         return self.displayType.get()
 
-    def members(self) -> List['DagNode']:
+    def members(self) -> list['DagNode']:
         tmp_mfn = _om2.MFnDependencyNode()
         members = _cmds.editDisplayLayerMembers(self.mel_object, query=True, fullNames=True)
         return [_graphs_eval_node(node, tmp_mfn) for node in members or []]
@@ -204,7 +203,7 @@ class DisplayLayer(DependNode[TFnDependNode], Generic[TFnDependNode]):
     def add(self, node: 'DagNode', no_recurse: bool = True) -> None:
         _cmds.editDisplayLayerMembers(self.mel_object, node.mel_object, noRecurse=no_recurse)
 
-    def extend(self, nodes: Sequence['DagNode'], no_recurse: bool = True) -> None:
+    def extend(self, nodes: abc.Sequence['DagNode'], no_recurse: bool = True) -> None:
         node_paths = [node.mel_object for node in nodes]
         _cmds.editDisplayLayerMembers(self.mel_object, *node_paths, noRecurse=no_recurse)
 
@@ -217,7 +216,7 @@ class DisplayLayer(DependNode[TFnDependNode], Generic[TFnDependNode]):
             _cmds.editDisplayLayerMembers('defaultLayer', nodes, noRecurse=True)
 
 
-class GeometryFilter(DependNode[TFnDependNode], Generic[TFnDependNode]):
+class GeometryFilter(DependNode[TFnDependNode], typing.Generic[TFnDependNode]):
 
     _mfn_type = _om2.MFn.kGeometryFilt
     _mel_type = 'geometryFilter'
@@ -237,7 +236,7 @@ class SkinCluster(DependNode[_om2anim.MFnSkinCluster]):
     def create(**kwargs) -> 'SkinCluster':
         return SkinCluster(_cmds.skinCluster(**kwargs))
 
-    def influences(self) -> List['Joint']:
+    def influences(self) -> list['Joint']:
         return [Joint(mdagpath) for mdagpath in self.mfn.influenceObjects()]
 
     def influence_index(self, joint: 'Joint') -> int:
@@ -245,9 +244,9 @@ class SkinCluster(DependNode[_om2anim.MFnSkinCluster]):
 
     def weights(self,
                 mesh: 'Mesh',
-                component: Optional[_components.MeshVertex] = None,
-                influences: Optional[Sequence['Joint']] = None
-    ) -> List[List[float]]:
+                component: _components.MeshVertex|None = None,
+                influences: abc.Sequence['Joint']|None = None
+    ) -> list[list[float]]:
         mfn: _om2anim.MFnSkinCluster = self.mfn
 
         if component is None:
@@ -275,7 +274,7 @@ class SkinCluster(DependNode[_om2anim.MFnSkinCluster]):
         return result
 
 
-class Entity(ContainerBase[TFnDependNode], Generic[TFnDependNode]):
+class Entity(ContainerBase[TFnDependNode], typing.Generic[TFnDependNode]):
     pass
 
 
@@ -289,8 +288,8 @@ class ObjectSet(Entity[_om2.MFnSet]):
     def create(**kwargs) -> 'ObjectSet':
         return ObjectSet(_cmds.sets(**kwargs))
 
-    def members(self, flatten: bool = False) -> List[_objects.MayaObject]:
-        result: List[_objects.MayaObject] = []
+    def members(self, flatten: bool = False) -> list[_objects.MayaObject]:
+        result: list[_objects.MayaObject] = []
 
         mfn: _om2.MFnSet = self.mfn
         selection = mfn.getMembers(flatten)
@@ -326,14 +325,14 @@ class ObjectSet(Entity[_om2.MFnSet]):
         else:
             _cmds.sets(obj.mel_object, forceElement=self.mel_object)
 
-    def extend(self, objs: Sequence[_objects.MayaObject], force: bool=False) -> None:
+    def extend(self, objs: abc.Sequence[_objects.MayaObject], force: bool=False) -> None:
         if not force:
             _cmds.sets(*[o.mel_object for o in objs], addElement=self.mel_object)
         else:
             _cmds.sets(*[o.mel_object for o in objs], forceElement=self.mel_object)
 
-    def remove(self, obj: Union[_objects.MayaObject, Iterable[_objects.MayaObject]]) -> None:
-        if isinstance(obj, collections.Iterable):
+    def remove(self, obj: _objects.MayaObject|abc.Iterable[_objects.MayaObject]) -> None:
+        if isinstance(obj, abc.Iterable):
             _cmds.sets(*[o.mel_object for o in obj], remove=self.mel_object)
         else:
             _cmds.sets(obj.mel_object, remove=self.mel_object)
@@ -363,7 +362,7 @@ class ShadingEngine(ObjectSet):
         kwargs.pop('r', None)
         return ShadingEngine(_cmds.sets(**kwargs))
 
-    def materials(self) -> List[DependNode]:
+    def materials(self) -> list[DependNode]:
         names = _cmds.ls(_cmds.listHistory(self.mel_object), materials=True)
         tmp_mfn = _om2.MFnDependencyNode()
         return [_graphs_eval_node(name, tmp_mfn) for name in names]
@@ -392,11 +391,11 @@ class AnimCurve(DependNode[_om2anim.MFnAnimCurve]):
     def value(self, index: int) -> float:
         return self._to_output(self.mfn.value(index))
 
-    def keys(self) -> List[float]:
+    def keys(self) -> list[float]:
         mfn = self.mfn
         return [self._from_input(mfn.input(i)) for i in range(mfn.numKeys)]
 
-    def values(self) -> List[float]:
+    def values(self) -> list[float]:
         mfn = self.mfn
         return [self._to_output(mfn.value(i)) for i in range(mfn.numKeys)]
 
@@ -412,9 +411,9 @@ class AnimCurve(DependNode[_om2anim.MFnAnimCurve]):
 
     def set_tangent_type(
             self,
-            index: Union[int, Tuple[int, int]],
-            in_type: Optional[int] = None,
-            out_type: Optional[int] = None
+            index: int|tuple[int|int],
+            in_type: int|None = None,
+            out_type: int|None = None
      ) -> None:
         kwargs = {}
         if isinstance(index, int):
@@ -441,7 +440,7 @@ class AnimCurve(DependNode[_om2anim.MFnAnimCurve]):
             return value
         return input_type(value, input_type.uiUnit())
 
-    def _from_input(self, value: Union[_om2.MTime, _om2.MAngle, _om2.MDistance, float]) -> float:
+    def _from_input(self, value: _om2.MTime|_om2.MAngle|_om2.MDistance, float) -> float:
         if isinstance(value, float):
             return value
         return value.asUnits(self.__class__._input_type.uiUnit())
@@ -565,17 +564,17 @@ class AnimCurveUU(AnimCurve):
         return _graphs.create_node(AnimCurveUU._mel_type, **kwargs)
 
 
-TFnDagNode = TypeVar('TFnDagNode', bound=_om2.MFnDagNode)
+TFnDagNode = typing.TypeVar('TFnDagNode', bound=_om2.MFnDagNode)
 
 
-class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
+class DagNode(Entity[TFnDagNode], typing.Generic[TFnDagNode]):
 
     _mfn_type = _om2.MFn.kDagNode
     _mfn_set = _om2.MFnDagNode
     _mel_type = None
 
     @classmethod
-    def ls(cls, *args, **kwargs) -> List['DagNode']:
+    def ls(cls, *args, **kwargs) -> list['DagNode']:
         kwargs['dagObjects'] = True
         return super().ls(*args, **kwargs)
 
@@ -633,7 +632,7 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
     def local_bounding_box(self) -> _om2.MBoundingBox:
         return self.mfn.boundingBox
 
-    def __init__(self, obj: Optional[Union[str, _om2.MObject]]) -> None:
+    def __init__(self, obj: str|_om2.MObject|None) -> None:
         if isinstance(obj, str):
             _, obj = _graphs_get_mobject(obj)
 
@@ -652,7 +651,7 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
             return f'{self.__class__.__name__}(world)'
         return super().__repr__()
 
-    def relatives(self, **kwargs) -> List['DagNode']:
+    def relatives(self, **kwargs) -> list['DagNode']:
         if self.is_world:
             raise NotImplementedError('World.relatives() is not implemented')
 
@@ -664,7 +663,7 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
         tmp_mfn = _om2.MFnDependencyNode()
         return [_graphs_eval_node(name, tmp_mfn) for name in others]
 
-    def parent(self, index: int = 0) -> Optional['DagNode']:
+    def parent(self, index: int = 0) -> 'DagNode'|None:
         if self.is_world:
             return None
 
@@ -674,13 +673,13 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
 
         return _graphs_to_node_instance(parent_mfn, parent_mfn_dag.getPath())
 
-    def parents(self, **kwargs) -> List['DagNode']:
+    def parents(self, **kwargs) -> list['DagNode']:
         if self.is_world:
             return []
         kwargs['allParents'] = True
         return self.relatives(**kwargs)
 
-    def child(self, index: int = 0) -> Optional['DagNode']:
+    def child(self, index: int = 0) -> 'DagNode'|None:
         if self.is_world:
             return self.children()[index]
 
@@ -692,7 +691,7 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
         child_mfn = _om2.MFnDagNode(child_mobj)
         return _graphs_to_node_instance(child_mfn, _om2.MFnDagNode(child_mobj).getPath())
 
-    def first_child(self, **kwargs) -> Optional['DagNode']:
+    def first_child(self, **kwargs) -> 'DagNode'|None:
         if 'name' not in kwargs:
             return self.child(0)
 
@@ -708,7 +707,7 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
 
         return None
 
-    def last_child(self, **kwargs) -> Optional['DagNode']:
+    def last_child(self, **kwargs) -> 'DagNode'|None:
         if 'name' not in kwargs:
             return self.child(0)
 
@@ -726,7 +725,7 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
 
         return None
 
-    def children(self, **kwargs) -> List['DagNode']:
+    def children(self, **kwargs) -> list['DagNode']:
         if self.is_world:
             kwargs['assemblies'] = True
             return _graphs.ls_nodes(**kwargs)
@@ -734,7 +733,7 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
         kwargs['children'] = True
         return self.relatives(**kwargs)
 
-    def ancestors(self, **kwargs) -> List['DagNode']:
+    def ancestors(self, **kwargs) -> list['DagNode']:
         if self.is_world:
             return []
 
@@ -767,7 +766,7 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
 
         return result
 
-    def descendents(self, **kwargs) -> List['DagNode']:
+    def descendents(self, **kwargs) -> list['DagNode']:
         if self.is_world:
             kwargs['dagObjects'] = True
             return _graphs.ls_nodes(**kwargs)
@@ -775,7 +774,7 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
         kwargs['allDescendents'] = True
         return self.relatives(**kwargs)
 
-    def siblings(self, **kwargs) -> List['DagNode']:
+    def siblings(self, **kwargs) -> list['DagNode']:
         if self.is_world:
             return []
 
@@ -851,11 +850,11 @@ class DagNode(Entity[TFnDagNode], Generic[TFnDagNode]):
     def is_instance_of(self, node: 'DagNode') -> bool:
         return self.mobject == node.mobject
 
-    def instances(self) -> List['DagNode']:
+    def instances(self) -> list['DagNode']:
         if not self.is_instanced:
             return []
 
-        instances = []  # type: List[DagNode]
+        instances = []  # type: list[DagNode]
 
         tmp_mfn = _om2.MFnDagNode()
         mdagpath = self.mdagpath
@@ -903,7 +902,7 @@ class Transform(DagNode[_om2.MFnTransform]):
                 count += 1
         return count
 
-    def shape(self) -> Optional['Shape']:
+    def shape(self) -> 'Shape'|None:
         mdagpath = _om2.MDagPath(self.mdagpath)
         try:
             mdagpath.extendToShape()
@@ -911,7 +910,7 @@ class Transform(DagNode[_om2.MFnTransform]):
             return None
         return _graphs_to_node_instance(_om2.MFnDependencyNode(mdagpath.node()), mdagpath)
 
-    def shapes(self) -> List['Shape']:
+    def shapes(self) -> list['Shape']:
         return self.relatives(shapes=True)
 
     def add_shape(self, shape: 'Shape') -> 'Shape':
@@ -940,19 +939,19 @@ class Joint(Transform):
         return Joint(_cmds.joint(**kwargs))
 
 
-TFnShape = TypeVar('TFnShape', bound=_om2.MFnDagNode)
+TFnShape = typing.TypeVar('TFnShape', bound=_om2.MFnDagNode)
 
 
-class Shape(DagNode[TFnShape], Generic[TFnShape]):
+class Shape(DagNode[TFnShape], typing.Generic[TFnShape]):
 
     _mfn_type = _om2.MFn.kShape
     _mel_type = 'shape'
 
-    def transform(self) -> Optional[Transform]:
+    def transform(self) -> Transform|None:
         parent = self.parent()
         return parent if isinstance(parent, Transform) else None
 
-    def shading_groups(self) -> List[ShadingEngine]:
+    def shading_groups(self) -> list[ShadingEngine]:
         names = _cmds.ls(_cmds.listHistory(self.mel_object, future=True), type='shadingEngine')
         tmp_mfn = _om2.MFnDependencyNode()
         return [_graphs_eval_node(name, tmp_mfn) for name in names]
@@ -961,7 +960,7 @@ class Shape(DagNode[TFnShape], Generic[TFnShape]):
         transform = _cmds.instance(self.mel_object, **kwargs)
         return _graphs_eval_node(transform, _om2.MFnDependencyNode())
 
-    def skin_cluster(self) -> Optional['SkinCluster']:
+    def skin_cluster(self) -> 'SkinCluster'|None:
         names = _cmds.ls(_cmds.listHistory(self.mel_object), type='skinCluster')
         if len(names) == 0:
             return None
@@ -988,27 +987,27 @@ class Camera(Shape[_om2.MFnCamera]):
         return _cmds.camera(self.mel_object, query=True, startupCamera=True)
 
 
-class GeometryShape(Shape[TFnShape], Generic[TFnShape]):
+class GeometryShape(Shape[TFnShape], typing.Generic[TFnShape]):
 
     _mel_type = 'geometryShape'
 
 
-class DeformableShape(GeometryShape[TFnShape], Generic[TFnShape]):
+class DeformableShape(GeometryShape[TFnShape], typing.Generic[TFnShape]):
 
     _mel_type = 'deformableShape'
 
 
-class ControlPoint(DeformableShape[TFnShape], Generic[TFnShape]):
+class ControlPoint(DeformableShape[TFnShape], typing.Generic[TFnShape]):
 
     _mel_type = 'controlPoint'
 
 
-class SurfaceShape(ControlPoint[TFnShape], Generic[TFnShape]):
+class SurfaceShape(ControlPoint[TFnShape], typing.Generic[TFnShape]):
 
     _mel_type = 'surfaceShape'
 
 
-class CurveShape(ControlPoint[TFnShape], Generic[TFnShape]):
+class CurveShape(ControlPoint[TFnShape], typing.Generic[TFnShape]):
 
     _mel_type = 'curveShape'
 
@@ -1057,7 +1056,7 @@ class Mesh(SurfaceShape[_om2.MFnMesh]):
     def points(self, space: int =_om2.MSpace.kObject) -> _om2.MFloatPointArray:
         return self.mfn.getFloatPoints(space)
 
-    def connected_shaders(self) -> Dict['ShadingEngine', List[int]]:
+    def connected_shaders(self) -> dict['ShadingEngine', list[int]]:
         mobjs, face_ids = self.mfn.getConnectedShaders(self.instance_number)
 
         shaders = {index: ShadingEngine(mobj) for index, mobj in enumerate(mobjs)}
@@ -1074,7 +1073,7 @@ class Mesh(SurfaceShape[_om2.MFnMesh]):
         name = mfn.currentColorSetName(self.instance_number)
         return _general.ColorSet(name, self)
 
-    def color_sets(self) -> List[_general.ColorSet]:
+    def color_sets(self) -> list[_general.ColorSet]:
         mfn = self.mfn
         names = mfn.getColorSetNames()
         return [_general.ColorSet(name, self) for name in names]
@@ -1084,7 +1083,7 @@ class Mesh(SurfaceShape[_om2.MFnMesh]):
         name = mfn.currentUVSetName()
         return _general.UvSet(name, self)
 
-    def uv_sets(self) -> List[_general.UvSet]:
+    def uv_sets(self) -> list[_general.UvSet]:
         mfn = self.mfn
         names = mfn.getUVSetNames()
         return [_general.UvSet(name, self) for name in names]
@@ -1094,34 +1093,34 @@ class Mesh(SurfaceShape[_om2.MFnMesh]):
         name = _cmds.polyColorSet(create=True, colorSet=name)
         return _general.ColorSet(name, self)
 
-    def face_comp(self, indices: Optional[Sequence[int]] = None) -> _components.MeshFace:
+    def face_comp(self, indices: abc.Sequence[int]|None = None) -> _components.MeshFace:
         return self.__create_component(_components.MeshFace, indices, self.face_count)
 
-    def vertex_comp(self, indices: Optional[Sequence[int]] = None) -> _components.MeshVertex:
+    def vertex_comp(self, indices: abc.Sequence[int]|None = None) -> _components.MeshVertex:
         return self.__create_component(_components.MeshVertex, indices, self.vertex_count)
 
-    def edge_comp(self, indices: Optional[Sequence[int]] = None) -> _components.MeshEdge:
+    def edge_comp(self, indices: abc.Sequence[int]|None = None) -> _components.MeshEdge:
         return self.__create_component(_components.MeshEdge, indices, self.edge_count)
 
-    def vertex_face_comp(self, indices: Optional[Sequence[Tuple[int, int]]] = None) -> _components.MeshVertexFace:
+    def vertex_face_comp(self, indices: abc.Sequence[tuple[int, int]]|None = None) -> _components.MeshVertexFace:
         return self.__create_component(_components.MeshVertexFace, indices, [self.vertex_count, self.face_count])
 
-    def faces(self, comp: Optional[_components.MeshFace] = None) -> _iterators.MeshFaceIter:
+    def faces(self, comp: _components.MeshFace|None = None) -> _iterators.MeshFaceIter:
         if comp is None:
             comp = self.face_comp()
         return comp.iterator()
 
-    def vertices(self, comp: Optional[_components.MeshVertex] = None) -> _iterators.MeshVertexIter:
+    def vertices(self, comp: _components.MeshVertex|None = None) -> _iterators.MeshVertexIter:
         if comp is None:
             comp = self.vertex_comp()
         return comp.iterator()
 
-    def edges(self, comp: Optional[_components.MeshEdge] = None) -> _iterators.MeshEdgeIter:
+    def edges(self, comp: _components.MeshEdge|None = None) -> _iterators.MeshEdgeIter:
         if comp is None:
             comp = self.edge_comp()
         return comp.iterator()
 
-    def face_vertices(self, comp: Optional[_components.MeshVertexFace] = None) -> _iterators.MeshFaceVertexIter:
+    def face_vertices(self, comp: _components.MeshVertexFace|None = None) -> _iterators.MeshFaceVertexIter:
         if comp is None:
             comp = self.vertex_face_comp()
         return comp.iterator()
@@ -1129,9 +1128,9 @@ class Mesh(SurfaceShape[_om2.MFnMesh]):
     def __create_component(
             self,
             cls: type,
-            indices: Optional[Sequence[Any]] = None,
-            complete_length: Optional[Union[int, List[int]]] = None
-    ) -> Any:
+            indices: abc.Sequence[object]|None = None,
+            complete_length: int|list[int]|None = None
+    ) -> object:
         comp = cls._comp_mfn()
         mobj = comp.create(cls._comp_type)
         if indices is not None:
@@ -1174,15 +1173,15 @@ class FileReference(DependNode[_om2.MFnReference]):
     def associated_namespace(self) -> str:
         return ':' + self.mfn.associatedNamespace(False)
 
-    def load(self, depth: Optional[str] = None, return_new_nodes: bool = False) -> Optional[List[DependNode]]:
+    def load(self, depth: str|None = None, return_new_nodes: bool = False) -> list[DependNode|None]:
         return self.replace(None, depth, return_new_nodes)
 
     def replace(
             self,
-            file_path: Optional[str],
-            depth: Optional[str] = None,
+            file_path: str|None,
+            depth: str|None = None,
             return_new_nodes: bool = False
-    ) -> Optional[List[DependNode]]:
+    ) -> list[DependNode|None]:
         args = []
         if file_path is not None:
             args.append(file_path)
@@ -1211,7 +1210,7 @@ class FileReference(DependNode[_om2.MFnReference]):
     def remove(self, force: bool = False) -> None:
         _cmds.file(self.file_path, removeReference=True, force=force)
 
-    def nodes(self) -> List[DependNode]:
+    def nodes(self) -> list[DependNode]:
         nodes = self.mfn.nodes()
         if len(nodes) == 0:
             return []

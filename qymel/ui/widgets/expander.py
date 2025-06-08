@@ -1,6 +1,3 @@
-# coding: utf-8
-from typing import *
-
 from ..pyside_module import *
 from .. import layouts as _layouts
 
@@ -36,10 +33,10 @@ class Expander(QFrame):
     def content_layout(self) -> QLayout:
         return self._content_layout
 
-    def __init__(self, parent: Optional[QObject] = None) -> None:
+    def __init__(self, parent: QObject|None = None) -> None:
         super(Expander, self).__init__(parent)
 
-        toggle_icon = QApplication.style().standardIcon(QStyle.SP_MediaPlay)
+        toggle_icon = QApplication.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay)
         self._toggle_pix = toggle_icon.pixmap(12)
         self._toggle_image = QLabel()
         self._toggle_image.setPixmap(self._toggle_pix)
@@ -53,7 +50,7 @@ class Expander(QFrame):
 
         self._content = QWidget()
         self._content.setLayout(self._content_layout)
-        self._content.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self._content.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._content.setMaximumHeight(0)
         self._content.setMinimumHeight(0)
 
@@ -66,7 +63,7 @@ class Expander(QFrame):
         self.setLayout(self._main_layout)
 
         self.setLineWidth(1)
-        self.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+        self.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Plain)
 
         self._expanded = False
 
@@ -104,7 +101,7 @@ class Expander(QFrame):
         else:
             content_height = 0
 
-        m = QMatrix().rotate(90)
+        m = QTransform.rotate(90)
         icon_pix = self._toggle_pix.transformed(m)
         self._toggle_image.setPixmap(icon_pix)
 

@@ -1,8 +1,5 @@
-# coding: utf-8
-from __future__ import annotations
-from typing import *
-
-import abc
+import collections.abc as abc
+import typing
 
 import maya.cmds as _cmds
 import maya.api.OpenMaya as _om2
@@ -14,23 +11,23 @@ from . import objects as _objects
 from . import iterators as _iterators
 
 
-TCompIter = TypeVar('TCompIter', bound=_iterators._ComponentIter)
-TCompFn = TypeVar('TCompFn', bound=_om2.MFnComponent)
-TCompElem = TypeVar('TCompElem')
+TCompIter = typing.TypeVar('TCompIter', bound=_iterators._ComponentIter)
+TCompFn = typing.TypeVar('TCompFn', bound=_om2.MFnComponent)
+TCompElem = typing.TypeVar('TCompElem')
 
 
 # 呼び出し回数が極端に多くなる可能性のある静的メソッドをキャッシュ化しておく
 _graphs_get_comp_mobject = _graphs.get_comp_mobject
 
 
-class Component(_objects.MayaObject, Generic[TCompFn, TCompElem, TCompIter]):
+class Component(_objects.MayaObject, typing.Generic[TCompFn, TCompElem, TCompIter]):
 
     _comp_mfn = None
     _comp_type = _om2.MFn.kComponent
     _comp_repr = ''
 
     @property
-    def mel_object(self) -> Tuple[str]:
+    def mel_object(self) -> tuple[str]:
         sel_list = _om2.MSelectionList()
         sel_list.add((self.mdagpath, self.mobject), False)
         return _cmds.ls(sel_list.getSelectionStrings(0), long=True)
@@ -53,15 +50,15 @@ class Component(_objects.MayaObject, Generic[TCompFn, TCompElem, TCompIter]):
         return self._mfn
 
     @property
-    def elements(self) -> Sequence[TCompElem]:
+    def elements(self) -> abc.Sequence[TCompElem]:
         return self.mfn.getElements()
 
-    def __init__(self, obj: Union[_om2.MObject, str], mdagpath: _om2.MDagPath) -> None:
+    def __init__(self, obj: _om2.MObject|str, mdagpath: _om2.MDagPath) -> None:
         if isinstance(obj, str):
             mdagpath, obj = _graphs_get_comp_mobject(obj)
         super(Component, self).__init__(obj)
         self._mdagpath = mdagpath
-        self._mfn: Optional[TCompFn] = None
+        self._mfn: TCompFn|None = None
         self.__cursor = 0
 
     def __str__(self) -> str:
@@ -76,7 +73,7 @@ class Component(_objects.MayaObject, Generic[TCompFn, TCompElem, TCompIter]):
     def __getitem__(self, item: int) -> TCompFn:
         return self.element(item)
 
-    def __iter__(self) -> Component:
+    def __iter__(self) -> 'Component':
         self.__cursor = 0
         return self
 
@@ -114,14 +111,14 @@ class Component(_objects.MayaObject, Generic[TCompFn, TCompElem, TCompIter]):
     def append(self, element: TCompElem) -> None:
         self.mfn.addElement(element)
 
-    def extend(self, elements: Sequence[TCompElem]) -> None:
+    def extend(self, elements: abc.Sequence[TCompElem]) -> None:
         self.mfn.addElements(elements)
 
     def set_complete(self, count: int) -> None:
         self.mfn.setCompleteData(count)
 
     @classmethod
-    def _create_api_comp(cls: TComponent, elements: Optional[Sequence[TCompElem]] = None) -> TCompFn:
+    def _create_api_comp(cls: TComponent, elements: abc.Sequence[TCompElem]|None = None) -> TCompFn:
         comp = cls._comp_mfn()
         comp.create(cls._comp_type)
         if elements:
@@ -135,12 +132,12 @@ class Component(_objects.MayaObject, Generic[TCompFn, TCompElem, TCompIter]):
 
 class SingleIndexedComponent(
     Component[_om2.MFnSingleIndexedComponent, int, TCompIter],
-    Generic[TCompIter]
+    typing.Generic[TCompIter]
 ):
 
     _comp_mfn = _om2.MFnSingleIndexedComponent
 
-    def __init__(self, obj: Union[_om2.MObject, str], mdagpath: _om2.MDagPath) -> None:
+    def __init__(self, obj: _om2.MObject|str, mdagpath: _om2.MDagPath) -> None:
         super(SingleIndexedComponent, self).__init__(obj, mdagpath)
 
     def element(self, index: int) -> int:
@@ -152,16 +149,16 @@ class SingleIndexedComponent(
 
 
 class DoubleIndexedComponent(
-    Component[_om2.MFnDoubleIndexedComponent, Tuple[int, int], TCompIter],
-    Generic[TCompIter]
+    Component[_om2.MFnDoubleIndexedComponent, tuple[int, int], TCompIter],
+    typing.Generic[TCompIter]
 ):
 
     _comp_mfn = _om2.MFnDoubleIndexedComponent
 
-    def __init__(self, obj: Union[_om2.MObject, str], mdagpath: _om2.MDagPath) -> None:
+    def __init__(self, obj: _om2.MObject|str, mdagpath: _om2.MDagPath) -> None:
         super(DoubleIndexedComponent, self).__init__(obj, mdagpath)
 
-    def element(self, index: int) -> Tuple[int, int]:
+    def element(self, index: int) -> tuple[int, int]:
         return self.mfn.getElement(index)
 
     @abc.abstractmethod
@@ -174,7 +171,7 @@ class MeshVertex(SingleIndexedComponent[_iterators.MeshVertexIter]):
     _comp_type = _om2.MFn.kMeshVertComponent
     _comp_repr = 'vtx'
 
-    def __init__(self, obj: Union[_om2.MObject, str], mdagpath: _om2.MDagPath) -> None:
+    def __init__(self, obj: _om2.MObject|str, mdagpath: _om2.MDagPath) -> None:
         super(MeshVertex, self).__init__(obj, mdagpath)
 
     def iterator(self) -> _iterators.MeshVertexIter:
@@ -187,7 +184,7 @@ class MeshFace(SingleIndexedComponent[_iterators.MeshFaceIter]):
     _comp_type = _om2.MFn.kMeshPolygonComponent
     _comp_repr = 'f'
 
-    def __init__(self, obj: Union[_om2.MObject, str], mdagpath: _om2.MDagPath) -> None:
+    def __init__(self, obj: _om2.MObject|str, mdagpath: _om2.MDagPath) -> None:
         super(MeshFace, self).__init__(obj, mdagpath)
 
     def iterator(self) -> _iterators.MeshFaceIter:
@@ -200,7 +197,7 @@ class MeshEdge(SingleIndexedComponent[_iterators.MeshEdgeIter]):
     _comp_type = _om2.MFn.kMeshEdgeComponent
     _comp_repr = 'e'
 
-    def __init__(self, obj: Union[_om2.MObject, str], mdagpath: _om2.MDagPath) -> None:
+    def __init__(self, obj: _om2.MObject|str, mdagpath: _om2.MDagPath) -> None:
         super(MeshEdge, self).__init__(obj, mdagpath)
 
     def iterator(self) -> _iterators.MeshEdgeIter:
@@ -213,7 +210,7 @@ class MeshVertexFace(DoubleIndexedComponent[_iterators.MeshFaceVertexIter]):
     _comp_type = _om2.MFn.kMeshVtxFaceComponent
     _comp_repr = 'vtxface'
 
-    def __init__(self, obj: Union[_om2.MObject, str], mdagpath: _om2.MDagPath) -> None:
+    def __init__(self, obj: _om2.MObject|str, mdagpath: _om2.MDagPath) -> None:
         super(MeshVertexFace, self).__init__(obj, mdagpath)
 
     def iterator(self) -> _iterators.MeshFaceVertexIter:

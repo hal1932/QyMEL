@@ -1,5 +1,4 @@
-# coding: utf-8
-from typing import *
+import collections.abc as abc
 
 from qymel.ui.pyside_module import *
 from qymel.ui import layouts as _layouts
@@ -29,7 +28,7 @@ class ControlWidget(QWidget):
             contents_margins=0
         ))
 
-    def load_from(self, results: Sequence[_items.CheckResult]):
+    def load_from(self, results: abc.Sequence[_items.CheckResult]):
         self.__modify_button.setEnabled(False)
         for result in results:
             if result.is_modifiable:

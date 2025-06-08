@@ -1,12 +1,10 @@
-# coding: utf-8
-from typing import *
 
 import os
 
 from qymel.ui.pyside_module import *
 
 
-_icons: Dict[str, QIcon] = {}
+_icons: dict[str, QIcon] = {}
 
 
 class IconType(object):

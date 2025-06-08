@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import *
 
 from qymel.ui.pyside_module import *
 from qymel.ui import layouts as _layouts
@@ -12,7 +10,7 @@ from . import icons as _icons
 
 class ItemListItem(_models.TreeItem):
 
-    def __init__(self, group: _groups.CheckItemGroup, category: Optional[str], items: List[_items.CheckItem]):
+    def __init__(self, group: _groups.CheckItemGroup, category: str|None, items: list[_items.CheckItem]):
         super().__init__()
         self.group = group
         if category is None:
@@ -22,11 +20,11 @@ class ItemListItem(_models.TreeItem):
             self.label = category
             self.is_category = True
         self.items = items
-        self.icon: QPixmap = None
+        self.icon: QPixmap|None = None
         self.load_results()
 
     def load_results(self):
-        results: List[_items.CheckResult] = []
+        results: list[_items.CheckResult] = []
         for item in self.items:
             if not self.group.is_executed(item):
                 results.clear()
@@ -66,20 +64,20 @@ class ItemListWidget(QWidget):
         self.__model = _models.TreeModel()
         self.__model.define_column(0, _models.TreeDefinition(
             bindings={
-                Qt.DisplayRole: 'label',
-                Qt.DecorationRole: 'icon',
+                Qt.ItemDataRole.DisplayRole: 'label',
+                Qt.ItemDataRole.DecorationRole: 'icon',
             }
         ))
 
         self.__view = QTreeView()
         self.__view.setModel(self.__model)
         self.__view.setHeaderHidden(True)
-        self.__view.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.__view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.__view.expanded.connect(lambda index: self.__model.item_from_index(index).expand())
         self.__view.clicked.connect(lambda index: self.selection_changed.emit(self.__model.item_from_index(index)))
         self.__view.expandAll()
 
-        self.__view.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.__view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.__view.customContextMenuRequested.connect(self.__show_context_menu)
 
         self.setLayout(_layouts.vbox(

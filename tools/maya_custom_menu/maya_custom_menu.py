@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import *
 import dataclasses
 import abc
 import json
@@ -97,7 +95,7 @@ def _create_child_menu(item: _MenuItem, *_):
                 _Script.create(option_path).create_option(child, item, child_item)
 
 
-def _load_settings(settings_path: str) -> List[_MenuItem]:
+def _load_settings(settings_path: str) -> list[_MenuItem]:
     try:
         with open(settings_path, 'r') as f:
             items = [_MenuItem(**setting) for setting in json.load(f)]
@@ -109,7 +107,7 @@ def _load_settings(settings_path: str) -> List[_MenuItem]:
         item.directory_path = os.path.expandvars(item.directory_path)
         item.directory_path = os.path.expanduser(item.directory_path)
 
-    errors_notfound: List[str] = []
+    errors_notfound: list[str] = []
 
     settings_root = os.path.dirname(settings_path)
     for item in items:
