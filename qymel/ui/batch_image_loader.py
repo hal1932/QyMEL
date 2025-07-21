@@ -10,7 +10,7 @@ LoadedCallback = abc.Callable[[QImage], QImage]
 CompletedCallback = abc.Callable[[QImage], None]
 ErrorCallback = abc.Callable[[BaseException], None]
 
-TCallback = typing.TypeVar('TCallback', LoadedCallback, CompletedCallback, ErrorCallback)
+TCallback = LoadedCallback | CompletedCallback | ErrorCallback
 
 
 class ImageLoadingCallback(object):

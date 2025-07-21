@@ -11,9 +11,16 @@ if typing.TYPE_CHECKING:
     from . import components as _components
     from . import general as _general
 
-TMItComp = typing.TypeVar('TMItComp', bound=(_om2.MItMeshVertex, _om2.MItMeshEdge, _om2.MItMeshPolygon, _om2.MItMeshFaceVertex))
-TColorSet = typing.TypeVar('TColorSet', bound=(_general.ColorSet, str))
-TUvSet = typing.TypeVar('TUvSet', bound=(_general.UvSet, str))
+_TItMeshVertex = typing.TypeVar('_TItMeshVertex', bound=_om2.MItMeshVertex)
+_TItMeshEdge = typing.TypeVar('_TItMeshEdge', bound=_om2.MItMeshEdge)
+_TItMeshPolygon = typing.TypeVar('_TItMeshPolygon', bound=_om2.MItMeshPolygon)
+_TItMeshFaceVertex = typing.TypeVar('_TItMeshFaceVertex', bound=_om2.MItMeshFaceVertex)
+_TColorSet = typing.TypeVar('_TColorSet', bound=_general.ColorSet)
+_TUvSet = typing.TypeVar('_TUvSet', bound=_general.UvSet)
+
+TMItComp = _TItMeshPolygon | _TItMeshVertex | _TItMeshEdge | _TItMeshFaceVertex
+TColorSet = _TColorSet | str
+TUvSet = _TUvSet | str
 
 
 class ComponentIter(typing.Generic[TMItComp]):

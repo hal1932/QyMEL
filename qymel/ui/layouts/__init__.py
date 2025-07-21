@@ -8,7 +8,10 @@ class _Stretch(object):
     pass
 
 
-TLayoutItem = typing.TypeVar('TLayoutItem', bound=(QWidget, QLayout, _Stretch))
+_TWidget = typing.TypeVar('_TWidget', bound=QWidget)
+_TLayout = typing.TypeVar('_TLayout', bound=QLayout)
+TLayoutItem = _TWidget | _TLayout | _Stretch
+
 TBoxLayout = typing.TypeVar('TBoxLayout', bound=QBoxLayout)
 
 _stretch_instance = _Stretch()
